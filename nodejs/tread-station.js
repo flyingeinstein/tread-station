@@ -1,4 +1,9 @@
 
+process.on('SIGINT', function() {
+    console.trace("Caught interrupt signal");
+    process.exit();
+});
+
 var fs = require('fs');
 var bbbPWM = require('./bbb-pwm');
 var DateJS = require('./node_modules/datejs');
@@ -6,9 +11,10 @@ var Aggregate = require('./aggregate');
 var glob = require("glob");
 var exec = require('child_process').exec;
 
+
 // find the OCP PWM module as it's very nomadic
 var ocp_root = null, pwm_endpoint = null;
-var files = glob.sync("/sys/devices/ocp.?");
+var files = glob.sync("/sys/devices/platform/ocp");
 if(files.length>1) {
 	console.log("found too many potential OCP folders:");
 	files.forEach(function(item) { console.log("  : "+item); });
@@ -17,7 +23,7 @@ if(files.length>1) {
 	console.log("found OCP root at "+ocp_root);
 
 	// found OCP root, now find the PWM module
-	files = glob.sync(ocp_root+"/pwm_test_P8_13*");
+	files = glob.sync(ocp_root+"/ocp:pwm_test_P8_13");
 	if(files.length>1) {
 		console.log("found too many potential PWM endpoints for P8:13:");
 		files.forEach(function(item) { console.log("  : "+item); });
@@ -40,16 +46,8 @@ if(!pwm_endpoint) console.log("failed to find the PWM P8:13 endpoint in /sys/dev
 var WebSocketServer = require('websocket').server;
 var http = require('http');
 
-// connect to the database
 var mysql      = require('mysql');
 var mysqlDateFormat = "yyyy-MM-dd HH:mm:ss";
-var db = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'tread',
-  password : 'peps1c0la',
-  database : 'treadstation'
-});
-
 
 var server = http.createServer(function(request, response) {
     // process HTTP request. Since we're writing just WebSockets server
@@ -90,13 +88,32 @@ function Treadmill()
     this.speedMeasured = 0;
     this.accelleration = 1;
 
-    // usually root owns the pwm device, we want to take ownership
-    // current user must be in the /etc/sudoers file with NOPASSWD needed
-    this.takeOwnershipOfDevice(pwm_endpoint);
+    // check if we are running in simulation mode
+    //var simfile = fs.lstatSync('/etc/treadmill/simulate');
+    if(1) { //simfile.isFile()) {
+        this.simulation = {
+            active: true,
+            autopace: false
+        };
+        console.log('configured for simulation');
+    }
 
-    // Instantiate bbbPWM object to control PWM device.  Pass in device path
-    // and the period to the constructor.
-    this.pwm = new bbbPWM(pwm_endpoint, 50000000);
+    this.storage = {
+        mysql: false
+    };
+
+    if(!this.simulation.active) {
+        // usually root owns the pwm device, we want to take ownership
+        // current user must be in the /etc/sudoers file with NOPASSWD needed
+        this.takeOwnershipOfDevice(pwm_endpoint);
+
+        // Instantiate bbbPWM object to control PWM device.  Pass in device path
+        // and the period to the constructor.
+        this.pwm = new bbbPWM(pwm_endpoint, 50000000);
+        this.pwm.turnOff();
+        this.pwm.polarity(0);
+    }
+
 
     this.currentIncline = 0;
     this.desiredIncline = 0;
@@ -109,6 +126,7 @@ function Treadmill()
         },
         sonar: {
             device: {
+                present: false,
                 mode: "raw",
                 file: "/sys/bus/iio/devices/iio\:device0/in_distance_raw"
             },
@@ -124,16 +142,6 @@ function Treadmill()
     this.inclineIncrement = this.inclineGradeToNative(1);
     this.minIncline = this.inclineGradeToNative(0);
     this.maxIncline = this.inclineGradeToNative(50);
-
-    // check if we are running in simulation mode
-    var simfile = fs.lstatSync('/etc/treadmill/simulate');
-    if(simfile.isFile()) {
-        this.simulation = {
-            active: true,
-            autopace: false
-        };
-        console.log('configured for simulation');
-    }
 
     // variables
     this.runningTime = 0;       // total running millis (accumulates start/stops until a reset)
@@ -164,17 +172,40 @@ function Treadmill()
     this.connection = null;
     this.__updateInterval = null;
 
-    // connect to mysql
-    this.db = db;
-    this.db.connect();
-    this.loadSystem();
-
     // session
     this.session = {
         id: null,
         user: null,
         recording: false
     };
+
+    // connect to mysql
+    if(this.storage.mysql) {
+        this.mysql = {
+            db : mysql.createConnection({
+                host     : 'localhost',
+                user     : 'tread',
+                password : 'peps1c0la',
+                database : 'treadstation'
+            })
+        };
+        this.mysql.db.connect();
+        this.loadSystem();
+    } else {
+        this.users = {
+            0: {
+                userid: 'colin',
+                name: 'Colin MacKenzie',
+                birthdate: new Date('1975-06-25'),
+                weight: 68,
+                height: 170,
+                goaltime: 5400,
+                goaldistance: null
+            }
+        };
+        this.session.user = this.users[0];
+    }
+
 
     this.autopace = {
         enabled: true,
@@ -190,9 +221,6 @@ function Treadmill()
         //mode: 'sonar.kalman'
         mode: 'sonar'
     };
-
-    this.pwm.turnOff();
-    this.pwm.polarity(0);
 
     this.init_screensaver();
 
@@ -223,6 +251,7 @@ Treadmill.prototype.algorithms = [];
 
 Treadmill.prototype.takeOwnershipOfDevice = function(device_path)
 {
+/*
     exec("sudo chown -R $USER "+device_path, function(error,stdout, stderr) {
         if(error) {
             ss.enabled = false;
@@ -232,6 +261,7 @@ Treadmill.prototype.takeOwnershipOfDevice = function(device_path)
             console.log(stderr);
         }
     });
+*/
 }
 
 Treadmill.prototype.loadSystem = function()
@@ -391,6 +421,7 @@ Treadmill.prototype.speed = function(value)
     } else if(!isNaN(value)) {
         // startup if stopped
         this.active = true;
+        console.log("speed <= "+value);
         this.desiredSpeed = clamp( this.MPHtoNative(Number(value)), this.minSpeed, this.maxSpeed);
     }
 
@@ -407,10 +438,14 @@ Treadmill.prototype.speed = function(value)
         this.deccellerate();
 
     // update the PWM
-    this.pwm.setDuty(this.currentSpeed*100);
-    if(!was_active && this.active) {
-    	this.pwm.turnOn();
-	    this.sendEvent("running");
+    if(!this.simulation.active) {
+        this.pwm.setDuty(this.currentSpeed*100);
+        if(!was_active && this.active) {
+    	    this.pwm.turnOn();
+	        this.sendEvent("running");
+        }
+    } else {
+        console.log("pwm => "+this.currentSpeed);
     }
 }
 
@@ -444,7 +479,10 @@ Treadmill.prototype.accellerate = function()
             var _treadmill = this;
             setTimeout(function() { _treadmill.accellerate(); }, 100);
         }
-    	this.pwm.setDuty(this.currentSpeed*100);
+        if(!this.simulation.active)
+    	    this.pwm.setDuty(this.currentSpeed*100);
+        else
+            console.log("pwm => "+this.currentSpeed);
     }
     this.sendStatus();
 }
@@ -462,7 +500,10 @@ Treadmill.prototype.deccellerate = function()
             var _treadmill = this;
             setTimeout(function() { _treadmill.deccellerate(); }, 100);
         }
-    	this.pwm.setDuty(this.currentSpeed*100);
+        if(!this.simulation.active)
+    	    this.pwm.setDuty(this.currentSpeed*100);
+        else
+            console.log("pwm => "+this.currentSpeed);
     }
     this.sendStatus();
 }
@@ -488,7 +529,10 @@ Treadmill.prototype.fullstop = function()
         this.activateAutopace(false);
 
     this.active = false;
-    this.pwm.turnOff();
+    if(!this.simulation.active)
+        this.pwm.turnOff();
+    else
+        console.log("pwm => estop");
     this.desiredSpeed=0;
     this.currentSpeed=0;
     this.sendEvent("stopped");
@@ -577,7 +621,7 @@ Treadmill.prototype.sendStatus = function()
 Treadmill.prototype.updateMysqlStatus = function()
 {
     try {
-        if(this.db && this.session && this.session.id && this.session.user && this.runningSince) {
+        if(this.storage.mysql && this.db && this.session && this.session.id && this.session.user && this.runningSince) {
             var treadmill = this;
             var _lastUpdate = new Date().unix_timestamp();
             var _runningSince = this.runningSince.unix_timestamp();
@@ -623,7 +667,7 @@ Treadmill.prototype.readSensors = function()
 Treadmill.prototype.readSensor = function(sensor_info)
 {
     var _treadmill = this;
-    if(sensor_info.device.mode =='raw') {
+    if(sensor_info && sensor_info.device && sensor_info.device.present && sensor_info.device.mode =='raw') {
         // read the value straight from the file
         fs.readFile(sensor_info.device.file, function(err, contents) {
             if(err==null) {
