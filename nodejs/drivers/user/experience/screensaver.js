@@ -12,7 +12,6 @@ class ScreenSaverExperience {
     probe(props) {
         if(this.refs && this.refs.screensaver && this.refs.screensaver.devices.length>0) {
             this.backlight = this.refs.screensaver.devices[0];
-            console.log("backlight ", this.backlight);
             this.backlight.enable();
         } else
             console.log("no screensaver or backlight control drivers found");

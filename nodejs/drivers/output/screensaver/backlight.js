@@ -1,5 +1,5 @@
 const fs = require('fs');
-const Q = require('Q');
+const Q = require('q');
 
 const searchpaths = ["/sys/class/backlight/backlight/brightness"];
 
@@ -31,7 +31,7 @@ class BacklightSysClass {
 class BacklightChannel {
     constructor(driver, path, props)
     {
-        this.value = 100;
+        this.value = 1;
         this.endpoint = path;
     }
 
@@ -49,15 +49,14 @@ class BacklightChannel {
 
     __set(value) {
         let deferred = Q.defer();
-        fs.writeFile(this.endpoint, value, function (error) {
+        fs.writeFile(this.endpoint, value+'\n', function (error) {
             if (error) {
                 deferred.reject(error);
             }
             else {
-                console.log('writeFile complete: ' + this.endpoint);
                 deferred.resolve();
             }
-        });
+        }.bind(this));
         return deferred.promise;
     }
 }
