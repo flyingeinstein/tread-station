@@ -1,3 +1,4 @@
+'use strict';
 
 class ScreenSaverExperience {
     constructor(props) {
@@ -18,6 +19,16 @@ class ScreenSaverExperience {
         return true;
     }
 
+    enable() {
+        // every 10 seconds reset the screensaver so it doesnt activate
+        this.enabled = true;
+        this.resetTimer = setTimeout(function(){ this.reset(); }.bind(this), 10000);
+    }
+
+    disable() {
+        this.enabled = false;
+        clearTimeout(this.resetTimer);
+    }
 }
 
 module.exports = ScreenSaverExperience;

@@ -1,5 +1,8 @@
+'use strict';
+
 const glob = require("glob");
 const fs = require('fs');
+const postal = require('postal');
 
 function DriverTree(props)
 {
@@ -97,7 +100,7 @@ DriverTree.prototype.__probe = function(node, props)
     children.forEach(function(c) {
         let child = node[c];
         if(child && child.tree && child.path && Array.isArray(child.drivers)) {
-            this.__probe(node[c]);
+            this.__probe(node[c], props);
         }
     }.bind(this));
 };
@@ -105,12 +108,55 @@ DriverTree.prototype.__probe = function(node, props)
 DriverTree.prototype.probe = function(props)
 {
     this.__resolveDependancies(this.root);
-    this.__probe(this.root);
 
-    //this.root.output.pwm.probe(props);
-    //this.root.motion.controllers.probe(props);
-    //console.log(this.root);
-    //console.log("controllers: "+this.root.motion.controllers.devices.length);
+    props.addSection = function(name, data) {
+        return this[name] = data;
+    }.bind(props);
+
+    props.readSection = function(name, default_value)
+    {
+        let filepath = "../conf/"+name+".conf";
+        let added = false;
+        if(fs.existsSync(filepath)) {
+            let stat = fs.lstatSync(filepath);
+            if (stat.isFile()) {
+                let text = fs.readFileSync(filepath, 'utf8');
+                let data = JSON.parse(text);
+                if (data) {
+                    //console.log("read configuration section " + name, data);
+                    return this.addSection(name, data); //now it an object
+                }
+            }
+        }
+        return (default_value)
+            ? this.addSection(name, default_value)
+            : false;
+    }.bind(props);
+
+    if(props.notifyDeviceReady===undefined) {
+        props.notifyDeviceReady = function (driver, dev) {
+            driver.bus.publish( "device.ready",  { driver: driver, device: dev, ready: true });
+        }.bind(props);
+    }
+
+    // initiate the probing
+    props.__probing = {
+        completed: false,
+        ready: []   // list of drivers that turned ready
+    };
+
+    this.__probe(this.root, props);
+    props.__probing.completed = true; // will cause any pending drivers to send their ready update immediately
+    if(typeof props.notifyDeviceReady==="function") {
+        // send notifications for each device that became ready
+        for (let i = 0, n = props.__probing.ready.length; i < n; i++) {
+            let driver = props.__probing.ready[i];
+            for (let j = 0, _j = driver.devices.length; j < _j; j++) {
+                let dev = driver.devices[j];
+                props.notifyDeviceReady(driver, dev);
+            }
+        }
+    }
 };
 
 // todo: this should probably be a function of the DeviceTree
@@ -161,14 +207,16 @@ DriverTreeNode.prototype.addDriver = function(driverinfo) {
 
         return driver;
     }
-}
+};
 
 DriverTreeNode.prototype.probe = function(props)
 {
-    let valid_drivers = [];
     this.probed = true;
-    for(let i=0, n=this.drivers.length; i<n; i++) {
-        let driver = this.drivers[i];
+    let _drivers = this.drivers;
+    this.drivers = [];
+
+    for(let i=0, n=_drivers.length; i<n; i++) {
+        let driver = _drivers[i];
         if(driver.probed)
             continue;
 
@@ -182,31 +230,49 @@ DriverTreeNode.prototype.probe = function(props)
         }
 
         if(!driver.probe) {
-            console.log("driver has no probe function: ", driver);
+            //console.log("driver has no probe function: ", driver);
             continue;
         }
         driver.tree = this.tree;
         driver.node = this;
         driver.probed = true;
 
+        // create a bus channel for the driver
+        driver.postal = postal;
+        if(driver.bus===undefined)
+            driver.bus = postal.channel(driver.devicePath);
+
         // get the driver control class to probe for devices on the system
-        if(driver.probe(props)) {
-            //driver.node = this;
-            valid_drivers.push(driver);
+        let defer = driver.probe(props);
+        let _then = function(probe_succeeded) {
+            //console.log("probe: "+driver.name+" returned ", probe_succeeded);
+            if(!probe_succeeded)
+                return;
+
+            // add driver to list of valid drivers
+            this.drivers.push(driver);
 
             if(driver.devices && driver.devices.length>0) {
                 // update path for all devices
                 for (let j = 0, _j = driver.devices.length; j < _j; j++) {
                     let dev = driver.devices[j];
                     dev.node = this;
+                    if(dev.bus === undefined)
+                        dev.bus = driver.bus;
                     this.devices.push(dev);
+
+                    if(typeof props.notifyDeviceReady==="function")
+                        props.notifyDeviceReady(driver, dev);
                 }
             }
-        }
-    }
+        }.bind(this);
 
-    // now replace the list of drivers with only the ones found
-    this.drivers = valid_drivers;
+        // TODO: I am enabling this code to detect promise returned and delay the inner bracket code
+        if(defer && typeof defer.then==="function")
+            defer.then(_then, (_driver) => _then(_driver, false));
+        else
+            _then(defer);
+    }
 };
 
 

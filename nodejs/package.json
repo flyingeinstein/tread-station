@@ -4,11 +4,13 @@
   "version": "0.0.2",
   "private": true,
   "dependencies": {
+    "d3-scale": "^1.0.6",
     "datejs": "^1.0.0-rc3",
     "glob": "^7.0",
     "mysql": "^2.5.4",
+    "postal": "^2.0.5",
     "q": "0.9.x",
-    "websocket": "1.0.x",
-    "ws": "^3.1.0"
+    "shifty": "^2.1.2",
+    "websocket": "1.0.x"
   }
 }

@@ -1,3 +1,5 @@
+const postal = require('postal');
+const Q = require('q');
 
 function zeropad(number) {
     return (number<10) ? '0'+number : number;
@@ -19,74 +21,150 @@ export default function Treadmill(options)
         options = {};
     }
 
-    this.host = options.host
-        ? options.host
-        : getParameterByName("host");
+    // get hostname from query string if present
+    this.host = getParameterByName("host")
+        ? getParameterByName("host")
+        : options.host;
+
+    // get host from host line (meaning UI and Treadmill service on the same server)
     if(!this.host)
         this.host = window.location.hostname;
+
+    // log what host we are going to try
     console.log("treadmill host: "+this.host);
 
-    // variables
-	this.speed = -1;
-    this.incline = -1;
+    // set if you are debugging RPC communication to Treadmill service
+	//this.rpc.debug = true;
 
-    // Research suggests walking 5 miles a day is the magic number when it comes to health and fitness. For this reason
-    // we choose a goal distance of 5 miles. Based on an average human walking speed of 3.1 miles/hour (wikipedia) this
-    // translates to about 90 minutes of of walking. The user will choose a goal based on either time or distance but
-    // either choice they will walk the magic number if they accept the defaults.
-    // references:
-    //     https://en.wikipedia.org/wiki/Preferred_walking_speed
-    //     http://www.livescience.com/10406-fast-walk-predict-long-youll-live.html
-	this.goal = {
-        time: 1.5 * 3600,       // hour and a half
-        distance: 5             // 5 miles
+    //this.forward("controlpanel", "state");
+    //this.forward("controlpanel", "session.#");
+    //this.forward("controlpanel", "event.#");
+
+    /*** Remote Interfaces on Treadmill Service
+     *
+     */
+
+    // Control Panel
+    // This function object represents the remote interface on the ControlPanel
+    // driver which mimics the interface of an old style Treadmill panel.
+    this.controlpanel = {
+        endpoint: "user/experience/controlpanel",
+        speed: (value) => this.rpc(this.controlpanel.endpoint, "speed", value),
+        increment: () => this.rpc(this.controlpanel.endpoint, "speed", '++'),
+        decrement: () => this.rpc(this.controlpanel.endpoint, "speed", '--'),
+        incline: (value) => this.rpc(this.controlpanel.endpoint, "incline", value),
+        stop: () => this.rpc(this.controlpanel.endpoint, "stop"),
+        fullstop: () => this.rpc(this.controlpanel.endpoint, "fullstop"),
+        reset: () => this.rpc(this.controlpanel.endpoint, "reset")
     };
-    
-    // internals
-	var _treadmill = this;
-	this.eventHandlers = {
-	};
-	this.onConnectionStatus = function(connected, message) { console.log(message); };
+
+    // Data Model
+    // This contains remote interfaces to manipulate data such as users
+    // or recording run status.
+    this.data = {
+        // Users
+        // Interface for querying system users and manipulating the current user.
+        users: {
+            endpoint: "data/users",
+            all: (value) => this.rpc(this.data.users.endpoint, "users"),
+            current: () => this.rpc(this.data.users.endpoint, "user"),
+            select: (id) => this.rpc(this.data.users.endpoint, "setUser", id)
+        }
+    }
 }
+
+/**
+ * Configure postal.js channel/topic messages to be sent to remote clients.
+ * @param {string} channel - The postal.js channel name
+ * @param {string} topic... - The postal.js topic name to catch (accepts postal.js wildcards}
+ * @returns {boolean} true if at least one remote subscription was forwarded
+ */
+Treadmill.prototype.forward = function()
+{
+    // todo: could this be added to postal.prototype instead?
+    if(arguments.length <2)
+        return false;
+    let args = [];
+    Array.prototype.push.apply(args, arguments);
+    let channel = args.shift();
+    while(args.length) {
+        let topic = args.shift();
+        postal.subscribe({
+            channel: channel,
+            topic: topic,
+            callback: function (data, envelope) {
+                try {
+                    if (this.connection!==undefined && this.connection!==null) {
+                        this.connection.sendUTF(JSON.stringify(envelope));
+                    }
+                    if(this.debug || this.remoteSubscribe.debug)
+                        console.log(envelope);
+                } catch (ex) {
+                    console.log("warning: failed to transmit postal event, likely connection error, aborting connection.");
+                    console.log("status object was ", envelope);
+                    this.abortConnection();
+                }
+            }.bind(this)
+        });
+    }
+    return true;
+};
 
 Treadmill.prototype.connect = function()
 {
   if ("WebSocket" in window)
   {
      let _treadmill = this;
+     this.channel = {
+         connection: postal.channel("connection"),
+         controlpanel: postal.channel("controlpanel")
+     };
+
 
      // Let us open a web socket
-     this.onConnectionStatus(false, "connecting to "+this.host+"...");
      this.connection = new WebSocket("ws://"+this.host+":27001/echo");
      this.connection.onopen = function()
      {
         // Web Socket is connected, send data using send()
-         _treadmill.onConnectionStatus(true, "Connected.");
-		_treadmill.parseEvent("connected");
-		
-		// request some objects from the treadmill service
-		_treadmill.request("users");
-		_treadmill.request("user");		
-	};
-     this.connection.onmessage = function (evt) 
+		this.channel.connection.publish("connected", {
+		    host: this.host,
+            message: "connected",
+		    connected: true
+		});
+     }.bind(this);
+
+     this.connection.onmessage = function (evt)
      {
         let received_msg = evt.data;
         let msg = JSON.parse(received_msg);
-        if(msg!==null)
-            _treadmill.parseMessage(msg);        
-     };
+        if(msg!==null) {
+            // delgate to postal, some other module may be interested in it
+            if(msg.channel!==undefined && msg.topic!==undefined && msg.channel!==null && msg.topic!==null)
+                postal.publish(msg);
+        }
+     }.bind(this);
+
      this.connection.onclose = function()
-     { 
-        // websocket is closed.
-         _treadmill.onConnectionStatus(false, "Connection closed.");
+     {
+         // Web Socket is closed
+         this.channel.connection.publish("connected", {
+             host: this.host,
+             message: "disconnected",
+             connected: false
+         });
+
          _treadmill.connection = null;
 		_treadmill.parseEvent("closed");
-     };
+     }.bind(this);
+
      this.connection.onerror = function(evt)
      {
-         _treadmill.onConnectionStatus(false, "Connection error : "+evt.data);
+         this.channel.connection.publish("error", {
+             host: this.host,
+             message: evt.data
+         });
 	    setTimeout(function(){ _treadmill.connect(); }, 5000);
-     }
+     }.bind(this);
   } else
     alert("web sockets not supported");
 };
@@ -97,127 +175,131 @@ Treadmill.prototype.request = function(schema)
 		this.connection.send(JSON.stringify({ Get: schema }));
 };
 
-Treadmill.prototype.on = function(eventName, callback)
-{
-	this.eventHandlers[eventName] = callback;
-};
 
-Treadmill.prototype.parseMessage = function(msg)
+/**
+ * Configure postal.js channel/topic messages to be sent to remote clients.
+ * @param {string} channel - The postal.js channel name
+ * @param {string} topic... - The postal.js topic name to catch (accepts postal.js wildcards}
+ * @returns {boolean} true if at least one remote subscription was forwarded
+ */
+Treadmill.prototype.remoteSubscribe = function()
 {
-    if(msg.type==="status") {
-        //console.log("stat ", msg);
-
-        if(this.onStatusUpdate!==null)
-            this.onStatusUpdate(msg);
-        
-        if(this.speed !== msg.currentSpeed)
-        {
-            this.speed = msg.currentSpeed;
-            if(this.onSpeedChanged)
-                this.onSpeedChanged(msg.currentSpeed);
-        }
-        
-        if(this.incline !== msg.currentIncline)
-        {
-            this.incline = msg.currentIncline;
-            if(this.onInclineChanged)
-                this.onInclineChanged(msg.currentIncline);
-                
-        }
-    } else if(msg.type==="event") {
-		this.parseEvent(msg.name, msg.data);
-    } else if(msg.type==="response") {
-		//console.log(msg);
-		if(msg.schema==="users")
-			this.users = msg.response;
-		else if(msg.schema==="user")
-		{
-			if(msg.response && msg.response.userid>0) {
-				this.user = msg.response;
-				this.users[this.user.userid] = this.user;
-				this.goal.time = this.user.goaltime;
-				this.goal.distance = this.user.goaldistance;
-			}
-		}
-		
-		if(this.eventHandlers && this.eventHandlers[msg.schema]!=null)
-			this.eventHandlers[msg.schema](msg.response);
+    // todo: could this be added to postal.prototype instead?
+    if(arguments.length <2)
+        return false;
+    let args = [];
+    Array.prototype.push.apply(args, arguments);
+    let channel = args.shift();
+    while(args.length) {
+        let topic = args.shift();
+        postal.subscribe({
+            channel: channel,
+            topic: topic,
+            callback: function (data, envelope) {
+                try {
+                    if (this.connection!==undefined && this.connection!==null) {
+                        this.connection.send(JSON.stringify(envelope));
+                    }
+                    if(this.debug || this.remoteSubscribe.debug)
+                        console.log(envelope);
+                } catch (ex) {
+                    console.log("warning: failed to transmit postal event, likely connection error, aborting connection.");
+                    console.log("status object was ", envelope);
+                    this.abortConnection();
+                }
+            }.bind(this)
+        });
     }
+    return true;
 };
 
-Treadmill.prototype.setUser = function(user, weightUpdate) 
+Treadmill.prototype.rpc = function(driver, funcname)
 {
-    if(this.connection)
-        this.connection.send(JSON.stringify({ User: user, Weight: weightUpdate }));
-};
-	
-Treadmill.prototype.parseEvent = function(name, data)
-{
-    // this should not be edited, the main app will override this member
+    // ensure the response handler is setup
+    if(this._rpc === undefined) {
+        this._rpc = {
+            pending: [],
+            cookie: 1,
+            defer: function () {
+                let deferred = Q.defer();
+                deferred.cookie = this.cookie;
+                this.pending.push(deferred);
+                //console.log("defer "+deferred.cookie+": ", deferred);
+                return deferred;
+            },
+            promise: function(cookie) {
+                for(let i=0,_i=this.pending.length; i<_i; i++)
+                    if(this.pending[i] && this.pending[i].cookie === cookie ) {
+                        let defer = this.pending[i];
+                        this.pending[i] = null;
+                        return defer;
+                    }
+                    return null;
+            },
+            response_handler: postal.subscribe({
+                channel: "system",
+                topic: "rpc.response",
+                callback: function (data, envelope) {
+                    //console.log("rpc-response: ", envelope);
+                    let defer = this._rpc.promise(data.cookie);
+                    if(defer!==null) {
+                        defer.resolve(data.response);
+                    }
+                }.bind(this)
+            })
+        }
+    };
+
+    if(arguments.length <2)
+        return false;
+    let args = [];
+    Array.prototype.push.apply(args, arguments);
+    args.shift(); args.shift(); // remove the two known arguments
+
+    let defer = this._rpc.defer();
+    let envelope = {
+        channel: "system",
+        topic: "rpc.request",
+        data: {
+            driver: driver,
+            func: funcname,
+            arguments: args,
+            cookie: defer.cookie
+        }
+    };
+    try {
+        if (this.connection!==undefined && this.connection!==null) {
+            this.connection.send(JSON.stringify(envelope));
+        }
+        if(this.debug || this.rpc.debug)
+            console.log(envelope);
+    } catch (ex) {
+        console.log("warning: rpc call failed, likely connection error, aborting connection.");
+        console.log("rpc object was ", envelope);
+    }
+    return defer.promise;
 };
 
-Treadmill.prototype.setSpeed = function(value) 
+Treadmill.prototype.remote = function(channel, topic, data)
 {
-	if(this.resetTimer!==null)
-		clearTimeout(this.resetTimer);
-				
-    if(this.connection)
-        this.connection.send(JSON.stringify({ Speed: value }));
-};
-
-Treadmill.prototype.setIncline = function(value) 
-{
-    if(this.connection)
-        this.connection.send(JSON.stringify({ Incline: value }));
-};
-
-Treadmill.prototype.increaseSpeed = function() 
-{
-    return this.setSpeed("++");
-};
-
-Treadmill.prototype.decreaseSpeed = function() 
-{
-    return this.setSpeed("--");
-};
-
-Treadmill.prototype.stop = function() 
-{
-    return this.setSpeed("STOP");
-};
-
-Treadmill.prototype.estop = function() 
-{
-    return this.setSpeed("ESTOP");
-};
-
-Treadmill.prototype.reset = function(value) 
-{
-	if(this.resetTimer!==null)
-		clearTimeout(this.resetTimer);
-	if(this.connection)
-        this.connection.send(JSON.stringify({ Reset: true }));
-};
-	
-Treadmill.prototype.inclineUp = function() 
-{
-    return this.setIncline("++");
-};
-
-Treadmill.prototype.inclineDown = function() 
-{
-    return this.setIncline("--");
-};
-
-Treadmill.prototype.floor = function() 
-{
-    return this.setIncline("FLOOR");
-};
-
-Treadmill.prototype.autopace = function(value)
-{
-    if(this.connection && value)
-        this.connection.send(JSON.stringify({ Autopace: value }));
+    if(!channel || !subtopic)
+        return false;
+    let envelope = {
+        channel: channel,
+        topic: topic,
+        data: data
+    };
+    try {
+        if (this.connection!==undefined && this.connection!==null) {
+            this.connection.send(JSON.stringify(envelope));
+        }
+        if(this.debug || this.rpc.debug)
+            console.log(envelope);
+    } catch (ex) {
+        console.log("warning: rpc call failed, likely connection error, aborting connection.");
+        console.log("rpc object was ", envelope);
+        this.abortConnection();
+    }
 };
 
 Treadmill.prototype.formatTime = function(millis)

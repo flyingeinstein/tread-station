@@ -1,3 +1,5 @@
+'use strict';
+
 const fs = require('fs');
 const Q = require('q');
 const glob = require("glob");
@@ -81,6 +83,10 @@ function PWM() {
 }
 
 PWM.prototype.probe = function (v) {
+	return false;
+
+
+
     // find the OCP PWM module as it's very nomadic
     let pwm_endpoint=null;
     let ocp_root = null;

@@ -10,6 +10,8 @@ import ButtonGroup from "./dial/ButtonGroup.jsx";
 import Button from "./dial/Button.jsx";
 import Treadmill from "../js/treadmill.js";
 import TreadmillStatus from "./TreadmillStatus.jsx";
+import TreadmillUser from "./UserIndicator.jsx";
+const postal = require('postal');
 import "shapes.css";
 
 function ConnectionStatus(props) {
@@ -31,10 +33,15 @@ export default class TreadmillControl extends React.Component {
                 active: false,
                 timestamp: 0,
                 runningTime: 0,
-                currentSpeed: 0,
-                desiredSpeed: 0,
+                speed: {
+                    current: 0,
+                    target: 0
+                },
                 currentIncline: 0,
                 desiredIncline: 0
+            },
+            user: {
+                name: 'No user'
             }
         };
 
@@ -42,76 +49,83 @@ export default class TreadmillControl extends React.Component {
             host: this.state.treadmill.host
         });
 
-        this.stop = this.stop.bind(this);
-        this.reset = this.reset.bind(this);
-        this.incrementSpeed = this.incrementSpeed.bind(this);
-        this.decrementSpeed = this.decrementSpeed.bind(this);
         this.quickSpeed = this.quickSpeed.bind(this);
     }
 
     componentDidMount()
     {
-        //var el = ReactDOM.findDOMNode(this.refs.statusIndicator);
-        let _this = this;
+        let controlpanel = postal.channel("controlpanel");
+        let connection = postal.channel("connection");
+        let users = postal.channel("users");
+        let user = postal.channel("user");
+        let motion = postal.channel("motion-control");
 
-        this.treadmill.onStatusUpdate = function(status) {
-            status.timeDisplay = _this.treadmill ? _this.treadmill.formatTime(status.runningTime) : "";
-            _this.speed.setValue(status.currentSpeed);
-            _this.setState((prevState, props) => { return {
+        controlpanel.subscribe("event.speed", (data) => {
+            //this.speed.setValue(data.value);
+        });
+
+        controlpanel.subscribe("state", (status) => {
+            status.timeDisplay = this.treadmill ? this.treadmill.formatTime(status.runningTime) : "";
+            console.log(status);
+            this.speed.setValue(status.speed.current);
+            this.avgspeed.setValue(status.speed.average);
+            this.setState((prevState, props) => { return {
                 status: status
             }});
-        };
-        this.treadmill.onConnectionStatus = function(connected, message) {
-            _this.setState((prevState, props) => { return {
-                treadmill: { host: prevState.host, connected: connected, message: message }
+        });
+
+        motion.subscribe("speed.#", (speed) => {
+            //console.log(speed);
+            this.speed.setValue(speed.current);
+            this.setState((prevState, props) => { return {
+                status: {
+                    active: true,
+                    headline: prevState.status.headline,
+                    timeDisplay: prevState.status.timeDisplay,
+                    speed: {
+                        current: speed.current,
+                        target: speed.target,
+                        average: prevState.status.speed.average
+                    }
+                }
             }});
-        };
-        this.treadmill.parseEvent = function(name, data) {
-            console.log("event: ", name, data);
-        };
-        this.treadmill.connect()
-    }
+        });
 
-    stop() {
-        console.log("stop");
-        this.treadmill.stop();
-        //this.speed.setValue(0);
-    }
+        connection.subscribe("connected", (state) => {
+            this.setState((prevState, props) => { return {
+                treadmill: { host: prevState.host, connected: state.connected, message: state.message }
+            }});
+            this.treadmill.data.users.select(0).then((user) => {
+                console.log("got user", user);
+            });
+        });
 
-    reset() {
-        console.log("reset");
-        this.treadmill.estop();
-        //this.speed.setValue(0);
-    }
+        user.subscribe("selected", (user) => {
+            console.log("user "+user.name+" selected");
+            this.setState((prevState, props) => { return {
+                user: user
+            }});
+        });
 
-    incrementSpeed() {
-        this.treadmill.increaseSpeed();
-        //this.speed.setValue(this.speed.getValue()+0.1);
-    }
-
-    decrementSpeed() {
-        this.treadmill.decreaseSpeed();
-        //this.speed.setValue(this.speed.getValue()-0.1);
+        this.treadmill.connect();
     }
 
     quickSpeed(e) {
-        console.log(e.getValue());
-        this.treadmill.setSpeed(e.getValue());
-        //this.speed.setValue(e.getValue());
-        //this.speed.setValue(this.speed.getValue()-0.1);
+        this.treadmill.controlpanel.speed(e.getValue());
     }
 
     render() {
         return (
             <div className="treadmill-control" style={{textAlign: 'center'}}>
-                <button id="stop" className="stop shape-tag right" onClick={this.stop}>STOP</button>
-                <button id="reset" className="reset shape-tag left" onClick={this.reset}>RESET</button>
+                <button id="stop" className="stop shape-tag right" onClick={this.treadmill.controlpanel.stop}>STOP</button>
+                <button id="reset" className="reset shape-tag left" onClick={this.treadmill.controlpanel.reset}>RESET</button>
                 <Dial id="speed-control" theme="red">
                     <Lane id="root" lane="0" radius="700" width="250px" alignment="bottom">
-                        <MeterIndicator ref={meter => {this.speed=meter;} } domain={[2, 9]} arcrange={[ 1.18*Math.PI, 2.82*Math.PI ]} value="3.2" />
+                        <MeterIndicator className="average" ref={meter => {this.avgspeed=meter;} } domain={[2, 9]} arcrange={[ 1.18*Math.PI, 2.82*Math.PI ]} value="3.5" />
+                        <MeterIndicator className="current" ref={meter => {this.speed=meter;} } domain={[2, 9]} arcrange={[ 1.18*Math.PI, 2.82*Math.PI ]} graduated={false} value="3.2" />
                         <ButtonGroup arcrange={[ 0.83*Math.PI, 1.17*Math.PI ]} style={{ alignment: 'bottom' }}>
-                            <Button id="speed-increase" caption="$up"   onClick={this.incrementSpeed} />
-                            <Button id="speed-decrease" caption="$down" onClick={this.decrementSpeed} />
+                            <Button id="speed-increase" caption="$up"   onClick={this.treadmill.controlpanel.increment} />
+                            <Button id="speed-decrease" caption="$down" onClick={this.treadmill.controlpanel.decrement} />
                         </ButtonGroup>
                     </Lane>
                     <Lane id="incline" lane="1" radius="980" alignment="bottom">
@@ -130,6 +144,7 @@ export default class TreadmillControl extends React.Component {
                         </ButtonGroup>
                     </Lane>
                     <TreadmillStatus connection={this.state.treadmill} status={this.state.status} />
+                    <TreadmillUser user={this.state.user} />
                 </Dial>
                 <ConnectionStatus connection={this.state.treadmill} />
             </div>
