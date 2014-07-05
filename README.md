@@ -35,27 +35,38 @@ Control Interface
 Access the following variables and functions through the spark cloud interface. The user interface uses a faster direct 
 interface which provides realtime feedback and control.
 
-Variables:
-   Variable         | Type       | Description                                                                             |
-   ---------------- | ---------- | --------------------------------------------------------------------------------------- |
-    speed           | integer    | the current speed output to the controller |
-    desiredSpeed    | integer    | the desired speed setting. current speed will catchup or fallback to this speed at the set morph rate |
-    enabled         | bool       | true if platform motion is desired (platform will slow to a stop if this is set false) |
-    running         | bool       | true if the platform is in motion (this is the actual state of the platform)           |
-    incline         | integer    | current incline setting |
-    desiredIncline  | integer    | the desired incline setting |
-    inclineInMotion | integer    | 0 if the platform is not inclining, +1 if inclining positive, -1 if negative. |
+Variable         | Type       | Description                                                                             
+---------------- | ---------- | --------------------------------------------------------------------------------------- 
+speed           | integer    | the current speed output to the controller 
+desiredSpeed    | integer    | the desired speed setting. current speed will catchup or fallback to this speed at the set morph rate 
+enabled         | bool       | true if platform motion is desired (platform will slow to a stop if this is set false) 
+running         | bool       | true if the platform is in motion (this is the actual state of the platform)           
+incline         | integer    | current incline setting 
+desiredIncline  | integer    | the desired incline setting 
+inclineInMotion | integer    | 0 if the platform is not inclining, +1 if inclining positive, -1 if negative. 
 
 
-Functions:
-    SetSpeed            speed       treadmill platform speed in tenths of a millisecond (Range is 90 to 410, i.e. 9ms
-                                    to 41ms) Also use commands {STOP, START, PANIC}. Platform starts in the STOP state,
-                                    so use SetSpeed(START) to begin the motion.
-    SetSpeedMorphRate   rate        how fast actual speed will adjust to match desired speed (1=fastest to 20=slowest, 
-                                    but even 5 is a crawl)    
-    SetIncline          integer     achieve desired incline level, 0=floor to 100=max incline or use {FLOOR,CALIBRATE}.
-                                    CALIBRATE will set current_incline to zero (floor).
-    EnableSoftLimits    bool        set to false to disable the soft limits acheiving faster speeds (default is on)
+Function          | Description
+----------------- | --------------------------------------------------------------------------------------
+   Speed          | treadmill platform speed in tenths of a millisecond (Range is 90 to 410, i.e. 9ms to 41ms) Also supports speed verbs {STOP, START, PANIC}, safe limit verbs {REDLINE, SAFE}, or accelleration profile verbs {AX_CRAWL,AX_SLOW,AX_MEDIUM,AX_FAST}.
+Incline           | achieve desired incline level, 0=floor to 100=max incline or use verbs {FLOOR,CALIBRATE}. CALIBRATE will set the current incline to zero (floor) but perform no physical motion.
+Flags             | Modify or query system state. first character is the operator (+,-,^,?) or no operator to query flag value. Returns the state of the given flags as a bit-mask. See below for flag and operator descriptions.
+
+SYSTEM STATE/OPTION FLAGS
+
+Operator  | Description
+:--------:| --------------------------------------------------------------------------------
+ +  |  Set the given option(s) in the system. Un-mutable flags or options will not be affected.
+ -  |  Removes the given option(s). Un-mutable flags or options will not be affected.
+ ^  |  Toggles the given options(s), uses an XOR operation. Un-mutable flags or options will not be affected.
+ ?  |  Returns the ordinal value of the given flag(s). Used by the interface to interrogate the enum value of the flag, not the current state of the flag.
+None | Returns the current state of the given flag(s)/options(s) as a bitmask. Use the ? operator to determine the ordinal value of each flag.
+
+Flag                  | Description
+--------------------- | --------------------------------------------------------------------------------
+UPDATE_CLOUD          | Set to enable the transmission of spark-based cloud events. WebSockets was chosen to supercede this option.
+CLIENT_CONNECTED      | True if a client is directly connected to the controller via TCPServer/WebSockets.
+NO_CLOUD_WHEN_LOCAL   | Turn off cloud communication when a client is directly connected. Cloud communication is only needed to determine the sparks ip address, thus cloud communication just unnecessarily takes resources at that point. When the client drops, cloud communication will be re-established.
 
 Electronics
 ===========
