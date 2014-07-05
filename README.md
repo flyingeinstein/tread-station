@@ -1,27 +1,30 @@
-tread-station
+Tread Station
 =============
 
 Wirelessly control your treadmill, replace the old lackluster dashboard with graphics and workout analytics! Replace the dashboard with a monitor and add a small computer and you have a Treadmill Workstation.
+
+ABOUT ME
+I've replaced my old treadmill dashboard with a 27" monitor and hooked it up to a Mac Mini. My keyboard, mouse and touchpad are all wireless. This is sweet! A workstation without the wires and controllable via a web page. This should help get me back to health. Already I feel more energy, and more creativity as I work a difficult day job that requires me to be at the computer long periods of time.
 
 Features
 ========
   * Controls both speed and incline
   * morphs speed to the desired speed, no fast changes
   * contains soft limit for testing (reduces max speed)
-  * saves state of incline level to EEPROM. To calibrate, reduce platform to zero incline and use SetIncline("CALIBRATE") function to reset saved level.
-  * can retrieve local IP for later implementation of direct local connection
+  * saves state of incline level to EEPROM. To calibrate, reduce platform to zero incline and use Incline("CALIBRATE") function to reset saved level.
+  * can retrieve local IP for direct local connection via TCP (websockets communication coming)
 
 Upcoming Features
 =================
   * measures pulses from a hall-effect sensor and uses a rolling average
         currently my reed switch sensor on my treadmill appears broken, so I did not implement this right away.
+  * WebSockets implemented within the spark to allow direct communication from browsers. Will use the
+    cwebsockets project. Waiting to fix above outstanding item before complicating the code.
 
 Issues
 ======
   * currently dealing with a major issue where the spark board resets (blinking reds) after about 10 mins of connectivity
     via TCPServer.
-  * Requires implementation of WebSockets on the spark side to allow direct communication from browsers. Will use the
-    cwebsockets project. Waiting to fix above outstanding item before complicating the code.
 
 Progress
 ========
