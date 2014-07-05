@@ -9,13 +9,17 @@
 // FlyingEinstein.com / Colin - Jun 28th, 2014
 //===============================================
 
-// increment this each release
-// good way to tell if our firmware got programmed successfully
-#define FIRMWARE_VERSION 15
 
 #include "config.h"
 #include "SparkIntervalTimer.h"
+#include "firmware-version.h"	// contains the FIRMWARE_VERSION
 //#include <EEPROM.h>
+
+// increment this each release
+// good way to tell if our firmware got programmed successfully
+#ifndef FIRMWARE_VERSION
+#define FIRMWARE_VERSION 15
+#endif
 
 // the port the spark will listen on for direct-local connections
 #define SERVER_PORT    5600
