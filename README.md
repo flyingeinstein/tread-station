@@ -36,14 +36,15 @@ Access the following variables and functions through the spark cloud interface. 
 interface which provides realtime feedback and control.
 
 Variables:
-    speed           integer     the current speed output to the controller
-    desiredSpeed    integer     the desired speed setting. current speed will catchup or fallback to this speed at the
-                                set morph rate
-    enabled         bool        true if platform motion is desired (platform will slow to a stop if this is set false)
-    running         bool        true if the platform is in motion (this is the actual state of the platform)
-    incline         integer     current incline setting
-    desiredIncline  integer     the desired incline setting
-    inclineInMotion integer     0 if the platform is not inclining, +1 if inclining positive, -1 if negative.
+   Variable         | Type       | Description                                                                             |
+   ---------------- | ---------- | --------------------------------------------------------------------------------------- |
+    speed           | integer    | the current speed output to the controller |
+    desiredSpeed    | integer    | the desired speed setting. current speed will catchup or fallback to this speed at the set morph rate |
+    enabled         | bool       | true if platform motion is desired (platform will slow to a stop if this is set false) |
+    running         | bool       | true if the platform is in motion (this is the actual state of the platform)           |
+    incline         | integer    | current incline setting |
+    desiredIncline  | integer    | the desired incline setting |
+    inclineInMotion | integer    | 0 if the platform is not inclining, +1 if inclining positive, -1 if negative. |
 
 
 Functions:
