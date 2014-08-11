@@ -340,7 +340,6 @@ void setup()
  ****/
 
 void  loop() {
-    delay(50); // wait 10 milliseconds
     unsigned long now = millis();
     
     //output our status as an event
