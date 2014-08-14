@@ -18,7 +18,7 @@
 // increment this each release
 // good way to tell if our firmware got programmed successfully
 #ifndef FIRMWARE_VERSION
-#define FIRMWARE_VERSION 15
+#define FIRMWARE_VERSION 16
 #endif
 
 // the port the spark will listen on for direct-local connections
