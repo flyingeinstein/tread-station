@@ -1,7 +1,7 @@
 PROJECT=treadstation
 
-SOURCES=treadstation.cpp SparkIntervalTimer.cpp
-HEADERS=SparkIntervalTimer.h 
+SOURCES=treadstation.cpp SparkIntervalTimer.cpp SparkSockets.cpp uExpect.cpp Base64.cpp sha1.c precompiled_program.cpp
+HEADERS=SparkIntervalTimer.h SparkSockets.h uExpect.h Base64.h sha1.h tropicssl-config.h
 
 FIRMWARE_BINARY=$(PROJECT).bin
 
@@ -12,7 +12,7 @@ FLASH_TARGET?=48ff73065067555026182287
 FLASH_PROTOCOL=usb
 
 
-main: flash
+main: compile
 
 compile: $(SOURCES) $(HEADERS)
 	@echo Compiling $(PROJECT)
@@ -21,7 +21,7 @@ compile: $(SOURCES) $(HEADERS)
 flash: $(FIRMWARE_BINARY)
 	@echo Flashing $(PROJECT)
 ifdef FLASH_PROTOCOL
-	spark flash --$(FLASH_PROTOCOL) $(FIRMWARE_BINARY)
+	@spark flash --$(FLASH_PROTOCOL) $(FIRMWARE_BINARY)
 else
 	@spark flash $(FLASH_TARGET) $(FIRMWARE_BINARY)
 endif
@@ -29,9 +29,10 @@ endif
 # file dependancies
 $(FIRMWARE_BINARY): $(SOURCES) $(HEADERS)
 	@echo Compiling $(PROJECT)
-	@[ ! -e firmware-version.h ] && echo "versioning project" && awk -- '/#define FIRMWARE_VERSION/ {printf("%s %s %d\n", $$1,$$2,$$3)}' < treadstation.cpp > firmware-version.h
-	@awk -- '{printf("%s %s %d\n", $$1,$$2,$$3+1)}' < firmware-version.h > __firmware.version
-	@mv __firmware.version firmware-version.h
-	@[ -e $(FIRMWARE_BINARY) ] && rm $(FIRMWARE_BINARY) || true
-	@spark compile $(SOURCES) $(HEADERS) firmware-version.h $(FIRMWARE_BINARY)
+	# the following safe check is causing a make error
+	#[ ! -e firmware-version.h ] && echo "versioning project" && awk -- '/#define FIRMWARE_VERSION/ {printf("%s %s %d\n", $$1,$$2,$$3)}' < treadstation.cpp > firmware-version.h
+	awk -- '{printf("%s %s %d\n", $$1,$$2,$$3+1)}' < firmware-version.h > __firmware.version
+	mv __firmware.version firmware-version.h
+	[ -e $(FIRMWARE_BINARY) ] && rm $(FIRMWARE_BINARY) || true
+	spark compile $(SOURCES) $(HEADERS) firmware-version.h $(FIRMWARE_BINARY)
 

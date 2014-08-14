@@ -12,13 +12,16 @@
 
 #include "config.h"
 #include "SparkIntervalTimer.h"
+#include "SparkSockets.h"
+
 #include "firmware-version.h"	// contains the FIRMWARE_VERSION
+
 //#include <EEPROM.h>
 
 // increment this each release
 // good way to tell if our firmware got programmed successfully
 #ifndef FIRMWARE_VERSION
-#define FIRMWARE_VERSION 15
+#define FIRMWARE_VERSION 10
 #endif
 
 // the port the spark will listen on for direct-local connections
@@ -26,7 +29,7 @@
 
 // enable to make this unit simulate a treadmill but not actually send any control signals
 // will disable the PWM and pin interrupts and require only a bare spark
-#define SIMULATE
+//#define SIMULATE
 
 // You can set a speed limit on the machine
 // a good idea while you develop your circuitry and software
@@ -93,12 +96,13 @@ volatile unsigned long save_config_timeout=0;    // if this timer expires we sav
 // status and option events 
 #define OPT_UPDATE_CLOUD        (1<<0)  // set if we should send our status to the cloud as an event stream
 #define OPT_NO_CLOUD_WHEN_LOCAL (1<<1)  // disconnect from the cloud while a local connection exists (will reconnect to cloud if local drops)
+#define OPT_WEBSOCKETS		(1<<2)  // use web sockets protocol for direct communication (otherwise, raw tcp/ip is used and you can use netcat tool)
 #define ST_CLIENT_CONNECTED     (1<<8)  // set if a client is connected to the system
 #define ST_INCLINE_TIMEOUT      (1<<9)  // a timeout occured waiting for an incline pulse
 #define ST_RESERVED             (1<31)  // would be the negative sign bit so let's reserve it for internal use only)
 #define ST_INTERNAL_FLAGS       ( ST_INCLINE_TIMEOUT | ST_RESERVED )    // these flags cannot be read/set by a client
-#define ST_USER_MUTABLE         ( OPT_UPDATE_CLOUD )    // all flags that can be set by the UI
-unsigned int status_flags=OPT_NO_CLOUD_WHEN_LOCAL;
+#define ST_USER_MUTABLE         ( OPT_UPDATE_CLOUD | OPT_WEBSOCKETS )    // all flags that can be set by the UI
+unsigned int status_flags=OPT_NO_CLOUD_WHEN_LOCAL | OPT_WEBSOCKETS;
 
 
 // Example settings structure
@@ -139,6 +143,9 @@ unsigned long GetOptionMask(String option);
 // such as ipaddress:port, ssid, and rssi
 void updateNetwork();
 
+void pwm_advance(void);
+void incline_pulse_counter(void);
+
 // working variables
 int current_morph_rate_count=0; // working variable for smooth speed accelleration
 
@@ -147,6 +154,9 @@ TCPServer server = TCPServer(SERVER_PORT);
 TCPClient client;
 char cmdbuffer[60]; 
 char* pcmdend = cmdbuffer;
+
+// websockets features
+SparkSockets websockets(1024);	// our web sockets implementation
 
 /****
  ****  Cloud Messages
@@ -279,6 +289,37 @@ int ProcessCommand(String cmd)
     return 0;
 }
 
+int websockets_write(void* writeContext, const char* output, int length)
+{
+	int written=0;
+	if(client.connected())
+	{
+		if(length>=0)
+			written=client.write((const unsigned char*)output, length);	
+		else
+			written=client.print(output);
+	}
+	return written;
+}
+
+short websockets_receive_message(SparkSockets* spark, ws_message* msg)
+{
+	if (msg->opcode == WS_OPCODE_TEXT)
+		ProcessCommand(msg->data);
+	return 0;
+}
+
+void send(const char* text)
+{
+    if(status_flags & OPT_WEBSOCKETS)
+    {
+        if(websockets.ready)
+            websockets.sendText(status);
+    } else
+        client.println(status);
+}
+
+
 /****
  ****  Spark initialization
  ****/
@@ -330,7 +371,11 @@ void setup()
 
     // retrieve our network wifi settings and place into variables
     updateNetwork();
-    
+
+    websockets.expect.__write = websockets_write;   
+    websockets.expect.write_context = (void*)&client;
+    websockets.onIncoming = websockets_receive_message;
+
     // begin listening for TCP connections
     server.begin();
 }
@@ -341,6 +386,7 @@ void setup()
 
 void  loop() {
     unsigned long now = millis();
+    int res;
     
     //output our status as an event
     if(now > next_status_emit)
@@ -350,11 +396,9 @@ void  loop() {
             enabled?'E':'-', running?'R':'-', (incline_in_motion>0)?'I':(incline_in_motion<0)?'D':'-',
             speed, desired_speed, 0, config.current_incline, desired_incline
             );
-        
-        // send to the cloud
-        //if((status_flags & OPT_UPDATE_CLOUD) && Spark.connected())
-        //    Spark.publish("treadmill",status);
-        server.println(status);
+       
+	// send to the client 
+        send(status);
 
         next_status_emit = now + (running ? 1000 : 5000);
     }
@@ -391,6 +435,7 @@ void  loop() {
             status_flags |= ST_CLIENT_CONNECTED;
             
         } else {
+restart_cloud:
             client.stop();
             if(!Spark.connected()) 
                 Spark.connect();
@@ -398,9 +443,13 @@ void  loop() {
         }
     } else {
         if(client = server.available()) {
+            websockets.Reset();
             delay(50);
-            sprintf(status, "#TREAD:%d", firmwareVersion);
-            client.println(status);
+	    if((status_flags & OPT_WEBSOCKETS) ==0) {
+            	sprintf(status, "#TREAD:%d", firmwareVersion);
+           	 send(status);
+	    }
+
             // disconnect from cloud if option is set to be exclusive
             if((status_flags&OPT_NO_CLOUD_WHEN_LOCAL) && Spark.connected())
                 Spark.disconnect();
@@ -412,18 +461,38 @@ void  loop() {
     if (client && client.connected()) {
         // echo all available bytes back to the client
         while (client.available()) {
-            // nothing
-            char c = client.read();
-            switch(c) {
-                case '\n':
-                    *pcmdend=0;
-                    ProcessCommand(String(cmdbuffer));
-                    pcmdend=cmdbuffer;
-                case '\r': 
-                    break; // ignore
-                default:
-                    *pcmdend++ = c;
-                    break;
+	    if(status_flags & OPT_WEBSOCKETS) {
+                // use uExpect and web sockets
+                if((res=websockets.Process(client.read())) <0) {
+			switch(res) {
+				case ST_FAIL: strcpy(status, "HTTP/1.1 400 Malformed request"); break;
+				case ST_BAD_PROGRAM: strcpy(status, "HTTP/1.1 500 Bad uExpect program"); break;
+				default:
+					sprintf(status, "HTTP/1.1 500 unknown error, code %d", res); break;
+			}
+			client.println(status);
+
+			// print program debug info
+			sprintf(status, "debug: pc=0x%04x (%d) w=%d output='%s'\n", websockets.expect.getPC(), websockets.expect.getPC(), websockets.expect.w, websockets.expect.GetOutputBuffer());
+			client.println(status);
+
+			client.println();
+			//goto restart_cloud;
+		}
+	    } else {
+                // raw tcp mode
+                char c = client.read();
+                switch(c) {
+                    case '\n':
+                        *pcmdend=0;
+                        ProcessCommand(String(cmdbuffer));
+                        pcmdend=cmdbuffer;
+                    case '\r': 
+                        break; // ignore
+                    default:
+                        *pcmdend++ = c;
+                        break;
+                }
             }
         }
     }
@@ -525,16 +594,18 @@ unsigned long GetOptionMask(String option)
         opt |= ST_CLIENT_CONNECTED;
     else if(option=="NO_CLOUD_WHEN_LOCAL")
         opt |= OPT_NO_CLOUD_WHEN_LOCAL;
+    else if(option=="WEBSOCKETS")
+        opt |= OPT_WEBSOCKETS;
     return opt;
 }
 
 void updateNetwork()
 {
-    if(WiFi.status() == WIFI_ON)
+    if(WiFi.ready())
     {
-        rssi = Network.RSSI();
-        strcpy(ssid, Network.SSID());
-        IPAddress local = Network.localIP();
+        rssi = WiFi.RSSI();
+        strcpy(ssid, WiFi.SSID());
+        IPAddress local = WiFi.localIP();
         sprintf(ipaddress, "%d.%d.%d.%d:%d", local[0], local[1], local[2], local[3], SERVER_PORT);
     } else {
         strcpy(ssid, "n/a");
