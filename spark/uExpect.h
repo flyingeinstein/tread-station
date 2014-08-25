@@ -9,6 +9,9 @@
 #include <stdint.h>
 #include <map>
 
+// enable if you want to ouptut a line for each executer operation
+#define TRACE
+
 // if not defined, all opcodes and memory related to a stack are removed 
 // not all uExpect programs need a stack an removing it can save memory and program space
 //#define HAS_STACK
@@ -161,6 +164,11 @@ class uExpect
 public:
 	write_function __write;
 	void* write_context;
+
+#ifdef TRACE
+	// if trace is enabled you can set a write function to display trace/debug output
+	write_function __trace;
+#endif
 
 protected:
 	static int default_write(void* writeContext, const char* output, int length);

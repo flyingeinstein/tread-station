@@ -4,10 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 
-// enable if you want to ouptut a line for each executer operation
-//#define TRACE
-
-
 /*
              _/_/_/_/                                            _/      
   _/    _/  _/        _/    _/  _/_/_/      _/_/      _/_/_/  _/_/_/_/   
@@ -25,6 +21,9 @@ uExpect::uExpect()
 #ifdef HAS_STACK
 	, pstack(stack)
 #endif
+#ifdef TRACE
+	, __trace(NULL)
+#endif
 {
 }
 
@@ -32,6 +31,9 @@ uExpect::uExpect(const char* _program)
 	: program(NULL), pc(NULL), owns_pgm_mem(false), output(NULL), output_end(NULL), state(0), outputEnable(true), abortOnMismatch(true), active_opcode(0), w(0), __write(default_write), write_context(NULL)
 #ifdef HAS_STACK
 	, pstack(stack)
+#endif
+#ifdef TRACE
+	, __trace(NULL)
 #endif
 {
 	ResetStatic(_program);
@@ -131,8 +133,8 @@ int uExpect::Process(short input)
 restart:
 	if (active_opcode > 0) {
 #ifdef TRACE
-		sprintf(msg, "\t: %d '%c'\n", input, isprint(input) ? input : '?');
-		write(msg, -1);
+		x=sprintf(msg, "\t: %d '%c'\r\n", input, isprint(input) ? input : '?');
+		if(__trace) __trace(write_context, msg, x);
 #endif
 		switch (active_opcode) {
 			case OPCODE_EXPECTJ:
@@ -184,8 +186,8 @@ next_instruction:
 		return ST_NEXT;
 
 #ifdef TRACE
-	sprintf(msg, "%04x: %02x <= %d '%c'\n", getPC(), opcode, input, isprint(input) ? input : '?');
-	write(msg, -1);
+	x=sprintf(msg, "%04x: %02x <= %d '%c'\r\n", getPC(), opcode, input, isprint(input) ? input : '?');
+	if(__trace) __trace(write_context, msg, x);
 #endif
 
 	pc++;
