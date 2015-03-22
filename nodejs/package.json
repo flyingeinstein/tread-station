@@ -1,0 +1,10 @@
+{
+    "name": "tread-station",
+    "description": "Control a treadmill speed controller through your beaglebone and your computer",
+    "version": "0.0.2",
+    "private": true,
+    "dependencies": {
+        "websocket":"1.0.x",
+        "q":"0.9.x"
+    }
+}
