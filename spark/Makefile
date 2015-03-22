@@ -1,15 +1,17 @@
 PROJECT=treadstation
 
-SOURCES=treadstation.cpp SparkIntervalTimer.cpp SparkSockets.cpp uExpect.cpp Base64.cpp sha1.c precompiled_program.cpp
-HEADERS=SparkIntervalTimer.h SparkSockets.h uExpect.h Base64.h sha1.h tropicssl-config.h
+SOURCES=treadstation.cpp
+#SOURCES=treadstation.cpp SparkIntervalTimer.cpp SparkSockets.cpp uExpect.cpp Base64.cpp sha1.c precompiled_program.cpp
+#HEADERS=SparkIntervalTimer.h SparkSockets.h uExpect.h Base64.h sha1.h tropicssl-config.h
 
 FIRMWARE_BINARY=$(PROJECT).bin
+include Makefile.my
 
 # DO NOT MODIFY  - to override, rename Makefile.my.sample to Makefile.my and edit
 ###############
 FLASH_TARGET?=48ff73065067555026182287
 
-FLASH_PROTOCOL=usb
+#FLASH_PROTOCOL=usb
 
 
 main: compile
@@ -21,7 +23,7 @@ compile: $(SOURCES) $(HEADERS)
 flash: $(FIRMWARE_BINARY)
 	@echo Flashing $(PROJECT)
 ifdef FLASH_PROTOCOL
-	@spark flash --$(FLASH_PROTOCOL) $(FIRMWARE_BINARY)
+	spark flash --$(FLASH_PROTOCOL) $(FIRMWARE_BINARY)
 else
 	@spark flash $(FLASH_TARGET) $(FIRMWARE_BINARY)
 endif
