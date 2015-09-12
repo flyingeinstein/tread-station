@@ -15,7 +15,7 @@ function load()
 {
     dashcode.setupParts();
     treadmill = new Treadmill();
-    treadmill.connect("127.0.0.1");
+    treadmill.connect("192.168.2.48");
 }
 
 //

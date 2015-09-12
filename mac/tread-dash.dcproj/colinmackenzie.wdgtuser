@@ -38,7 +38,7 @@
 	<key>Design time language</key>
 	<string>en.lproj</string>
 	<key>EvaluatorFrame</key>
-	<string>21 644 479 226 0 0 1440 878 </string>
+	<string>21 643 479 226 0 0 1440 877 </string>
 	<key>MainSplitViewGeometry</key>
 	<dict>
 		<key>_indexOfCollapsedView</key>
@@ -50,7 +50,7 @@
 		</array>
 	</dict>
 	<key>MainWindowFrame</key>
-	<string>164 115 1004 738 0 0 1440 878 </string>
+	<string>165 114 1004 738 0 0 1440 877 </string>
 	<key>NavigatorSplitViewGeometry</key>
 	<dict>
 		<key>ContentSplitViewConfig</key>
