@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Tread Station</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link type="text/css" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">
+	<link rel="stylesheet" href="css/themes/smoothness/jquery-ui.css">
+	<link rel="stylesheet" href="css/grayscale.css">
+	<link rel="stylesheet" href="bootstrap/css/bootstrap.css">
+	<link rel="stylesheet" href="bootstrap/css/bootstrap-theme.css">
+	<script src="js/jquery-1.9.1.js"></script>
+	<script src="js/jquery-ui.js"></script>
+	<script src="js/underscore.js"></script>
+	<script src="js/backbone.js"></script>
+	<script src="js/side-nav.js"></script>
+	<script src="bootstrap/js/bootstrap.js"></script>
+	<script src="highcharts/js/highstock.js"></script>
+	<script src="highcharts/js/exporting.js"></script>
+	<script src="highcharts/js/highcharts-more.js"></script>
+	<script src="js/treadmill.js"></script>
+	<script src="js/main.js"></script>
+	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/brown.css">
+</head>
+<body id="page-top" data-spy="scroll" data-target=".navbar-custom" style>
+
+<nav class="navbar navbar-custom navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div id="header-title" class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-main-collapse">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <a class="navbar-brand" href="#page-top">
+                    <i class="fa fa-play-circle"></i>  Tread <span class="light">Station</span> <span class="light tiny">by Flying Einstein</span>
+                </a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse navbar-right navbar-main-collapse">
+                <ul class="nav navbar-nav">
+                    <!-- Hidden li included to remove active class from about link when scrolled up past about section -->
+                    <li class="hidden active">
+                        <a href="#page-top"></a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="#about">Run</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="#download">History</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="#contact">You</a>
+                    </li>
+                </ul>
+            </div>
+			
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+
+<div id="ConnectionStatus" class="">Not connected</div>
+			
+<div id="layout1" class="layout">
+<div class="container">
+<div class="controls col-md-5" style="margin-left:auto;margin-right:auto;float:none;margin-top:150px">
+	<div id="SpeedIndicator" style='height:200px;border:1px solid #eee;'>
+		SPEED
+	</div>
+	<div class="collapse navbar-collapse navbar-main-collapse">
+                <ul class="nav navbar-nav" style="text-align:center">
+                    <!-- Hidden li included to remove active class from about link when scrolled up past about section -->
+                    <li class="hidden active">
+                        <a href="#page-top"></a>
+                    </li>
+                    <li class="page-scroll">
+                        <a id="slower" style='width:120px'>Slower</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a id="startstop" style='color:red;width:170px'>START</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a id="faster" style='width:120px'>Faster</a>
+                    </li>
+                </ul>
+     </div>
+</div>
+</div>
+</div>
+
+<div class="command-panel">
+	<ul id="command-main" class="nav">
+	<li><i class="glyphicon glyphicon-heart"></i><label>Favorites</label></li>
+	<li><i class="glyphicon glyphicon-volume-up"></i><label>Sound</label></li>
+	</ul>
+	
+	<h6>Layout</h6>
+	<ul id="command-data" class="nav">
+	<li><i class="glyphicon glyphicon-th"></i><label>Summary View</label></li>
+	<li><i class="glyphicon glyphicon-th-list"></i><label>Detail View</label></li>
+	<li><i class="glyphicon glyphicon-signal"></i><label>Signal Analysis</label></li>
+	</ul>
+	
+	<h6>Design</h6>
+	<ul id="command-data" class="nav">
+	<li data-callout="add-kpi"><i class="glyphicon glyphicon-plus-sign"></i><label>Add KPI</label></li>
+	<li data-callout="alerts"><i class="glyphicon glyphicon-bell"></i><label>Alerts</label></li>
+	<li><i class="glyphicon glyphicon-minus-sign"></i><label>Remove</label></li>
+	</ul>
+	
+	<h6>Account</h6>
+	<ul id="command-data" class="nav">
+	<li data-callout="profile"><i class="glyphicon glyphicon-user"></i><label>Profile</label></li>
+	<li><i class="glyphicon glyphicon-cog"></i><label>Settings</label></li>
+	<li><i class="glyphicon glyphicon-off"></i><label>Sign out</label></li>
+	</ul>
+</div>
+
+<i id="callout-indicator" class="glyphicon glyphicon-play" style="display:none;margin-top:15px"></i>
+<div class="callouts">
+	<div id="add-kpi" class="callout" data-width="300">
+		<h5>Choose among the following KPIs</h5>
+		<p>Style your data using stylization parameters accessed through hitting the panel flip button on the bottom right.</p>
+	</div>
+	<div id="alerts" class="callout" data-width="220">
+		<h5>Alerts</h5>
+		<p>Alerts are disabled for now. Go into settings and enable the use of alerts by paying us gobs of money.</p>
+	</div>
+	<div id="profile" class="callout" data-width="250">
+		<h5>Profile</h5>
+		<div class="column column-beta " id="about_user_column">
+        <div id="user-profile-photos" class="clearfix">
+		    <div id="user-main-photo">
+		    <div class="photo-box pb-ms">
+		            <a href="/user_photos?return_url=%2Fuser_details%3Fuserid%3DysakeAQj9mknDNeO69-FzQ&amp;select=USl2kS-WA7DpZsFt3ZRklw&amp;userid=ysakeAQj9mknDNeO69-FzQ">
+		                <img alt="Photo of Teresa L." class="photo-box-img" height="100" id="main_user_photo_in_about_user_column" src="http://s3-media1.ak.yelpcdn.com/photo/USl2kS-WA7DpZsFt3ZRklw/ms.jpg" width="100">
+		            </a>
+		    </div>
+		    </div>
+
+		</div>
+<br/>
+
+        <ul id="user_stats" style="list-style:none">
+            <li>
+                <a href="/user_details_friends?userid=ysakeAQj9mknDNeO69-FzQ" class="i-wrap ig-wrap-common i-friends-green-common-wrap"><i class="i ig-common i-friends-green-common"></i> 40 Friends</a>
+            </li>
+            <li>
+                <a href="/user_details_reviews_self?userid=ysakeAQj9mknDNeO69-FzQ" class="i-wrap ig-wrap-common i-star-orange-common-wrap"><i class="i ig-common i-star-orange-common"></i> 97 Reviews</a>
+            </li>
+                <li>
+                    <span class="i-wrap ig-wrap-common i-refresh-orange-small-common-wrap"><i class="i ig-common i-refresh-orange-small-common"></i> 1 Review Update</span>
+                </li>
+                <li>
+                    <a href="/user_details_reviews_self?review_filter=first&amp;userid=ysakeAQj9mknDNeO69-FzQ" class="i-wrap ig-wrap-common i-first-burst-common-wrap"><i class="i ig-common i-first-burst-common"></i> 5 Firsts</a>
+                </li>
+                <li>
+                    <a href="/user_details_quicktips?userid=ysakeAQj9mknDNeO69-FzQ" class="i-wrap ig-wrap-common i-light-bulb-common-wrap"><i class="i ig-common i-light-bulb-common"></i> 8 Tips</a>
+                </li>
+                <li>
+                    <span class="i-wrap ig-wrap-common i-pink-heart-common-wrap"><i class="i ig-common i-pink-heart-common"></i> 3 Fans</span>
+                </li>
+                <li>
+                    <a href="/user_local_photos?userid=ysakeAQj9mknDNeO69-FzQ" class="i-wrap ig-wrap-common i-camera-common-wrap"><i class="i ig-common i-camera-common"></i> 35 Local Photos</a>
+                </li>
+                <li>
+                    <a href="/user_details_lists?userid=ysakeAQj9mknDNeO69-FzQ" class="i-wrap ig-wrap-common i-list-common-wrap"><i class="i ig-common i-list-common"></i> 1 List</a>
+                </li>
+        </ul>
+        <p id="review_votes" class="i-wrap ig-wrap-user_social i-review-votes-user_social-wrap smaller"><i class="i ig-user_social i-review-votes-user_social"></i> Review votes:<br> 63 Useful, 10 Funny, and 18 Cool</p>
+    <div id="profile_questions">
+            <span class="highlight2">Location</span>
+            <p>Clearwater, FL</p>
+        <span class="highlight2">Joined</span>
+        <p>June 2013</p>
+        <span class="highlight2">Things I Love</span>
+        <p>
+            food, horses, food, fire, food, MINI, food, drinks, food. . .
+        </p>
+            <span class="highlight2">My Hometown</span>
+            <p>I don't have just one.</p>
+            <span class="highlight2">When I'm Not Yelping...</span>
+            <p>I'm motoring, traveling, eating, drinking, or horsing around.</p>
+            <span class="highlight2">Why You Should Read My Reviews</span>
+            <p>No BS but plenty of sarcasm</p>
+            <span class="highlight2">My First Concert</span>
+            <p>Korn</p>
+            <span class="highlight2">Most Recent Discovery</span>
+            <p>I don't need no stinkin' recipe - I just make it up as I go!</p>
+    </div>          
+    <button class="btn btn-primary">Edit</button>
+	</div>
+	</div> <!-- end of profile panel -->
+</div>
+
+
+
+
+ 
+
+</body>
+</html>

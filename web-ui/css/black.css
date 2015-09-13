@@ -1,0 +1,33 @@
+body {
+	background-image: url(img/dark.png);
+}
+
+.panel {
+	background-color: rgba(0,0,0,0.7);
+  -moz-border-radius: 5px;
+  border-radius: 5px;	
+}
+
+.panel h1 {
+	font-family: tahoma;
+	font-size: 15px;
+	font-weight: 900;
+	color: #e2e2e2;
+	text-shadow: 1.5px 1.5px 1px #000;
+}
+
+.panel h2 {
+	font-family: tahoma;
+	font-size: 10px;
+	color: #bababa;
+	text-shadow: 1.5px 1.5px 1px #000;
+}
+
+.panel .content {
+	border: none;
+	background: rgba(0,0,0,0.45) url(default);
+	color: #f0f0f0;
+	font-family: arial;
+	-moz-border-radius: 5px;
+	border-radius: 5px;	
+}
