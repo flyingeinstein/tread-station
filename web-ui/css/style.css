@@ -191,9 +191,33 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', e
 	color: rgba(0, 137, 255, 0.5);
 }
 
+#ConnectionStatus {
+	position: absolute;
+	bottom: 15px;
+	left: 15px;
+}
 
+#SpeedIndicator {
+	text-align: center;	
+	vertical-align: middle;
+	height:150px;
+}
 
+body.connected.running #SpeedIndicator {
+	color: rgba(255,255,255,1);
+	font-size: 12rem;
+}
 
+body.connected #SpeedIndicator {
+	color: rgba(255,255,255,0.15);
+	font-size: 12rem;
+}
+
+#SpeedIndicator {
+	color: rgba(150,0,0,0.75);
+	font-size: 36pt;
+	line-height: 12rem;
+}
 
 
 

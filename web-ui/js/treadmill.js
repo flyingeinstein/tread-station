@@ -33,7 +33,8 @@ Treadmill.prototype.connect = function(url)
      {
         // Web Socket is connected, send data using send()
         ws_status("Connected.");
-     };
+		_treadmill.parseEvent("connected");
+	};
      this.connection.onmessage = function (evt) 
      {
         var received_msg = evt.data;
@@ -46,6 +47,7 @@ Treadmill.prototype.connect = function(url)
         // websocket is closed.
         ws_status("Connection closed."); 
         this.connection = null;
+		_treadmill.parseEvent("closed");
      };
      this.connection.onerror = function(evt)
      {
@@ -76,7 +78,13 @@ Treadmill.prototype.parseMessage = function(msg)
                 this.onInclineChanged(msg.currentIncline);
                 
         }
+    } else if(msg.type=="event") {
+		this.parseEvent(msg.name, msg.data);
     }
+}
+
+Treadmill.prototype.parseEvent = function(name, data)
+{
 }
 
 Treadmill.prototype.setSpeed = function(value) 

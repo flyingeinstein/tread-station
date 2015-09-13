@@ -14,9 +14,13 @@ var treadmill = null;
 $(function() {
     treadmill = new Treadmill();
 	
-	$('#startstop').click(function() {
-		treadmill.setSpeed("2.6");
-	});
+	$('#startstop').click(function(e) {
+		console.log($(this).text());
+		if($(this).text() == "RUN")		
+			treadmill.setSpeed("2.2");
+		else
+			treadmill.setSpeed("STOP");
+		});
 	
 	$('#slower').on('click', function() {
 		treadmill.decreaseSpeed();
@@ -25,6 +29,22 @@ $(function() {
 	$('#faster').on('click', function() {
 		treadmill.increaseSpeed();
 	});
+	
+	Treadmill.prototype.parseEvent = function(name, data)
+	{
+		if(name=="connected") {
+			$("body").addClass("connected");	
+		} else if(name=="closed") {
+			$("#SpeedIndicator").text("NO CONNECTION!");    
+			$("body").removeClass("connected");			
+		} else if(name=="running") {
+			$("body").addClass("running");
+			$("#startstop").text("STOP");
+		} else if(name=="stopped") {
+			$("body").removeClass("running");
+			$("#startstop").text("RUN");
+		}
+	}
 	
     treadmill.connect("192.168.2.48");
 });
