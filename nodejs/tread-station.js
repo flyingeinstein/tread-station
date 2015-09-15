@@ -1,5 +1,13 @@
+
+var bbbPWM = require('./bbb-pwm');
+
 var WebSocketServer = require('websocket').server;
 var http = require('http');
+
+// Instantiate bbbPWM object to control PWM device.  Pass in device path
+// and the period to the constructor.
+var pwm = new bbbPWM('/sys/devices/ocp.3/pwm_test_P8_13.15/', 50000000);
+
 
 var server = http.createServer(function(request, response) {
     // process HTTP request. Since we're writing just WebSockets server
@@ -66,7 +74,12 @@ function Treadmill()
     this.connection = null;
     this.__updateInterval = null;
 
+    pwm.turnOff();
+    pwm.polarity(0);
+
     console.log("Treadmill ready");
+
+    var _treadmill = this;
 }
 
 Treadmill.prototype.MPHtoNative = function(value) 
@@ -92,16 +105,21 @@ Treadmill.prototype.nativeToInclineGrade = function(value)
 
 Treadmill.prototype.speed = function(value) 
 {
+    var was_active = this.active;
+
     // TODO: The accelleration verbs
     if(value=="STOP") {
         active = false;
+	pwm.turnOff();
         this.desiredSpeed=0;
+	this.sendEvent("stopped");
     } else if(value=="PANIC" || value=="ESTOP") {
         active = false;
+	pwm.turnOff();
         this.currentSpeed=0;
         this.desiredSpeed=0;
     } else if(value=="START") {
-        active = true;
+	return this.speed("2.0");
     } else if(value=="++") {
         this.active = true;
         this.desiredSpeed += this.speedIncrement;
@@ -112,7 +130,6 @@ Treadmill.prototype.speed = function(value)
         // startup if stopped
         this.active = true;
         this.desiredSpeed = clamp( this.MPHtoNative(Number(value)), this.minSpeed, this.maxSpeed);
-        console.log("set speed to "+this.desiredSpeed);
     }
 
     // check limits
@@ -126,6 +143,13 @@ Treadmill.prototype.speed = function(value)
         this.accellerate();
     else if(this.currentSpeed > this.desiredSpeed)
         this.deccellerate();
+
+    // update the PWM
+    pwm.setDuty(this.currentSpeed*100);
+    if(!was_active && this.active) {
+    	pwm.turnOn();
+	this.sendEvent("running");
+    }
 }
 
 Treadmill.prototype.incline = function(value)
@@ -158,6 +182,7 @@ Treadmill.prototype.accellerate = function()
             var _treadmill = this;
             setTimeout(function() { _treadmill.accellerate(); }, 100);
         }
+    	pwm.setDuty(this.currentSpeed*100);
     }
     this.sendStatus();
 }
@@ -169,6 +194,7 @@ Treadmill.prototype.deccellerate = function()
         if(this.currentSpeed<this.minSpeed) {
             // we've stopped
             this.active = false;
+	    pwm.turnOff();
             this.currentSpeed=0;
         } else if(this.currentSpeed < this.desiredSpeed)
             this.currentSpeed = this.desiredSpeed;
@@ -176,6 +202,7 @@ Treadmill.prototype.deccellerate = function()
             var _treadmill = this;
             setTimeout(function() { _treadmill.deccellerate(); }, 100);
         }
+    	pwm.setDuty(this.currentSpeed*100);
     }
     this.sendStatus();
 }
@@ -229,6 +256,23 @@ Treadmill.prototype.sendStatus = function()
         this.abortConnection();
     }
 }
+
+Treadmill.prototype.sendEvent = function(_name, _data)
+{
+	try {
+            if(this.connection) {
+                this.connection.sendUTF(JSON.stringify({
+                    type: 'event', 
+		    name: _name,
+		    data: _data
+                }));
+	    }
+	} catch(ex) {
+        	console.log("warning: failed to transmit event, likely connection error, aborting connection.");
+        	this.abortConnection();
+	}
+}
+
 
 Treadmill.prototype.abortConnection = function()
 {

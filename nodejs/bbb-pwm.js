@@ -6,6 +6,7 @@ function bbbPWM(pwmPath, period) {
     bbbPWM.RUN_PATH = pwmPath + 'run';
     bbbPWM.DUTY_PATH = pwmPath + 'duty';
     bbbPWM.PERIOD_PATH = pwmPath + 'period';
+    bbbPWM.POLARITY_PATH = pwmPath + 'polarity';
     this.configureDevice();
 }
 
@@ -38,6 +39,14 @@ bbbPWM.prototype.turnOff = function () {
 
 bbbPWM.prototype.turnOn = function () {
     this.writeFile(bbbPWM.RUN_PATH, '1');
+};
+
+bbbPWM.prototype.period = function (v) {
+    this.writeFile(bbbPWM.PERIOD_PATH, String(v));
+};
+
+bbbPWM.prototype.polarity = function (v) {
+    this.writeFile(bbbPWM.POLARITY_PATH, String(v));
 };
 
 bbbPWM.prototype.configureDevice = function () {
