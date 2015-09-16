@@ -1,3 +1,4 @@
+#!/usr/bin/nodejs
 
 var bbbPWM = require('./bbb-pwm');
 
