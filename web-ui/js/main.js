@@ -46,13 +46,20 @@ $(function() {
 		}
 	}
 	
+	// show some debug info
+	var s = "<hr/>width:"+window.innerWidth+"  height:"+window.innerHeight;
+	$("div#debug").html(s);
+		
     treadmill.connect("192.168.2.48");
 });
 
 
 Treadmill.prototype.onSpeedChanged = function(value) 
 {
-    $("#SpeedIndicator").text(value.toFixed(1));    
+	if(value==0.0)
+		$("#SpeedIndicator").text("STOPPED");
+    else
+    	$("#SpeedIndicator").text(value.toFixed(1));    
 }
 
 Treadmill.prototype.onInclineChanged = function(value)

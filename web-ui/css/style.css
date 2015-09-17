@@ -7,7 +7,7 @@ body {
 }
 
 body.map {
-	background-image: url(map-7.jpg);
+/*	background-image: url(map-7.jpg); */
 	background-size: cover;
 }
 
@@ -183,6 +183,11 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', e
 	font-size: 15px;
 }
 
+.command-panel .nav li a {
+	margin:0px;
+	padding:0px;
+}
+
 #callout-indicator {
 	position: absolute;
 	z-index: 100;
@@ -191,32 +196,15 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', e
 	color: rgba(0, 137, 255, 0.5);
 }
 
-#ConnectionStatus {
+#footer {
 	position: absolute;
 	bottom: 15px;
 	left: 15px;
 }
-
-#SpeedIndicator {
-	text-align: center;	
-	vertical-align: middle;
-	height:150px;
-}
-
-body.connected.running #SpeedIndicator {
-	color: rgba(255,255,255,1);
-	font-size: 12rem;
-}
-
-body.connected #SpeedIndicator {
-	color: rgba(255,255,255,0.15);
-	font-size: 12rem;
-}
-
-#SpeedIndicator {
-	color: rgba(150,0,0,0.75);
-	font-size: 36pt;
-	line-height: 12rem;
+#footer hr {
+	border-top:1px solid #555;
+	height:5px;
+	margin:5px 0px 0px 2px;
 }
 
 
