@@ -58,7 +58,7 @@ body.connected {
 }
 
 body.connected.running {
-	background-color: #FF3300;
+	background-color: #690000;
 }
 
 body.connected.running #SpeedIndicator {
@@ -68,7 +68,7 @@ body.connected.running #SpeedIndicator {
 
 body.connected #SpeedIndicator {
 	color: rgba(255,255,255,0.15);
-	font-size: 12rem;
+	font-size: 10rem;
 }
 
 #SpeedIndicator {
@@ -78,5 +78,6 @@ body.connected #SpeedIndicator {
 }
 
 #speed-controls li a {
-	font-size: 18pt;
+	font-size: 11pt;
 }
+
