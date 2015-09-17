@@ -14,7 +14,7 @@ var treadmill = null;
 $(function() {
     treadmill = new Treadmill();
 	
-	$('#startstop').click(function(e) {
+	$('#speed-startstop').click(function(e) {
 		console.log($(this).text());
 		if($(this).text() == "RUN")		
 			treadmill.setSpeed("2.2");
@@ -22,11 +22,11 @@ $(function() {
 			treadmill.setSpeed("STOP");
 		});
 	
-	$('#slower').on('click', function() {
+	$('#speed-decrease').on('click', function() {
 		treadmill.decreaseSpeed();
 	});
 
-	$('#faster').on('click', function() {
+	$('#speed-increase').on('click', function() {
 		treadmill.increaseSpeed();
 	});
 	
@@ -39,10 +39,10 @@ $(function() {
 			$("body").removeClass("connected");			
 		} else if(name=="running") {
 			$("body").addClass("running");
-			$("#startstop").text("STOP");
+			$("#speed-startstop").text("STOP");
 		} else if(name=="stopped") {
 			$("body").removeClass("running");
-			$("#startstop").text("RUN");
+			$("#speed-startstop").text("RUN");
 		}
 	}
 	
