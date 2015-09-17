@@ -57,7 +57,7 @@ $(function() {
 Treadmill.prototype.onSpeedChanged = function(value) 
 {
 	if(value==0.0)
-		$("#SpeedIndicator").text("STOPPED");
+		$("#SpeedIndicator").text("-.-");
     else
     	$("#SpeedIndicator").text(value.toFixed(1));    
 }
