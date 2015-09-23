@@ -7,7 +7,7 @@ var http = require('http');
 
 // Instantiate bbbPWM object to control PWM device.  Pass in device path
 // and the period to the constructor.
-var pwm = new bbbPWM('/sys/devices/ocp.3/pwm_test_P8_13.15/', 50000000);
+var pwm = new bbbPWM('/sys/devices/ocp.3/pwm_test_P8_13.11/', 50000000);
 
 
 var server = http.createServer(function(request, response) {
@@ -119,6 +119,7 @@ Treadmill.prototype.speed = function(value)
 	pwm.turnOff();
         this.currentSpeed=0;
         this.desiredSpeed=0;
+	this.sendEvent("stopped");
     } else if(value=="START") {
 	return this.speed("2.0");
     } else if(value=="++") {
@@ -197,6 +198,7 @@ Treadmill.prototype.deccellerate = function()
             this.active = false;
 	    pwm.turnOff();
             this.currentSpeed=0;
+	    this.sendEvent("stopped");
         } else if(this.currentSpeed < this.desiredSpeed)
             this.currentSpeed = this.desiredSpeed;
         else {
