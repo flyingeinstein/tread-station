@@ -64,7 +64,6 @@ Treadmill.prototype.parseMessage = function(msg)
     if(msg.type=="status") {
         this.updateRunningTime(msg.runningTime);
         
-        
         if(this.speed != msg.currentSpeed)
         {
             this.speed = msg.currentSpeed;
@@ -120,6 +119,12 @@ Treadmill.prototype.estop = function()
     return this.setSpeed("ESTOP");
 }
 
+Treadmill.prototype.reset = function(value) 
+{
+    if(this.connection)
+        this.connection.send(JSON.stringify({ Reset: true }));
+}
+	
 Treadmill.prototype.inclineUp = function() 
 {
     return this.setIncline("++");

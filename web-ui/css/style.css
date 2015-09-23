@@ -249,6 +249,10 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', e
 	padding:0px;
 }
 
+command-panel li {
+	cursor: pointer;	
+}
+
 #callout-indicator {
 	position: absolute;
 	z-index: 100;
@@ -291,7 +295,12 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', e
 	font-family: "Akkurat Medium"; /*,Helvetica,sans-serif;*/
 }
 #speed-dial svg g.status text.status-indicator {
-	font-size: 40px;
+	font-size: 30px;
+	fill: #ccc;
+	font-family: Akkurat; /*,Helvetica,sans-serif;*/
+}
+#speed-dial svg g.status text.running-time {
+	font-size: 30px;
 	fill: #ccc;
 	font-family: Akkurat; /*,Helvetica,sans-serif;*/
 }
@@ -353,8 +362,11 @@ ul.left-buttons li {
     background-color: #770303;
     border: 3px solid #C7C700;
 }
-body.stopped ul.left-buttons li.stop {
+ul.left-buttons li.stop {
 	display:none;
+}
+body.running ul.left-buttons li.stop {
+	display:block;
 }
 ul.left-buttons li:hover {
 	background-color: #9C0000;

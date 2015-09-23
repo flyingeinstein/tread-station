@@ -46,8 +46,11 @@ body {
 	height:150px;
 }
 
-body {
+body.disconnected {
 /*	background-color: #5F0505;*/
+	background-color: black;
+}
+body.running {
 	background-color: #690000;
 }
 
@@ -83,9 +86,23 @@ body.connected #SpeedIndicator {
 	
 }
 
-#speed-dial .background circle.background-circle {
+body.disconnected #speed-dial .background circle.background-circle {
+	fill: black;
+}
+body.disconnected #speed-dial .ticks .background-ticks path {
+	fill: #555;
+}
+body.disconnected #speed-dial .ticks .buttons {
+	display: none;
+}
+body.disconnected .quick-dial {
+	display: none;
+}
+
+body.running #speed-dial .background circle.background-circle {
 	fill: #770303;
 }
+
 #speed-dial .ticks .background-ticks line {
 	stroke: #788088;
 }

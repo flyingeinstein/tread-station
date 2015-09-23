@@ -23,30 +23,21 @@ $(function() {
 			treadmill.setSpeed("STOP");
 		});*/
 			
-	$('.speed-decrease').on('click', function() {
-		console.log("decrease");
-		treadmill.decreaseSpeed();
-	});
-
-	$('.speed-increase').on('click', function() {
-		console.log("increase");
-		treadmill.increaseSpeed();
-	});
+	$('.speed-decrease').on('click', function() { treadmill.decreaseSpeed(); });
+	$('.speed-increase').on('click', function() { treadmill.increaseSpeed(); });
+	$('.stop').on('click', function() { treadmill.stop(); });
+	$('.reset').on('click', function() { treadmill.reset(); });
 	
-	$('.stop').on('click', function() {
-		treadmill.stop();
-	});
-	
-	$('.quick-dial li').on('click', function() {
-		treadmill.setSpeed(Number($(this).text()));
-	});
+	$('.quick-dial li').on('click', function() { treadmill.setSpeed(Number($(this).text())); });
 	
 	Treadmill.prototype.parseEvent = function(name, data)
 	{
 		if(name=="connected") {
 			$("body").addClass("connected");	
+			$("body").removeClass("disconnected");	
 			$(".status-indicator").text("LET'S GO!");
 		} else if(name=="closed") {
+			$("body").addClass("disconnected");	
 			$("body").removeClass("connected");
 			$("body").removeClass("running");
 			$("body").removeClass("stopped");
@@ -55,10 +46,14 @@ $(function() {
 			$("body").removeClass("stopped");
 			$("body").addClass("running");
 			$(".status-indicator").text("RUNNING");
+		} else if(name=="stopping") {
+			$("body").removeClass("running");
+			$("body").addClass("stopped");
+			$(".status-indicator").text("STOPPING");
 		} else if(name=="stopped") {
 			$("body").removeClass("running");
 			$("body").addClass("stopped");
-			$(".status-indicator").text("STOPPED");
+			$(".status-indicator").text("");
 		}
 	}
 	
@@ -72,6 +67,7 @@ $(function() {
 
 Treadmill.prototype.onSpeedChanged = function(value) 
 {
+	console.log(value);
 	if(value==0.0)
 		$(".speed-indicator").text("0");
     else
@@ -85,15 +81,10 @@ Treadmill.prototype.onInclineChanged = function(value)
 
 Treadmill.prototype.onUpdateRunningTime = function(seconds, minutes, hours)
 {
-	return false;
-    $("#RunningSeconds").text( zeropad(seconds) );
-    $("#RunningMinutes").text( zeropad(minutes) );
+    var rt = zeropad(minutes)+":"+zeropad(seconds);
     if(hours>0)	// more than an hour
-    {
-        $("#RunningHours").text( hours );
-    } else {
-        $("#RunningHours").text( "" );
-    }
+		rt = hours+":"+rt;
+	$(".running-time").text(rt);
 }
 
 function SetFavSpeed(event)

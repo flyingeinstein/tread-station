@@ -156,15 +156,21 @@ function Dial(_container)
 		.attr("class","status-indicator")
 		.attr("text-anchor","middle")
 		.attr("x",center.x)
-		.attr("y",center.y-90)
+		.attr("y",center.y-140)
 		.text("...");
+	status.append("text")
+		.attr("class","running-time")
+		.attr("text-anchor","middle")
+		.attr("x",center.x)
+		.attr("y",center.y-100)
+		.text("0:00");
 	status.append("text")
 		.attr("class","speed-indicator")
 		.attr("text-anchor","middle")
 		.attr("x",center.x)
 		.attr("y",center.y+70)
 		.text("");
-	
+		
 	return dial;
 }
 
