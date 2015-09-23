@@ -50,7 +50,7 @@ $(function() {
 	var s = "<hr/>width:"+window.innerWidth+"  height:"+window.innerHeight;
 	$("div#debug").html(s);
 		
-    treadmill.connect("192.168.2.48");
+    treadmill.connect("treadmill");
 });
 
 

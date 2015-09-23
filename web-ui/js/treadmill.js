@@ -51,7 +51,8 @@ Treadmill.prototype.connect = function(url)
      };
      this.connection.onerror = function(evt)
      {
-        ws_status("Connection error : "+evt.data);      
+        ws_status("Connection error : "+evt.data);
+	setTimeout(function(){ _treadmill.connect(url); }, 5000);
      }
   } else
     alert("web sockets not supported");
