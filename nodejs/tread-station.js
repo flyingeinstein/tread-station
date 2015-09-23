@@ -110,16 +110,9 @@ Treadmill.prototype.speed = function(value)
 
     // TODO: The accelleration verbs
     if(value=="STOP") {
-        active = false;
-	pwm.turnOff();
-        this.desiredSpeed=0;
-	this.sendEvent("stopped");
+        this.stop();
     } else if(value=="PANIC" || value=="ESTOP") {
-        active = false;
-	pwm.turnOff();
-        this.currentSpeed=0;
-        this.desiredSpeed=0;
-	this.sendEvent("stopped");
+        this.fullstop();
     } else if(value=="START") {
 	return this.speed("2.0");
     } else if(value=="++") {
@@ -195,10 +188,7 @@ Treadmill.prototype.deccellerate = function()
         this.currentSpeed -= this.accelleration;
         if(this.currentSpeed<this.minSpeed) {
             // we've stopped
-            this.active = false;
-	    pwm.turnOff();
-            this.currentSpeed=0;
-	    this.sendEvent("stopped");
+            this.fullstop();
         } else if(this.currentSpeed < this.desiredSpeed)
             this.currentSpeed = this.desiredSpeed;
         else {
@@ -208,6 +198,30 @@ Treadmill.prototype.deccellerate = function()
     	pwm.setDuty(this.currentSpeed*100);
     }
     this.sendStatus();
+}
+
+Treadmill.prototype.stop = function()
+{
+    this.desiredSpeed=0;
+    this.sendEvent("stopping");
+}
+
+Treadmill.prototype.fullstop = function()
+{
+    this.active = false;
+    pwm.turnOff();
+    this.desiredSpeed=0;
+    this.currentSpeed=0;
+    this.sendEvent("stopped");
+    this.updateStatus();
+}
+
+Treadmill.prototype.reset = function()
+{
+     this.stop();
+     this.runningSince=null;
+     this.runningTime = 0;
+     this.sendStatus();
 }
 
 Treadmill.prototype.updateStatus = function()
@@ -312,8 +326,10 @@ Treadmill.prototype.acceptConnection = function(request)
             var msg = JSON.parse(message.utf8Data);
             if(msg.Speed)
                 _treadmill.speed(msg.Speed);
-            if(msg.Incline)
+            else if(msg.Incline)
                 _treadmill.incline(msg.Incline);
+            else if(msg.Reset)
+                _treadmill.reset();
         }
     });
 
