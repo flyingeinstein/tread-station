@@ -4,8 +4,7 @@
  according to the license.txt file included in the project.
  */
 
-var prefKey = "treadstation-ip";
-var treadmill = null;
+ var treadmill = null;
 
 //
 // Function: load()
@@ -14,35 +13,52 @@ var treadmill = null;
 $(function() {
     treadmill = new Treadmill();
 	
-	$('#speed-startstop').click(function(e) {
+	$("#speed-dial").dial();
+		
+	/*$('#speed-startstop').click(function(e) {
 		console.log($(this).text());
 		if($(this).text() == "RUN")		
 			treadmill.setSpeed("2.2");
 		else
 			treadmill.setSpeed("STOP");
-		});
-	
-	$('#speed-decrease').on('click', function() {
+		});*/
+			
+	$('.speed-decrease').on('click', function() {
+		console.log("decrease");
 		treadmill.decreaseSpeed();
 	});
 
-	$('#speed-increase').on('click', function() {
+	$('.speed-increase').on('click', function() {
+		console.log("increase");
 		treadmill.increaseSpeed();
+	});
+	
+	$('.stop').on('click', function() {
+		treadmill.stop();
+	});
+	
+	$('.quick-dial li').on('click', function() {
+		treadmill.setSpeed(Number($(this).text()));
 	});
 	
 	Treadmill.prototype.parseEvent = function(name, data)
 	{
 		if(name=="connected") {
 			$("body").addClass("connected");	
+			$(".status-indicator").text("LET'S GO!");
 		} else if(name=="closed") {
-			$("#SpeedIndicator").text("NO CONNECTION!");    
-			$("body").removeClass("connected");			
+			$("body").removeClass("connected");
+			$("body").removeClass("running");
+			$("body").removeClass("stopped");
+			$(".status-indicator").text("DISCONNECTED");    
 		} else if(name=="running") {
+			$("body").removeClass("stopped");
 			$("body").addClass("running");
-			$("#speed-startstop").text("STOP");
+			$(".status-indicator").text("RUNNING");
 		} else if(name=="stopped") {
 			$("body").removeClass("running");
-			$("#speed-startstop").text("RUN");
+			$("body").addClass("stopped");
+			$(".status-indicator").text("STOPPED");
 		}
 	}
 	
@@ -57,14 +73,14 @@ $(function() {
 Treadmill.prototype.onSpeedChanged = function(value) 
 {
 	if(value==0.0)
-		$("#SpeedIndicator").text("-.-");
+		$(".speed-indicator").text("0");
     else
-    	$("#SpeedIndicator").text(value.toFixed(1));    
+    	$(".speed-indicator").text(value.toFixed(1));    
 }
 
 Treadmill.prototype.onInclineChanged = function(value)
 {
-    $("#InclineIndicator").text(Math.round(value));
+    //$("#InclineIndicator").text(Math.round(value));
 }
 
 Treadmill.prototype.onUpdateRunningTime = function(seconds, minutes, hours)
