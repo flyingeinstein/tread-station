@@ -14,16 +14,18 @@
 	<script src="js/underscore.js"></script>
 	<script src="js/backbone.js"></script>
 	<script src="js/side-nav.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
 	<script src="bootstrap/js/bootstrap.js"></script>
 	<script src="highcharts/js/highstock.js"></script>
 	<script src="highcharts/js/exporting.js"></script>
 	<script src="highcharts/js/highcharts-more.js"></script>
 	<script src="js/treadmill.js"></script>
 	<script src="js/main.js"></script>
+	<script src="js/dial.js"></script>
 	<link rel="stylesheet" href="css/style.css">
 	<link rel="stylesheet" href="css/brown.css">
 </head>
-<body id="page-top" data-spy="scroll" data-target=".navbar-custom" style>
+<body id="page-top" data-spy="scroll" data-target=".navbar-custom" class="stopped">
 
 <nav class="navbar navbar-custom navbar-fixed-top" role="navigation">
         <div class="container">
@@ -60,12 +62,12 @@
         <!-- /.container -->
     </nav>
 
-<div id="footer">
+<div id="footer" style="display:none">
 	<div id="ConnectionStatus">Not connected</div>
 	<div id="debug"></div>
 </div>
 
-<div id="layout1" class="layout">
+<!--div id="layout1" class="layout">
 <div class="container">
 <div class="controls col-md-5" style="margin-left:auto;margin-right:auto;float:none;margin-top:150px">
 	<div id="SpeedIndicator">
@@ -78,6 +80,24 @@
 					<a id="speed-startstop">RUN</a>
                 </ul>
      </div>
+</div>
+</div>
+</div-->
+
+<div class="container">
+<div id="page1" class="page">
+<ul class="left-buttons">
+	<li class="stop">STOP</li>
+</ul>
+<ul class="quick-dial">
+	<li>2.4</li>
+	<li>3.2</li>
+	<li>4.2</li>
+	<li>4.8</li>
+	<li>5.5</li>
+</ul>
+<div id="speed-dial">
+	<!-- svg dial indicator goes here !-->
 </div>
 </div>
 </div>

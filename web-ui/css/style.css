@@ -11,6 +11,17 @@ body.map {
 	background-size: cover;
 }
 
+@font-face {
+font-family: Akkurat;
+src:url('fonts/akkurat/lineto-akkurat-pro-light.eot');
+src:url('fonts/akkurat/lineto-akkurat-pro-light.eot?#iefix') format('embedded-opentype'),url(fonts/akkurat/lineto-akkurat-pro-light.woff) format('woff'), url(fonts/akkurat/lineto-akkurat-pro-light.ttf) format('truetype'), url(fonts/akkurat/lineto-akkurat-pro-light.svg) format('svg');
+font-weight:normal;
+font-style:normal;
+}
+
+@font-face{font-family:"Akkurat Medium";src:url('fonts/akkurat/lineto-akkurat-figures-pi-medium.eot');src:url('fonts/akkurat/lineto-akkurat-figures-pi-medium.eot?#iefix') format('embedded-opentype'),url(fonts/akkurat/lineto-akkurat-figures-pi-medium.woff) format('woff'), url(fonts/akkurat/lineto-akkurat-figures-pi-medium.ttf) format('truetype'), url(fonts/akkurat/lineto-akkurat-figures-pi-medium.svg) format('svg');font-weight:normal;font-style:normal;
+}
+
 /* annabel polizi and Dr. Pepper */
 
 table td {
@@ -259,5 +270,84 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', e
 	margin:5px 0px 0px 2px;
 }
 
+.page {
+}
 
+#page1 .page-left {
+	
+}
 
+#speed-dial svg g.status text.speed-indicator {
+	font-size: 200px;
+	fill: white;
+	font-family: "Akkurat Medium"; /*,Helvetica,sans-serif;*/
+}
+#speed-dial svg g.status text.status-indicator {
+	font-size: 40px;
+	fill: #ccc;
+	font-family: Akkurat; /*,Helvetica,sans-serif;*/
+}
+
+ul.quick-dial {
+    width: 170px;
+	float: right;
+    position: absolute;
+    right: 40px;
+    top: 90px;
+	
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+ul.quick-dial li {
+    border: 1px solid #967575;
+    border-radius: 10px;
+    padding: 7px 7px 7px 7px;
+    margin: 6px;
+    text-align: center;
+    font-size: 28px;
+    list-style-type: none;
+    font-family: Akkurat;
+    color: #B1B1B1;
+    background-color: #770303;
+	cursor: pointer;
+}
+
+ul.left-buttons {
+    width: 150px;
+	float: right;
+    position: absolute;
+    left: -20px;
+    top: 140px;
+	z-index:1000;
+	
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+ul.left-buttons li {
+    border-radius: 10px;
+	height: 170px;
+    padding: 30px 7px 7px 7px;
+    margin: 6px;
+    text-align: center;
+    font-size: 25px;
+    list-style-type: none;
+    font-family: Akkurat;
+    color: #B1B1B1;
+	cursor: pointer;
+    background-color: #770303;
+    border: 3px solid #C7C700;
+}
+body.stopped ul.left-buttons li.stop {
+	display:none;
+}
+ul.left-buttons li:hover {
+	background-color: #9C0000;
+}

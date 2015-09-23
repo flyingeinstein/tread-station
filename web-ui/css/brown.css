@@ -32,9 +32,6 @@ body {
 	border-radius: 2px;	
 }
 
-body {
-}
-
 .highlight {
 
 }
@@ -50,7 +47,8 @@ body {
 }
 
 body {
-	background-color: red;
+/*	background-color: #5F0505;*/
+	background-color: #690000;
 }
 
 body.connected {
@@ -60,7 +58,6 @@ body.connected {
 body.connected.running {
 	background-color: #690000;
 }
-
 body.connected.running #SpeedIndicator {
 	color: white;
 	font-size: 12rem;
@@ -80,4 +77,96 @@ body.connected #SpeedIndicator {
 #speed-controls li a {
 	font-size: 11pt;
 }
+
+#speeddial svg {
+	
+	
+}
+
+#speed-dial .background circle.background-circle {
+	fill: #770303;
+}
+#speed-dial .ticks .background-ticks line {
+	stroke: #788088;
+}
+#speed-dial .ticks .background-ticks path {
+	fill: #7D5F5F;
+}
+#speed-dial .ticks .buttons path.inner {
+	fill: #7D5F5F;
+}
+#speed-dial .ticks .buttons path.outer {
+	fill: #805252;
+}
+#speed-dial .ticks .buttons path:hover {
+	fill: #C18E8E;
+}
+#speed-dial .ticks .buttons path.incline-background {
+	fill: #805252;
+}
+#speed-dial .ticks .buttons path.incline-indicator {
+	fill: #C5B5B5;
+}
+#speed-dial .ticks .buttons path.incline-background:hover {
+	fill: #B36E6E;
+}
+
+#speed-dial .ticks .target-ticks path {
+	fill: #788088;
+}
+#speed-dial .ticks .away-ticks path {
+	fill: #788088;
+	display:none;
+}
+#speed-dial .ticks path.current-temperature-tick {
+	fill: white;
+}
+
+#speed-dial {
+    height: 450px;
+    width: 550px;
+    position: relative;
+	left: 70px;
+/*	background: #690000;
+    border-radius: 50%;
+	box-shadow: 0 0.8rem 1.6rem #460000;*/
+}
+
+#speed-dial .ticks .buttons path.glyph {
+	fill: none;
+	stroke: white;
+}
+
+body.connected #speed-dial .background circle.background-circle {
+	fill: #2D3238;
+}
+body.connected #speed-dial .ticks .background-ticks line {
+	stroke: #8A8888;
+}
+body.connected #speed-dial .ticks .background-ticks path {
+	fill: #8A8888;
+}
+body.connected #speed-dial .ticks .buttons path.inner {
+	fill: #630101;
+}
+body.connected #speed-dial .ticks .buttons path.outer {
+	fill: #805252;
+}
+body.connected #speed-dial .ticks .buttons path:hover {
+	fill: #C18E8E;
+}
+body.connected #speed-dial .ticks .buttons path.incline-background {
+	fill: #2B3035;
+}
+body.connected #speed-dial .ticks .buttons path.incline-indicator {
+	fill: #D8D6D6;
+}
+body.connected #speed-dial .ticks .buttons path.incline-background:hover {
+	fill: #202225;
+}
+body.connected #speed-dial .ticks .buttons path.glyph {
+	fill: none;
+	stroke: #5F5F5F;
+}
+
 
