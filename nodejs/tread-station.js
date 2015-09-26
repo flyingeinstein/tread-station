@@ -1,9 +1,20 @@
 #!/usr/bin/nodejs
 
 var bbbPWM = require('./bbb-pwm');
+var DateJS = require('./node_modules/datejs');
+var Aggregate = require('./aggregate');
 
 var WebSocketServer = require('websocket').server;
 var http = require('http');
+
+var mysql      = require('mysql');
+var mysqlDateFormat = "yyyy-MM-dd HH:mm:ss";
+var db = mysql.createConnection({
+  host     : 'localhost',
+  user     : 'tread',
+  password : 'peps1c0la',
+  database : 'treadstation'
+});
 
 // Instantiate bbbPWM object to control PWM device.  Pass in device path
 // and the period to the constructor.
@@ -48,7 +59,7 @@ function Treadmill()
     this.desiredSpeed = 0;
     this.speedMeasured = 0;
     this.accelleration = 1;
-    this.pwm = null;    // the pwm speed control object
+    this.pwm = pwm;    // the pwm speed control object
 
     this.currentIncline = 0;
     this.desiredIncline = 0;
@@ -68,6 +79,25 @@ function Treadmill()
     // variables
     this.runningTime = 0;       // total running millis (accumulates start/stops until a reset)
     this.runningSince = null;   // Date that we started running (non stop)
+    this.distance = 0;
+    
+    // goals
+    this.track = {
+        id: 0,
+        laps: 0
+    };
+    this.goals = {
+        time : 90*60,       // default to 90 minutes
+        distance : null
+    };
+
+    // metrics
+    this.metrics = {
+        mets : new Aggregate(0),
+        speed : new Aggregate(0),
+        incline : new Aggregate(0)
+    };
+
 
     this.active = false;
 
@@ -75,12 +105,54 @@ function Treadmill()
     this.connection = null;
     this.__updateInterval = null;
 
+    // connect to mysql
+    this.db = db;
+    this.db.connect();
+    this.loadSystem();
+
+    // session
+    this.session = {
+        id: null,
+        user: null,
+        recording: false
+    };
+
     pwm.turnOff();
     pwm.polarity(0);
 
     console.log("Treadmill ready");
 
     var _treadmill = this;
+}
+
+Treadmill.prototype.loadSystem = function()
+{
+    // load users
+    var treadmill = this;
+    var users = this.users = new Array();
+    this.db.query('SELECT * FROM users') 
+        .on('result', function(row) {
+            users[row.userid] = row;
+            if(treadmill.session.user==null)
+                treadmill.setUser(row);
+            console.log(row);
+        });
+}
+
+Treadmill.prototype.setUser = function(user)
+{
+    if(!user)
+        return;
+    else if(user.userid==null)
+        user = this.users[ Number(user) ];
+    this.session.user = user;
+    if(user.goaltime!=null)
+        this.goaltime=user.goaltime;
+    if(user.goaldistance!=null)
+        this.goaldistance=user.goaldistance;
+    // notify the interface
+    if(this.connection)
+        this.connection.sendUTF(JSON.stringify({ type:'response', schema:'user', data: (this.session!=null) ? this.session.user : null }));
 }
 
 Treadmill.prototype.MPHtoNative = function(value) 
@@ -143,7 +215,7 @@ Treadmill.prototype.speed = function(value)
     pwm.setDuty(this.currentSpeed*100);
     if(!was_active && this.active) {
     	pwm.turnOn();
-	this.sendEvent("running");
+	    this.sendEvent("running");
     }
 }
 
@@ -221,6 +293,7 @@ Treadmill.prototype.reset = function()
      this.stop();
      this.runningSince=null;
      this.runningTime = 0;
+     this.session.id = null;    // session begins when user starts treadmill again
      this.sendStatus();
 }
 
@@ -232,8 +305,14 @@ Treadmill.prototype.updateStatus = function()
         this.runningTime += new Date().valueOf() - this.runningSince.valueOf();
         this.runningSince = null;
     } else if(this.active && this.runningSince==null) {
-        // we are starting
-        this.runningSince = new Date();
+        // we are starting up, could be a new session or a continuation of an existing session
+        if(this.session.id==null) {
+            // new session
+            this.runningSince = new Date();
+            this.session.id = this.runningSince.unix_timestamp();
+        } else {
+            this.runningSince = new Date();
+        }
     } 
 
     // HACK: make the incline move for now
@@ -268,8 +347,34 @@ Treadmill.prototype.sendStatus = function()
                 desiredIncline: this.nativeToInclineGrade(this.desiredIncline)
             }));
         }
+        this.updateMysqlStatus();
     } catch(ex) {
         console.log("warning: failed to transmit status, likely connection error, aborting connection.");
+        this.abortConnection();
+    }
+}
+
+Treadmill.prototype.updateMysqlStatus = function()
+{
+    try {
+        if(this.db && this.session && this.session.id && this.session.user && this.runningSince) {
+            var treadmill = this;
+            var _lastUpdate = new Date().unix_timestamp();
+            var _runningSince = this.runningSince.unix_timestamp();
+            var _runningTime = (new Date().valueOf() - this.runningSince.valueOf())/1000;
+            this.db.query("insert into runs(session,user,ts,track,laps,lastupdate,runningTime) values (?,?,?,?,?,?,?) on duplicate key update lastupdate=?, runningTime=?, laps=?;", [
+                    this.session.id, this.session.user.userid, _runningSince, this.track.id, this.track.laps, _lastUpdate, _runningTime,  // insert values
+                    _lastUpdate, _runningTime, this.track.laps])    // update values
+                .on('error', function(err) {
+                        treadmill.session.recording = false;
+                        console.log(err);
+                })
+                .on('end', function() { treadmill.session.recording=true; });
+        } else {
+            this.session.recording = false;
+        }
+    } catch(ex) {
+        console.log("warning: failed to send to mysql : "+ex);
         this.abortConnection();
     }
 }
@@ -330,6 +435,23 @@ Treadmill.prototype.acceptConnection = function(request)
                 _treadmill.incline(msg.Incline);
             else if(msg.Reset)
                 _treadmill.reset();
+            else if(msg.Get) {
+                try {
+                    console.log("request for schema "+msg.Get);
+                    var data;
+                    if(msg.Get=='users')
+                        data = _treadmill.users;
+                    else if(msg.Get=='user')
+                        data = (_treadmill.session!=null) ? _treadmill.session.user : null;
+                    else if(msg.Get=='metrics')
+                        data = _treadmill.metrics;
+
+                    // send the reply
+                    _treadmill.connection.sendUTF(JSON.stringify({ type:'response', schema:msg.Get, response: data }));
+                } catch(ex) {
+                    console.log("failed to send '"+msg.Get+"' : "+ex);
+                }
+            }
         }
     });
 
@@ -343,6 +465,16 @@ Treadmill.prototype.acceptConnection = function(request)
     });
 
 
+}
+
+Date.prototype.mysql = function()
+{
+    return this.toString(mysqlDateFormat);
+}
+
+Date.prototype.unix_timestamp = function()
+{
+    return Math.floor(this.getTime()/1000);
 }
 
 var treadmill = new Treadmill();
