@@ -57,6 +57,8 @@ $(function() {
 		}
 	}
 	
+	treadmill.on("user", function(user) { $("#user").text(user.name); });
+	
 	// show some debug info
 	var s = "<hr/>width:"+window.innerWidth+"  height:"+window.innerHeight;
 	$("div#debug").html(s);

@@ -350,9 +350,8 @@ ul.left-buttons {
 }
 ul.left-buttons li {
     border-radius: 10px;
-	height: 170px;
-    padding: 30px 7px 7px 7px;
-    margin: 6px;
+    padding: 12px 7px 10px 7px;
+    margin-top: 6px;
     text-align: center;
     font-size: 25px;
     list-style-type: none;
@@ -360,13 +359,12 @@ ul.left-buttons li {
     color: #B1B1B1;
 	cursor: pointer;
     background-color: #770303;
-    border: 3px solid #C7C700;
+    border: 1px solid #967575;
 }
 ul.left-buttons li.stop {
-	display:none;
-}
-body.running ul.left-buttons li.stop {
-	display:block;
+	height: 170px;
+    padding-top: 30px;
+    border: 3px solid #C7C700;
 }
 ul.left-buttons li:hover {
 	background-color: #9C0000;

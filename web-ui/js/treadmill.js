@@ -13,6 +13,7 @@ function Treadmill()
     this.incline = -1;
     
     // internals
+	this.eventHandlers = {};
 }
 
 function ws_status(str)
@@ -34,6 +35,10 @@ Treadmill.prototype.connect = function(url)
         // Web Socket is connected, send data using send()
         ws_status("Connected.");
 		_treadmill.parseEvent("connected");
+		
+		// request some objects from the treadmill service
+		//_treadmill.request("users");
+		_treadmill.request("user");		
 	};
      this.connection.onmessage = function (evt) 
      {
@@ -58,6 +63,16 @@ Treadmill.prototype.connect = function(url)
     alert("web sockets not supported");
 }
 
+Treadmill.prototype.request = function(schema)
+{
+    if(this.connection)
+		this.connection.send(JSON.stringify({ Get: schema }));
+}
+
+Treadmill.prototype.on = function(eventName, callback)
+{
+	this.eventHandlers[eventName] = callback;
+}
 
 Treadmill.prototype.parseMessage = function(msg)
 {
@@ -80,6 +95,10 @@ Treadmill.prototype.parseMessage = function(msg)
         }
     } else if(msg.type=="event") {
 		this.parseEvent(msg.name, msg.data);
+    } else if(msg.type=="response") {
+		console.log(msg);
+		if(this.eventHandlers && this.eventHandlers[msg.schema]!=null)
+			this.eventHandlers[msg.schema](msg.response);
     }
 }
 
