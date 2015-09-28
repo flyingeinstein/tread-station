@@ -43,6 +43,8 @@ function Dial(_container)
 	var center = {x: extents.width - radius, y: extents.height/2 };
 	console.log(extents, radius, center)
 	
+	this.goaltime = 1.5*3600;
+	
 	this.container.html("");
 	var svg = d3.select(this.container[0]).append("svg")
     	.attr("width", 550)
@@ -100,6 +102,7 @@ function Dial(_container)
 	var N=160;
 	var dxAngle = 2*Math.PI/N;
 	console.log(N, dxAngle);
+	this.arcs = {};
 	var tickArc = d3.svg.arc()
 		.startAngle(function(d,h) { return d-h; })
 		.endAngle(function(d,h) { return d+h; })
@@ -208,15 +211,15 @@ function Dial(_container)
 	
 	// goal indicator
 	var goalAngle = { begin: 2*Math.PI-ang-dxAngle, end: 2*Math.PI+ang+dxAngle };
-	var goalArc = d3.svg.arc()
+	this.arcs.goal = d3.svg.arc()
 		.startAngle(function(a,h) { return goalAngle.begin; })
 		.endAngle(function(a,h) { return goalAngle.begin + (goalAngle.end-goalAngle.begin)*h; })
 		.innerRadius(radius-radius*0.245-10)
 		.outerRadius(radius-radius*0.245-5);
-	buttons.append("path")
+	indicators.append("path")
 		.attr("id","goal")
 		.attr("class","goal")
-		.attr("d", goalArc(0, 0.25))
+		.attr("d", this.arcs.goal(0, 0.25))
 		.attr("transform","translate("+center.x+","+center.y+")");
 }
 
@@ -233,17 +236,12 @@ Dial.prototype.setSpeed = function(speed)
 	}
 }
 
-Dial.prototype.setSpeed = function(speed)
+Dial.prototype.setRunningTime = function(seconds,minutes,hours)
 {
-	var ctrl = this.container.find(".indicators .current-speed-indicator");
-	if(speed>2)
-	{
-		var val = (speed-1) * (this.divisorAngle*180/Math.PI);
-		ctrl.attr("style","");
-		ctrl.attr("transform",this.defaultTranslate+" rotate("+val+")");
-	} else {
-		ctrl.attr("style","display:none");
-	}
+	var percent = Math.min(1.0, (seconds+minutes*60+hours*3600) / this.goaltime);
+	this.container.find(".indicators .goal")
+		.attr("d", this.arcs.goal(0, percent))	
+	
 }
 
 Dial.prototype.click = function(x,y)

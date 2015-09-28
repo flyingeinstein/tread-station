@@ -77,7 +77,6 @@ $(function() {
 
 Treadmill.prototype.onSpeedChanged = function(value) 
 {
-	console.log(value);
 	if(value==0.0)
 		$(".speed-indicator").text("0");
     else
@@ -99,6 +98,7 @@ Treadmill.prototype.onUpdateRunningTime = function(seconds, minutes, hours)
     if(hours>0)	// more than an hour
 		rt = hours+":"+rt;
 	$(".running-time").text(rt);
+	if(this.dial) this.dial.setRunningTime(seconds,minutes,hours);
 }
 
 function SetFavSpeed(event)
