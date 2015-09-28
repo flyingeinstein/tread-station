@@ -13,7 +13,9 @@
 $(function() {
     treadmill = new Treadmill();
 	
-	$("#speed-dial").dial();
+	var dial = $("#speed-dial").dial();
+	console.log(dial);
+	treadmill.dial = dial;
 		
 	/*$('#speed-startstop').click(function(e) {
 		console.log($(this).text());
@@ -29,6 +31,12 @@ $(function() {
 	$('.reset').on('click', function() { treadmill.reset(); });
 	
 	$('.quick-dial li').on('click', function() { treadmill.setSpeed(Number($(this).text())); });
+	
+	$('#speed-dial svg').on("click",function(){
+		//console.log(event.layerX+":"+event.layerY);
+		//console.log(event);
+		dial.click(event.layerX, event.layerY);
+	});
 	
 	Treadmill.prototype.parseEvent = function(name, data)
 	{
@@ -73,7 +81,11 @@ Treadmill.prototype.onSpeedChanged = function(value)
 	if(value==0.0)
 		$(".speed-indicator").text("0");
     else
-    	$(".speed-indicator").text(value.toFixed(1));    
+    	$(".speed-indicator").text(value.toFixed(1));   
+	if(this.dial)
+	{
+		this.dial.setSpeed(value);
+	}
 }
 
 Treadmill.prototype.onInclineChanged = function(value)

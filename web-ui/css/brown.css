@@ -127,6 +127,12 @@ body.running #speed-dial .background circle.background-circle {
 #speed-dial .ticks .buttons path.incline-background:hover {
 	fill: #B36E6E;
 }
+#speed-dial .ticks .buttons path.goal {
+	fill: #E2E2E2;
+}
+#speed-dial .indicators .current-speed-indicator {
+	fill: white;
+}
 
 #speed-dial .ticks .target-ticks path {
 	fill: #788088;

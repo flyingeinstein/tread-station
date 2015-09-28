@@ -289,6 +289,11 @@ command-panel li {
 	
 }
 
+#speed-dial {
+	position:relative;
+	z-index: 2000;
+}
+
 #speed-dial svg g.status text.speed-indicator {
 	font-size: 200px;
 	fill: white;
@@ -302,6 +307,11 @@ command-panel li {
 #speed-dial svg g.status text.running-time {
 	font-size: 30px;
 	fill: #ccc;
+	font-family: Akkurat; /*,Helvetica,sans-serif;*/
+}
+#speed-dial svg g.background-ticks text.dial-ordinals {
+	font-size:20px;
+	fill: #FDFDFD;
 	font-family: Akkurat; /*,Helvetica,sans-serif;*/
 }
 
