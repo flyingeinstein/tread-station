@@ -7,6 +7,7 @@
 	<link type="text/css" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">
 	<link rel="stylesheet" href="css/themes/smoothness/jquery-ui.css">
 	<link rel="stylesheet" href="css/grayscale.css">
+	<link rel="stylesheet" href="css/font-awesome.min.css">
 	<link rel="stylesheet" href="bootstrap/css/bootstrap.css">
 	<link rel="stylesheet" href="bootstrap/css/bootstrap-theme.css">
 	<script src="js/jquery-1.9.1.js"></script>
@@ -19,7 +20,9 @@
 	<script src="highcharts/js/highstock.js"></script>
 	<script src="highcharts/js/exporting.js"></script>
 	<script src="highcharts/js/highcharts-more.js"></script>
+	<script src="js/bootstrap.touchspin.js"></script>
 	<script src="js/treadmill.js"></script>
+	<script src="js/qotd.js"></script>
 	<script src="js/main.js"></script>
 	<script src="js/dial.js"></script>
 	<link rel="stylesheet" href="css/style.css">
@@ -52,7 +55,7 @@
                         <a href="#download">History</a>
                     </li>
                     <li class="page-scroll">
-                        <a id="user" href="#user">You</a>
+                        <a id="view-current-user" href="#user">You</a>
                     </li>
                 </ul>
             </div>
@@ -88,7 +91,7 @@
 <div id="page1" class="page">
 <ul class="left-buttons">
 	<li class="stop">STOP</li>
-	<li class="reset">RESET</li>
+	<li class="reset"  data-toggle="modal" data-target="#user-select">RESET</li>
 </ul>
 <ul class="quick-dial">
 	<li>3.2</li>
@@ -103,31 +106,7 @@
 </div>
 </div>
 
-<div class="command-panel">
-	<ul id="command-main" class="nav">
-	<li><i class="glyphicon glyphicon-certificate reset"></i><label>Reset</label></li>
-	<li><i class="glyphicon glyphicon-volume-up"></i><label>Sound</label></li>
-	</ul>
-	
-	<h6>You</h6>
-	<ul id="command-data" class="nav">
-	<li><i class="glyphicon glyphicon-user"></i><label>Profile</label></li>
-	<li><i class="glyphicon glyphicon-th"></i><label>Summary View</label></li>
-	<li><i class="glyphicon glyphicon-th-list"></i><label>Detail View</label></li>
-	<li><i class="glyphicon glyphicon-signal"></i><label>History</label></li>
-	</ul>
-	
-	<h6>Home</h6>
-	<ul id="command-data" class="nav">
-		<li data-callout="add-kpi"><i class="glyphicon glyphicon-plus-sign"></i><label>Upstairs</label></li>
-	</ul>
-	
-	<h6>Treadmill</h6>
-	<ul id="command-data" class="nav">
-		<li data-callout="configure-control"><i class="glyphicon glyphicon-cog"></i><label>Settings</label></li>
-	<li><i class="glyphicon glyphicon-off"></i><label>Power-off</label></li>
-	</ul>
-</div>
+
 
 <i id="callout-indicator" class="glyphicon glyphicon-play" style="display:none;margin-top:15px"></i>
 <div class="callouts">
@@ -145,8 +124,41 @@
 
 
 
+<!-- Modal -->
+<form id="user-select-form">
+<div id="user-select" class="modal dark fade" role="dialog">
+  <div class="modal-admin">
 
- 
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Begin Your Workout</h4>
+      </div>
+      <div class="modal-body">
+		<p>Select your name to personalize your workout:</p>
+		
+		<div class="btn-group users" data-toggle="buttons">
+			
+		</div>
+		
+		<div style='width: 320px; margin-left:auto; margin-right:auto'>
+		<p>Update your weight and we'll record it for historical charting:</p>
+		
+		<input id="enter-weight" type="text" value="" size="4" name="weight" class="disabled">
+		</div>
+      </div>
+      <div class="modal-footer">
+		  <p class='qotd'>Being defeated is often a temporary condition. Giving up is what makes it permanent.</p>
+		  <button id="session-start" type="button" class="btn btn-default" data-dismiss="modal">BEGIN</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</form>
+
+
 
 </body>
 </html>

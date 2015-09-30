@@ -192,4 +192,21 @@ body.connected #speed-dial .ticks .buttons path.glyph {
 	stroke: #5F5F5F;
 }
 
+body .modal-admin {
+    /* new custom width */
+    width: 500px;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 20px;
+}
+#user-select.modal .modal-content {
+	text-align: center;
+}
+#user-select.modal .modal-content .users {
+	margin: 12px;
+}
+#user-select.modal .modal-content .users button {
+	margin: 12px;
+	height: 80px;
+}
 

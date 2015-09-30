@@ -11,9 +11,13 @@ function Treadmill()
     // variables
 	this.speed = -1;
     this.incline = -1;
+	
+	this.goaltime = 1.5*3600;
     
     // internals
-	this.eventHandlers = {};
+	var _treadmill = this;
+	this.eventHandlers = {
+	};
 }
 
 function ws_status(str)
@@ -37,7 +41,7 @@ Treadmill.prototype.connect = function(url)
 		_treadmill.parseEvent("connected");
 		
 		// request some objects from the treadmill service
-		//_treadmill.request("users");
+		_treadmill.request("users");
 		_treadmill.request("user");		
 	};
      this.connection.onmessage = function (evt) 
@@ -97,17 +101,38 @@ Treadmill.prototype.parseMessage = function(msg)
 		this.parseEvent(msg.name, msg.data);
     } else if(msg.type=="response") {
 		console.log(msg);
+		if(msg.schema=="users")
+			this.users = msg.response;
+		else if(msg.schema=="user")
+		{
+			if(msg.response.userid>0) {
+				this.user = msg.response;
+				this.users[this.user.userid] = this.user;
+				this.goaltime = this.user.goaltime;
+				this.goaldistance = this.user.goaldistance;
+			}
+		}
+		
 		if(this.eventHandlers && this.eventHandlers[msg.schema]!=null)
 			this.eventHandlers[msg.schema](msg.response);
     }
 }
 
+Treadmill.prototype.setUser = function(user, weightUpdate) 
+{
+    if(this.connection)
+        this.connection.send(JSON.stringify({ User: user, Weight: weightUpdate }));
+}
+	
 Treadmill.prototype.parseEvent = function(name, data)
 {
 }
 
 Treadmill.prototype.setSpeed = function(value) 
 {
+	if(this.resetTimer!=null)
+		clearTimeout(this.resetTimer);
+				
     if(this.connection)
         this.connection.send(JSON.stringify({ Speed: value }));
 }
@@ -140,7 +165,9 @@ Treadmill.prototype.estop = function()
 
 Treadmill.prototype.reset = function(value) 
 {
-    if(this.connection)
+	if(this.resetTimer!=null)
+		clearTimeout(this.resetTimer);
+	if(this.connection)
         this.connection.send(JSON.stringify({ Reset: true }));
 }
 	
@@ -161,8 +188,8 @@ Treadmill.prototype.floor = function()
 
 Treadmill.prototype.updateRunningTime = function(millis)
 {
-    var seconds, minutes, hours;
-    if(this.onUpdateRunningTime) {
+	var seconds, minutes, hours;
+	if(this.onUpdateRunningTime) {
         seconds = Math.floor(millis / 1000);
         minutes = Math.floor((seconds / 60)) % 60;
         hours = Math.floor(seconds / 3600);

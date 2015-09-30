@@ -6,6 +6,14 @@
 
  var treadmill = null;
 
+ var sayings = [
+ 	"Get ready to rumble!",
+	"Welcome to Club Med",
+	"Beach Body in Progress",
+	"Work those abs",
+	"I'm sexy and I know it!"
+ ];
+ 
 //
 // Function: load()
 // Called by HTML body element's onload event when the widget is ready to start
@@ -14,8 +22,8 @@ $(function() {
     treadmill = new Treadmill();
 	
 	var dial = $("#speed-dial").dial();
-	console.log(dial);
 	treadmill.dial = dial;
+	dial.treadmill = treadmill;
 		
 	/*$('#speed-startstop').click(function(e) {
 		console.log($(this).text());
@@ -24,19 +32,25 @@ $(function() {
 		else
 			treadmill.setSpeed("STOP");
 		});*/
-			
+		
+		$("#enter-weight").TouchSpin({
+			width: '150px',
+min: 50, // Minimum value.
+max: 600, // Maximum value.
+boostat: 5, // Boost at every nth step.
+maxboostedstep: 10, // Maximum step when boosted.
+postfix: 'lbs', // Text after the input.
+step: 1, // Incremental/decremental step on up/down change.
+stepinterval: 100, // Refresh rate of the spinner in milliseconds.
+stepintervaldelay: 500 // Time in milliseconds before the spinner starts to spin.
+});
+
 	$('.speed-decrease').on('click', function() { treadmill.decreaseSpeed(); });
 	$('.speed-increase').on('click', function() { treadmill.increaseSpeed(); });
 	$('.stop').on('click', function() { treadmill.stop(); });
 	$('.reset').on('click', function() { treadmill.reset(); });
 	
 	$('.quick-dial li').on('click', function() { treadmill.setSpeed(Number($(this).text())); });
-	
-	$('#speed-dial svg').on("click",function(){
-		//console.log(event.layerX+":"+event.layerY);
-		//console.log(event);
-		dial.click(event.layerX, event.layerY);
-	});
 	
 	Treadmill.prototype.parseEvent = function(name, data)
 	{
@@ -62,16 +76,59 @@ $(function() {
 			$("body").removeClass("running");
 			$("body").addClass("stopped");
 			$(".status-indicator").text("");
+			treadmill.resetTimer = setTimeout(function() { treadmill.reset(); $("#user-select").modal(); }, 10000);
 		}
 	}
 	
-	treadmill.on("user", function(user) { $("#user").text(user.name); });
+	treadmill.on("user", function(user) { console.log(user); $("#view-current-user").text(user.name); });
+	treadmill.on("users", function(users) { 
+		var usergroup = $("#user-select .users");
+		usergroup.html("");
+		for(var u in users)
+		{
+			var user = users[u];
+			if(u<=0) continue;
+			var radio = d3.select(usergroup[0]).append("label")
+				.attr("class","btn btn-default")
+				.text(user.name)
+				.on('click', function() {
+					//console.log("yes "+this.val());
+					//$("#enter-weight").attr("disabled","false");
+					var weight = $("#enter-weight");
+					var user = $(this).find("input").val();
+					if(user>0) {
+						weight.removeClass("disabled");
+						weight.val( KgToLbs(treadmill.users[user].weight) );
+					}
+				})
+				.append("input")
+					.attr("type","radio")
+					.attr("id","user"+user.userid)
+					.attr("name","user")
+					.attr("value",user.userid);
+			}
+	});
+	
+	var form = $("#user-select-form");
+	$("#user-select").on("show.bs.modal", function() { 
+		//$("#user-select.modal .modal-title").text(sayings[Math.floor(Math.random()*sayings.length)]);
+		$("#user-select.modal .modal-footer .qotd").html(qotd_rich());
+	});
+
+	$("#session-start").on("click", function() {
+		var user = form.find("input:radio[name=user]:checked").val();
+		var weight = form.find("input[name=weight]").val();
+		console.log("session[user:"+user+", weight:"+weight+"]");
+		treadmill.setUser(user, LbsToKg(weight));
+	});
 	
 	// show some debug info
 	var s = "<hr/>width:"+window.innerWidth+"  height:"+window.innerHeight;
 	$("div#debug").html(s);
 		
     treadmill.connect("treadmill");
+	
+	$("#user-select").modal();
 });
 
 
@@ -125,3 +182,13 @@ function inclineFloor(event)
     treadmill.floor();
 }
 
+function KgToLbs(kg)
+{
+	return Math.round(kg*2.2);
+}
+
+
+function LbsToKg(lbs)
+{
+	return lbs/2.2;
+}

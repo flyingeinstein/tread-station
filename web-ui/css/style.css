@@ -196,8 +196,61 @@ background: linear-gradient(to right,  rgba(0,0,0,0) 0%,rgba(0,0,0,0) 97%,rgba(0
 filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', endColorstr='#a6000000',GradientType=1 ); /* IE6-9 */
 	background-color: #004A8A;
 	overflow-y: auto;
-
 }
+
+.modal {
+	z-index: 2000;
+}
+
+.modal.dark div.modal-content {
+	background-color: #3E3E3E;
+}
+.modal.dark .modal-header {
+	border-bottom: 0px; /*1px solid #565656;*/
+}
+.modal.dark .modal-header button.close {
+	color: #FCFDFD;
+	text-shadow: none;
+}
+.modal.dark .modal-body {
+	padding-top: 0px;
+}	
+.modal.dark .modal-body p {
+	font-size: 14px;
+}
+.modal.dark .modal-footer {
+	border-top: 1px solid #565656;
+	padding: 0px 0px 0px;
+}
+.modal.dark .btn-default {
+	color: #CCCCCC;
+	background-color: #2F2F2F;
+    border: 0px;
+	background-image: none;
+	text-shadow: none;
+	padding: 20px 40px 20px 40px;
+	border-radius: 0px;
+	font-size: 18px;
+}
+.modal.dark .btn-default.active {
+	color: #CCCCCC;
+	background-color: #2E6DA3;
+}
+.modal.dark .btn-default:hover {
+	background-position: 0 0;
+}
+.modal.dark .btn-group .btn:first-child {
+    border-top-left-radius: 7px;
+    border-bottom-left-radius: 7px;
+}
+.modal.dark .btn-group .btn:last-child {
+    border-top-right-radius: 7px;
+    border-bottom-right-radius: 7px;
+}
+.modal.dark input.disabled {
+	background-color:gray;
+}
+
 .callout p {
 	font-size: 15px;
 }
@@ -378,4 +431,30 @@ ul.left-buttons li.stop {
 }
 ul.left-buttons li:hover {
 	background-color: #9C0000;
+}
+
+#user-select.modal #enter-weight {
+	text-align: center;
+	height: 65px;
+    font-size: 30px;
+}
+
+#user-select.modal .modal-footer button {
+	height: 80px;
+}
+#user-select.modal .btn-group label.active {
+	background-image: -webkit-linear-gradient(top, #428bca 0%, #2d6ca2 100%);
+    background-image: linear-gradient(to bottom, #428bca 0%, #2d6ca2 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff428bca', endColorstr='#ff2d6ca2', GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+    background-repeat: repeat-x;
+    border-color: #2b669a;
+}
+
+#user-select.modal .modal-footer .qotd {
+	float: left;
+    font-size: 12px;
+    width: 350px;
+    text-align: left;
+    padding: 10px 0 0px 10px;
 }
