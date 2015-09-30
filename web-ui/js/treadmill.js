@@ -100,12 +100,12 @@ Treadmill.prototype.parseMessage = function(msg)
     } else if(msg.type=="event") {
 		this.parseEvent(msg.name, msg.data);
     } else if(msg.type=="response") {
-		console.log(msg);
+		//console.log(msg);
 		if(msg.schema=="users")
 			this.users = msg.response;
 		else if(msg.schema=="user")
 		{
-			if(msg.response.userid>0) {
+			if(msg.response && msg.response.userid>0) {
 				this.user = msg.response;
 				this.users[this.user.userid] = this.user;
 				this.goaltime = this.user.goaltime;

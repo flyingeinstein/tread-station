@@ -76,11 +76,12 @@ stepintervaldelay: 500 // Time in milliseconds before the spinner starts to spin
 			$("body").removeClass("running");
 			$("body").addClass("stopped");
 			$(".status-indicator").text("");
+			console.log("wait for it");
 			treadmill.resetTimer = setTimeout(function() { treadmill.reset(); $("#user-select").modal(); }, 10000);
 		}
 	}
 	
-	treadmill.on("user", function(user) { console.log(user); $("#view-current-user").text(user.name); });
+	treadmill.on("user", function(user) { if(user!=null) $("#view-current-user").text(user.name); });
 	treadmill.on("users", function(users) { 
 		var usergroup = $("#user-select .users");
 		usergroup.html("");
