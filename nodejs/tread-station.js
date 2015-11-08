@@ -133,18 +133,32 @@ Treadmill.prototype.loadSystem = function()
     this.db.query('SELECT * FROM users') 
         .on('result', function(row) {
             users[row.userid] = row;
-            if(treadmill.session.user==null)
-                treadmill.setUser(row);
+            //if(treadmill.session.user==null)
+            //    treadmill.setUser(row);
             console.log(row);
         });
 }
 
-Treadmill.prototype.setUser = function(user)
+Treadmill.prototype.setUser = function(user, weight)
 {
     if(!user)
         return;
     else if(user.userid==null)
-        user = this.users[ Number(user) ];
+    {
+        if(isNaN(user))
+        {
+            for(var u in this.users)
+            {
+                if(users[u].name == user) {
+                    user = users[u];
+                    break;
+                }
+            }
+        } else
+            user = this.users[ Number(user) ];
+    }
+    console.log("selecting user "+user.name);
+    this.reset();
     this.session.user = user;
     if(user.goaltime!=null)
         this.goaltime=user.goaltime;
@@ -152,7 +166,27 @@ Treadmill.prototype.setUser = function(user)
         this.goaldistance=user.goaldistance;
     // notify the interface
     if(this.connection)
-        this.connection.sendUTF(JSON.stringify({ type:'response', schema:'user', data: (this.session!=null) ? this.session.user : null }));
+        this.connection.sendUTF(JSON.stringify({ type:'response', schema:'user', response: (this.session!=null) ? this.session.user : null }));
+    if(weight!=null) {
+        this.updateWeight(weight);
+    }
+}
+
+Treadmill.prototype.updateWeight = function(weight)
+{
+    if(weight!=null && weight>0 && this.db!=null && this.session && this.session.user && this.session.user.userid>0) {
+        var _treadmill = this;
+        this.db.query("insert into weight(userid, ts, weight) values (?,unix_timestamp(),?);", [this.session.user.userid, weight])
+            .on('end', function() {
+                // if log succeeds, then update user account
+                console.log("recorded weight "+weight);
+                _treadmill.db.query("update users set weight=? where userid=?;", 
+                    [weight, _treadmill.session.user.userid]);
+                _treadmill.session.user.weight = weight;
+                console.log(_treadmill.users[ _treadmill.session.user.userid ].weight);
+                _treadmill.connection.sendUTF(JSON.stringify({ type:'response', schema:'user', response: _treadmill.session.user }));
+            });
+    }
 }
 
 Treadmill.prototype.MPHtoNative = function(value) 
@@ -435,6 +469,8 @@ Treadmill.prototype.acceptConnection = function(request)
                 _treadmill.incline(msg.Incline);
             else if(msg.Reset)
                 _treadmill.reset();
+            else if(msg.User)
+                _treadmill.setUser(msg.User, msg.Weight);
             else if(msg.Get) {
                 try {
                     console.log("request for schema "+msg.Get);
