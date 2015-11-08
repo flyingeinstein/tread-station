@@ -1,0 +1,18 @@
+# This file can  be installed into /etc/systemd/system and controlled as a service with systemctl command.
+
+[Unit]
+Description=Treadmill Station Server
+
+[Service]
+ExecStart=/home/debian/tread-station/nodejs/tread-station.js
+Restart=always
+User=root
+Group=staff
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+WorkingDirectory=/home/debian/tread-station/nodejs
+
+[Install]
+WantedBy=multi-user.target
+Alias=tread-station.service
+
