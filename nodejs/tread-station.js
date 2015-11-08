@@ -308,8 +308,14 @@ Treadmill.prototype.deccellerate = function()
 
 Treadmill.prototype.stop = function()
 {
-    this.desiredSpeed=0;
-    this.sendEvent("stopping");
+    if(this.desiredSpeed!=0) {
+        this.desiredSpeed=0;
+        this.sendEvent("stopping");
+        if(this.currentSpeed==0) {
+            this.sendEvent("stopped");
+            this.updateStatus();
+        }
+    }
 }
 
 Treadmill.prototype.fullstop = function()
@@ -425,7 +431,7 @@ Treadmill.prototype.sendEvent = function(_name, _data)
 	    }
 	} catch(ex) {
         	console.log("warning: failed to transmit event, likely connection error, aborting connection.");
-        	this.abortConnection();
+        	//this.abortConnection();
 	}
 }
 
