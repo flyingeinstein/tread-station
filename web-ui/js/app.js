@@ -21,3 +21,7 @@ app.config(function($routeProvider) {
             redirectTo: '/main'
         });
 });
+
+function zeropad(number) {
+    return (number < 10) ? '0' + number : number;
+}

@@ -1,46 +1,74 @@
-app.controller('treadmillController', ['$scope', function($scope) {
+app.controller('treadmillController', ['$scope', 'treadmillService', function($scope, treadmill) {
     $scope.pageClass = 'treadmill';
 
-    var treadmill = new Treadmill();
     $scope.treadmill = treadmill;
     $scope.dial = $("#speed-dial").dial();
 
     $scope.treadmill.dial = $scope.dial;
     $scope.dial.treadmill = $scope.treadmill;
 
-    console.log($scope.treadmill);
+    //console.log($scope.treadmill);
 
-    Treadmill.prototype.parseEvent = function(name, data)
+    $scope.$on("treadmill.on.connected", function() {
+        $("body").addClass("connected");
+        $("body").removeClass("disconnected");
+        $(".status-indicator").text("LET'S GO!");
+    });
+
+    $scope.$on("treadmill.on.closed", function() {
+        $("body").addClass("disconnected");
+        $("body").removeClass("connected");
+        $("body").removeClass("running");
+        $("body").removeClass("stopped");
+    });
+
+    $scope.$on("treadmill.on.running", function() {
+        $("body").removeClass("stopped");
+        $("body").addClass("running");
+        $(".status-indicator").text("RUNNING");
+    });
+
+    $scope.$on("treadmill.on.stopping", function() {
+        $("body").removeClass("running");
+        $("body").addClass("stopped");
+        $(".status-indicator").text("STOPPING");
+    });
+
+    $scope.$on("treadmill.on.stopped", function() {
+        $("body").removeClass("running");
+        $("body").addClass("stopped");
+        $(".status-indicator").text("");
+        treadmill.resetTimer = setTimeout(function() {
+            treadmill.reset();
+            $("#user-select").modal();
+        }, 60000);
+    });
+
+    $scope.$on("treadmill.running-time", function(e, time)
     {
-        if(name=="connected") {
-            $("body").addClass("connected");
-            $("body").removeClass("disconnected");
-            $(".status-indicator").text("LET'S GO!");
-        } else if(name=="closed") {
-            $("body").addClass("disconnected");
-            $("body").removeClass("connected");
-            $("body").removeClass("running");
-            $("body").removeClass("stopped");
-            $(".status-indicator").text("DISCONNECTED");
-        } else if(name=="running") {
-            $("body").removeClass("stopped");
-            $("body").addClass("running");
-            $(".status-indicator").text("RUNNING");
-        } else if(name=="stopping") {
-            $("body").removeClass("running");
-            $("body").addClass("stopped");
-            $(".status-indicator").text("STOPPING");
-        } else if(name=="stopped") {
-            $("body").removeClass("running");
-            $("body").addClass("stopped");
-            $(".status-indicator").text("");
-            console.log("wait for it");
-            treadmill.resetTimer = setTimeout(function() { treadmill.reset(); $("#user-select").modal(); }, 10000);
-        }
-    }
+        var rt = zeropad(time.minutes)+":"+zeropad(time.seconds);
+        if(time.hours>0)	// more than an hour
+            rt = time.hours+":"+rt;
+        $(".running-time").text(rt);
+        if(this.dial) this.dial.setRunningTime(time.seconds,time.minutes,time.hours);
+    });
 
-    treadmill.on("user", function(user) { if(user!=null) $("#view-current-user").text(user.name); });
-    treadmill.on("users", function(users) {
+    $scope.$on("treadmill.current-speed", function(event, value) {
+        if(value==0.0)
+            $(".speed-indicator").text("0");
+        else
+            $(".speed-indicator").text(value.toFixed(1));
+        if(this.dial)
+        {
+            this.dial.setSpeed(value);
+        }
+    });
+
+    $scope.$on("treadmill.user", function(event, user) {
+        if(user!=null)
+            $("#view-current-user").text(user.name);
+    });
+    $scope.$on("treadmill.users", function(event, users) {
         var usergroup = $("#user-select .users");
         usergroup.html("");
         for(var u in users)

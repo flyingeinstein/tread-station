@@ -4,13 +4,13 @@
  according to the license.txt file included in the project.
  */
 
- var sayings = [
+ /*var sayings = [
  	"Get ready to rumble!",
 	"Welcome to Club Med",
 	"Beach Body in Progress",
 	"Work those abs",
 	"I'm sexy and I know it!"
- ];
+ ];*/
  
 //
 // Function: load()
@@ -60,39 +60,19 @@ $(function() {
 	//$("#user-select").modal();
 });
 
-
-Treadmill.prototype.onSpeedChanged = function(value) 
-{
-	if(value==0.0)
-		$(".speed-indicator").text("0");
-    else
-    	$(".speed-indicator").text(value.toFixed(1));   
-	if(this.dial)
-	{
-		this.dial.setSpeed(value);
-	}
-}
+/*
 
 Treadmill.prototype.onInclineChanged = function(value)
 {
     //$("#InclineIndicator").text(Math.round(value));
 }
 
-Treadmill.prototype.onUpdateRunningTime = function(seconds, minutes, hours)
-{
-    var rt = zeropad(minutes)+":"+zeropad(seconds);
-    if(hours>0)	// more than an hour
-		rt = hours+":"+rt;
-	$(".running-time").text(rt);
-	if(this.dial) this.dial.setRunningTime(seconds,minutes,hours);
-}
+
 
 function SetFavSpeed(event)
 {
     treadmill.setSpeed($(event.target).text());
 }
-
-
 
 function decline(event)
 {
@@ -110,6 +90,7 @@ function inclineFloor(event)
 {
     treadmill.floor();
 }
+*/
 
 function KgToLbs(kg)
 {
