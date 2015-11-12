@@ -4,8 +4,6 @@
  according to the license.txt file included in the project.
  */
 
- var treadmill = null;
-
  var sayings = [
  	"Get ready to rumble!",
 	"Welcome to Club Med",
@@ -19,11 +17,7 @@
 // Called by HTML body element's onload event when the widget is ready to start
 //
 $(function() {
-    treadmill = new Treadmill();
-	
-	var dial = $("#speed-dial").dial();
-	treadmill.dial = dial;
-	dial.treadmill = treadmill;
+
 		
 	/*$('#speed-startstop').click(function(e) {
 		console.log($(this).text());
@@ -35,81 +29,16 @@ $(function() {
 		
 		$("#enter-weight").TouchSpin({
 			width: '150px',
-min: 50, // Minimum value.
-max: 600, // Maximum value.
-boostat: 5, // Boost at every nth step.
-maxboostedstep: 10, // Maximum step when boosted.
-postfix: 'lbs', // Text after the input.
-step: 1, // Incremental/decremental step on up/down change.
-stepinterval: 100, // Refresh rate of the spinner in milliseconds.
-stepintervaldelay: 500 // Time in milliseconds before the spinner starts to spin.
-});
+			min: 50, // Minimum value.
+			max: 600, // Maximum value.
+			boostat: 5, // Boost at every nth step.
+			maxboostedstep: 10, // Maximum step when boosted.
+			postfix: 'lbs', // Text after the input.
+			step: 1, // Incremental/decremental step on up/down change.
+			stepinterval: 100, // Refresh rate of the spinner in milliseconds.
+			stepintervaldelay: 500 // Time in milliseconds before the spinner starts to spin.
+			});
 
-	$('.speed-decrease').on('click', function() { treadmill.decreaseSpeed(); });
-	$('.speed-increase').on('click', function() { treadmill.increaseSpeed(); });
-	$('.stop').on('click', function() { treadmill.stop(); });
-	$('.reset').on('click', function() { treadmill.reset(); });
-	
-	$('.quick-dial li').on('click', function() { treadmill.setSpeed(Number($(this).text())); });
-	
-	Treadmill.prototype.parseEvent = function(name, data)
-	{
-		if(name=="connected") {
-			$("body").addClass("connected");	
-			$("body").removeClass("disconnected");	
-			$(".status-indicator").text("LET'S GO!");
-		} else if(name=="closed") {
-			$("body").addClass("disconnected");	
-			$("body").removeClass("connected");
-			$("body").removeClass("running");
-			$("body").removeClass("stopped");
-			$(".status-indicator").text("DISCONNECTED");    
-		} else if(name=="running") {
-			$("body").removeClass("stopped");
-			$("body").addClass("running");
-			$(".status-indicator").text("RUNNING");
-		} else if(name=="stopping") {
-			$("body").removeClass("running");
-			$("body").addClass("stopped");
-			$(".status-indicator").text("STOPPING");
-		} else if(name=="stopped") {
-			$("body").removeClass("running");
-			$("body").addClass("stopped");
-			$(".status-indicator").text("");
-			console.log("wait for it");
-			treadmill.resetTimer = setTimeout(function() { treadmill.reset(); $("#user-select").modal(); }, 10000);
-		}
-	}
-	
-	treadmill.on("user", function(user) { if(user!=null) $("#view-current-user").text(user.name); });
-	treadmill.on("users", function(users) { 
-		var usergroup = $("#user-select .users");
-		usergroup.html("");
-		for(var u in users)
-		{
-			var user = users[u];
-			if(u<=0) continue;
-			var radio = d3.select(usergroup[0]).append("label")
-				.attr("class","btn btn-default")
-				.text(user.name)
-				.on('click', function() {
-					//console.log("yes "+this.val());
-					//$("#enter-weight").attr("disabled","false");
-					var weight = $("#enter-weight");
-					var user = $(this).find("input").val();
-					if(user>0) {
-						weight.removeClass("disabled");
-						weight.val( KgToLbs(treadmill.users[user].weight) );
-					}
-				})
-				.append("input")
-					.attr("type","radio")
-					.attr("id","user"+user.userid)
-					.attr("name","user")
-					.attr("value",user.userid);
-			}
-	});
-	
 	var form = $("#user-select-form");
 	$("#user-select").on("show.bs.modal", function() { 
 		//$("#user-select.modal .modal-title").text(sayings[Math.floor(Math.random()*sayings.length)]);
@@ -126,10 +55,9 @@ stepintervaldelay: 500 // Time in milliseconds before the spinner starts to spin
 	// show some debug info
 	var s = "<hr/>width:"+window.innerWidth+"  height:"+window.innerHeight;
 	$("div#debug").html(s);
-		
-    treadmill.connect("treadmill");
-	
-	$("#user-select").modal();
+
+	// pop the dialog to select which user will run
+	//$("#user-select").modal();
 });
 
 
