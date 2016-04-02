@@ -6,6 +6,18 @@ Wirelessly control your treadmill, replace the old lackluster dashboard with gra
 ABOUT ME
 I've replaced my old treadmill dashboard with a 27" monitor and hooked it up to a Mac Mini. My keyboard, mouse and touchpad are all wireless. This is sweet! A workstation without the wires and controllable via a web page. This should help get me back to health. Already I feel more energy, and more creativity as I work a difficult day job that requires me to be at the computer long periods of time.
 
+Directories
+===========
+  * nodejs - the control software for BeagleBoard Black devices (http://beagleboard.org/black)
+  * web-ui - Web user interface based on Angular.JS and D3D.js. Works in remote browser or in kiosk mode on BeagleBone Black with touch LCD
+
+Deprecated Code
+  * mac - a Mac OSX widget 
+  * spark - control firmware on particle.io (spark.io) boards (this platform never worked well, buggy network protocols)
+  * particle - part of the spark implementation
+  * uExpect - small C websockets implementation (was used for spark platform)
+
+
 Features
 ========
   * Controls both speed and incline
