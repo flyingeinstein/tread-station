@@ -3,10 +3,35 @@
 var bbbPWM = require('./bbb-pwm');
 var DateJS = require('./node_modules/datejs');
 var Aggregate = require('./aggregate');
+var glob = require("glob");
 
+// find the OCP PWM module as it's very nomadic
+var ocp_root = null, pwm_endpoint = null;
+var files = glob.sync("/sys/devices/ocp.?");
+if(files.length>1) {
+	console.log("found too many potential OCP folders:");
+	files.forEach(function(item) { console.log("  : "+item); });
+} else if(files.length==1) {
+	ocp_root = files[0];
+	console.log("found OCP root at "+ocp_root);
+
+	// found OCP root, now find the PWM module
+	files = glob.sync(ocp_root+"/pwm_test_P8_13*");
+	if(files.length>1) {
+		console.log("found too many potential PWM endpoints for P8:13:");
+		files.forEach(function(item) { console.log("  : "+item); });
+	} else if(files.length==1) {
+		pwm_endpoint = files[0]+'/';
+		console.log("found PWM P8:13 endpoint at "+pwm_endpoint);
+	}
+}
+if(!pwm_endpoint) console.log("failed to find the PWM P8:13 endpoint in /sys/devices/ocp.?/pwm_test_P8_13.??");
+
+// instantiate the Web Service
 var WebSocketServer = require('websocket').server;
 var http = require('http');
 
+// connect to the database
 var mysql      = require('mysql');
 var mysqlDateFormat = "yyyy-MM-dd HH:mm:ss";
 var db = mysql.createConnection({
@@ -15,10 +40,6 @@ var db = mysql.createConnection({
   password : 'peps1c0la',
   database : 'treadstation'
 });
-
-// Instantiate bbbPWM object to control PWM device.  Pass in device path
-// and the period to the constructor.
-var pwm = new bbbPWM('/sys/devices/ocp.3/pwm_test_P8_13.11/', 50000000);
 
 
 var server = http.createServer(function(request, response) {
@@ -59,7 +80,10 @@ function Treadmill()
     this.desiredSpeed = 0;
     this.speedMeasured = 0;
     this.accelleration = 1;
-    this.pwm = pwm;    // the pwm speed control object
+
+    // Instantiate bbbPWM object to control PWM device.  Pass in device path
+    // and the period to the constructor.
+    this.pwm = new bbbPWM(pwm_endpoint, 50000000);
 
     this.currentIncline = 0;
     this.desiredIncline = 0;
@@ -117,8 +141,8 @@ function Treadmill()
         recording: false
     };
 
-    pwm.turnOff();
-    pwm.polarity(0);
+    this.pwm.turnOff();
+    this.pwm.polarity(0);
 
     console.log("Treadmill ready");
 
@@ -246,9 +270,9 @@ Treadmill.prototype.speed = function(value)
         this.deccellerate();
 
     // update the PWM
-    pwm.setDuty(this.currentSpeed*100);
+    this.pwm.setDuty(this.currentSpeed*100);
     if(!was_active && this.active) {
-    	pwm.turnOn();
+    	this.pwm.turnOn();
 	    this.sendEvent("running");
     }
 }
@@ -283,7 +307,7 @@ Treadmill.prototype.accellerate = function()
             var _treadmill = this;
             setTimeout(function() { _treadmill.accellerate(); }, 100);
         }
-    	pwm.setDuty(this.currentSpeed*100);
+    	this.pwm.setDuty(this.currentSpeed*100);
     }
     this.sendStatus();
 }
@@ -301,7 +325,7 @@ Treadmill.prototype.deccellerate = function()
             var _treadmill = this;
             setTimeout(function() { _treadmill.deccellerate(); }, 100);
         }
-    	pwm.setDuty(this.currentSpeed*100);
+    	this.pwm.setDuty(this.currentSpeed*100);
     }
     this.sendStatus();
 }
@@ -321,7 +345,7 @@ Treadmill.prototype.stop = function()
 Treadmill.prototype.fullstop = function()
 {
     this.active = false;
-    pwm.turnOff();
+    this.pwm.turnOff();
     this.desiredSpeed=0;
     this.currentSpeed=0;
     this.sendEvent("stopped");
@@ -519,5 +543,12 @@ Date.prototype.unix_timestamp = function()
     return Math.floor(this.getTime()/1000);
 }
 
-var treadmill = new Treadmill();
+// ensure we have all config
+var treadmill;
+if(!ocp_root || !pwm_endpoint) {
+	setTimeout(function () { process.exit(5); }, 100);
+} else {
+  treadmill = new Treadmill();
+}
+
 
