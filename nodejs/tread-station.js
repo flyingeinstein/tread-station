@@ -229,16 +229,20 @@ Treadmill.prototype.nativeToMPH = function(value)
 Treadmill.prototype.init_screensaver = function(action) 
 {
     this.screensaver = {
+        // config/settings
         enabled: true,
         display: ":0.0",
         error: 0,
+
+        // internal variables
+        lastReset: new Date(),
 
         // screensaver functions
         enable: function() { this.set("on"); },
         disable: function() { this.set("off"); },
         activate: function() { this.set("activate"); },
         blank: function() { this.set("blank"); },
-        reset: function() { this.set("reset"); },
+        reset: function() { this.set("reset"); this.lastReset=new Date(); },
         timeout: function(secs) { this.set(""+secs); },
 
         // main set() function calls command "xset s <action>"
@@ -440,7 +444,8 @@ Treadmill.prototype.updateStatus = function()
     }
 
     // every 10 seconds reset the screensaver so it doesnt activate
-    if(this.active && (now.getSeconds() %10)==0) {
+    var secsSinceReset = (now - this.screensaver.lastReset)/1000;
+    if(this.active && secsSinceReset>10) {
         console.log("resetting screensaver");
         this.screensaver.reset();
     }
