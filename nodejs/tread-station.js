@@ -4,6 +4,7 @@ var bbbPWM = require('./bbb-pwm');
 var DateJS = require('./node_modules/datejs');
 var Aggregate = require('./aggregate');
 var glob = require("glob");
+var exec = require('child_process').exec;
 
 // find the OCP PWM module as it's very nomadic
 var ocp_root = null, pwm_endpoint = null;
@@ -264,10 +265,10 @@ Treadmill.prototype.init_screensaver = function(action)
     };
 
     // initialize the screensaver
-    var exec = require('child_process').exec;
+    var ss = this.screensaver;
     exec("./screensaver.conf "+this.screensaver.display, function(error,stdout, stderr) {
         if(error) {
-            this.screensaver.enabled = false;
+            ss.enabled = false;
             console.log("screensaver.conf error "+error);
             console.log(stdout);
             console.log("errors:");
