@@ -82,6 +82,10 @@ function Treadmill()
     this.speedMeasured = 0;
     this.accelleration = 1;
 
+    // usually root owns the pwm device, we want to take ownership
+    // current user must be in the /etc/sudoers file with NOPASSWD needed
+    this.takeOwnershipOfDevice(pwm_endpoint);
+
     // Instantiate bbbPWM object to control PWM device.  Pass in device path
     // and the period to the constructor.
     this.pwm = new bbbPWM(pwm_endpoint, 50000000);
@@ -150,6 +154,19 @@ function Treadmill()
     console.log("Treadmill ready");
 
     var _treadmill = this;
+}
+
+Treadmill.prototype.takeOwnershipOfDevice = function(device_path)
+{
+    exec("sudo chown -R $USER "+device_path, function(error,stdout, stderr) {
+        if(error) {
+            ss.enabled = false;
+            console.log("failed to take ownership of "+device_path+", error "+error);
+            console.log(stdout);
+            console.log("errors:");
+            console.log(stderr);
+        }
+    });
 }
 
 Treadmill.prototype.loadSystem = function()
