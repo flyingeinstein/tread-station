@@ -1,0 +1,29 @@
+
+User debian
+Group staff
+
+
+<VirtualHost *:80>
+	ServerAdmin webmaster@localhost
+
+	DocumentRoot /home/debian/tread-station/web-ui
+	<Directory />
+		Options FollowSymLinks
+		AllowOverride None
+	</Directory>
+	<Directory /home/debian/tread-station/web-ui/>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride All
+		Order allow,deny
+		allow from all
+	</Directory>
+
+	DirectoryIndex default.html
+	ErrorLog ${APACHE_LOG_DIR}/error.log
+
+	# Possible values include: debug, info, notice, warn, error, crit,
+	# alert, emerg.
+	LogLevel warn
+
+	CustomLog ${APACHE_LOG_DIR}/tread-station-webui.log combined
+</VirtualHost>
