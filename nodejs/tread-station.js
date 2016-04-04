@@ -144,6 +144,8 @@ function Treadmill()
     this.pwm.turnOff();
     this.pwm.polarity(0);
 
+    this.init_screensaver();
+
     console.log("Treadmill ready");
 
     var _treadmill = this;
@@ -222,6 +224,54 @@ Treadmill.prototype.MPHtoNative = function(value)
 Treadmill.prototype.nativeToMPH = function(value) 
 {
     return Number(value) / 45;
+}
+
+Treadmill.prototype.init_screensaver = function(action) 
+{
+    this.screensaver = {
+        enabled: true,
+        display: ":0.0",
+        error: 0,
+
+        // screensaver functions
+        enable: function() { this.set("on"); },
+        disable: function() { this.set("off"); },
+        activate: function() { this.set("activate"); },
+        blank: function() { this.set("blank"); },
+        reset: function() { this.set("reset"); },
+        timeout: function(secs) { this.set(""+secs); },
+
+        // main set() function calls command "xset s <action>"
+        set: function(action) {
+            if(!this.enabled) return false;
+            var ss = this;
+            exec("DISPLAY="+this.display+" xset s "+action, function(error,stdout, stderr) {
+                if(error) {
+                    if(ss.error++ >10) {
+                        ss.enabled=false;
+                    }
+                    console.log("xset error "+error);
+                    console.log(stdout);
+                    console.log("errors:");
+                    console.log(stderr);
+                }
+            });
+        }
+    };
+
+    // initialize the screensaver
+    var exec = require('child_process').exec;
+    exec("./screensaver.conf "+this.screensaver.display, function(error,stdout, stderr) {
+        if(error) {
+            this.screensaver.enabled = false;
+            console.log("screensaver.conf error "+error);
+            console.log(stdout);
+            console.log("errors:");
+            console.log(stderr);
+        }
+    });
+
+    this.screensaver.enable();
 }
 
 Treadmill.prototype.inclineGradeToNative = function(value) 
@@ -363,6 +413,8 @@ Treadmill.prototype.reset = function()
 
 Treadmill.prototype.updateStatus = function()
 {
+    var now = new Date();
+
     // if we are starting or stopping, then start our running timer
     if(!this.active && this.runningSince!=null) {
         // we are stopping, add latest runtime to accumulated total
@@ -386,6 +438,12 @@ Treadmill.prototype.updateStatus = function()
         else
             this.currentIncline -= this.inclineIncrement;
     }
+
+    // every 10 seconds reset the screensaver so it doesnt activate
+    if(this.active && (now.getSeconds() %10)==0) {
+        console.log("resetting screensaver");
+        this.screensaver.reset();
+    }
 }
 
 Treadmill.prototype.getTotalRunningMillis = function()
@@ -399,6 +457,7 @@ Treadmill.prototype.sendStatus = function()
 {
     this.updateStatus();
     try {
+        // update clients
         if(this.connection) {
             this.connection.sendUTF(JSON.stringify({
                 type: 'status', 
