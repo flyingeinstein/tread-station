@@ -32,8 +32,8 @@ Treadmill.prototype.connect = function(url)
      var _treadmill = this;
      
      // Let us open a web socket
-     ws_status("connecting...");
-     this.connection = new WebSocket("ws://192.168.2.48:27001/echo");
+     ws_status("connecting to "+window.location.hostname+"...");
+     this.connection = new WebSocket("ws://"+window.location.hostname+":27001/echo");
      this.connection.onopen = function()
      {
         // Web Socket is connected, send data using send()
