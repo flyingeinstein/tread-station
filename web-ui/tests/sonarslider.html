@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Tread Station</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link type="text/css" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">
+	<link rel="stylesheet" href="css/themes/smoothness/jquery-ui.css">
+	<link rel="stylesheet" href="css/grayscale.css">
+	<link rel="stylesheet" href="css/font-awesome.min.css">
+	<link rel="stylesheet" href="bootstrap/css/bootstrap.css">
+	<link rel="stylesheet" href="bootstrap/css/bootstrap-theme.css">
+	<script src="js/jquery-1.9.1.js"></script>
+	<script src="js/jquery-ui.js"></script>
+	<script src="js/underscore.js"></script>
+	<script src="js/backbone.js"></script>
+	<script src="js/side-nav.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+	<script src="bootstrap/js/bootstrap.js"></script>
+	<script src="highcharts/js/highstock.js"></script>
+	<script src="highcharts/js/exporting.js"></script>
+	<script src="highcharts/js/highcharts-more.js"></script>
+	<script src="js/bootstrap.touchspin.js"></script>
+	<script src="js/treadmill.js"></script>
+	<script src="js/qotd.js"></script>
+	<script src="js/main.js"></script>
+	<script src="js/dial.js"></script>
+	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/brown.css">
+</head>
+<body id="page-top" data-spy="scroll" data-target=".navbar-custom" class="noselect disconnected">
+
+<nav class="navbar navbar-custom navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div id="header-title" class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-main-collapse">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <a class="navbar-brand" href="/">
+                    <i class="fa fa-play-circle"></i>  Tread <span class="light">Station</span><br/><span class="light tiny">by Flying Einstein</span>
+                </a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse navbar-right navbar-main-collapse">
+                <ul class="nav navbar-nav">
+                    <!-- Hidden li included to remove active class from about link when scrolled up past about section -->
+                    <li class="hidden active">
+                        <a href="#page-top"></a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="#about">Run</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="#download">History</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a id="view-current-user" href="#user">You</a>
+                    </li>
+                </ul>
+            </div>
+			
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+
+<div id="footer" style="display:none">
+	<div id="ConnectionStatus">Not connected</div>
+	<div id="debug"></div>
+</div>
+
+<!--div id="layout1" class="layout">
+<div class="container">
+<div class="controls col-md-5" style="margin-left:auto;margin-right:auto;float:none;margin-top:150px">
+	<div id="SpeedIndicator">
+		
+	</div>
+	<div id="speed-controls" class="collapse noselect navbar navbar-collapse navbar-main-collapse" draggable="false">
+                <div id="speed-ramping" style="text-align:center">
+					<a id="speed-decrease" draggable="false"><img src="images/ramp-up.svg" draggable="false" /></a>
+					<a id="speed-increase" draggable="false"><img src="images/ramp-down.svg" draggable="false" /></a>
+					<a id="speed-startstop" draggable="false">RUN</a>
+                </ul>
+     </div>
+</div>
+</div>
+</div-->
+
+<div class="container">
+   <p>This is the sonar slider</p>
+</div>
+
+
+
+</body>
+</html>
