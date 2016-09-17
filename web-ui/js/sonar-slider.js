@@ -20,52 +20,69 @@ function SonarSlider(_container) {
     this.target = 40;
     this.targets = [{name: "set", value: this.target}];
 
-    this.bounds = {};
+    this.options = {};
     this.controls = {};
     this.groups = {};
 
     var slider = this;
-    var width = this.width = 40;
-    var height = this.height = 450;
-    var radius = this.radius = this.height / 2;
-    var center = this.center = {x: this.width - radius, y: this.height / 2};
-    this.bounds.outline =
+
+    // control measurements
+    this.options = {
+        // width and height of outer control
+        width: 40,
+        height: 450,
+
+        outline: {
+            border: 5, width: 16
+            // height: determined by formula
+        },
+        history: {
+            color: "white",
+            stroke: 3,
+            border: 3,
+            blur: 3
+        }
+    };
 
 
     this.container.html("");
     var svg = d3.select(this.container[0]).append("svg")
-        .attr("width", this.width)
-        .attr("height", this.height)
-        .attr("viewBox", "0 0 " + this.width + " " + this.height);
+        .attr("width", this.options.width)
+        .attr("height", this.options.height)
+        .attr("viewBox", "0 0 " + this.options.width + " " + this.options.height);
 
-    // add a border
-    radius -= 32;
+    var filter = svg.append("defs")
+        .append("filter")
+        .attr("id", "blur")
+        .append("feGaussianBlur")
+        .attr("stdDeviation", this.options.history.blur);
 
     var bg = svg.append("g")
-        .attr("class", "background")
-    bg.append("circle")
+        .attr("class", "background");
+    /*bg.append("circle")
         .attr("class", "background-circle")
         .attr("cx", center.x)
         .attr("cy", center.y)
         .attr("r", radius)
         .attr("filter", "url(#fe3)")
-    ;
+    ;*/
 
     this.controls.outline = svg.append("g")
         .attr("class", "outline");
     this.groups.history = this.controls.outline.append("g")
-        .attr("class", "history");
+        .attr("class", "history")
+        .attr("filter", "url(#blur)");
 
     var now = Math.floor(new Date() / 1000);
     this.history = [
-        { time: now-2, value: 63 },
-        { time: now-3, value: 60 },
-        { time: now-6, value: 61 },
-        { time: now-7, value: 59 },
-        { time: now-9, value: 54 },
-        { time: now-12, value: 53 },
-        { time: now-14, value: 34 },
-        { time: now-17, value: 36 }
+        { time: now-2, value: 0.2 },
+        { time: now-3, value: 0.21 },
+        { time: now-6, value: 0.22 },
+        { time: now-7, value: 0.24 },
+        { time: now-9, value: 0.67 },
+        { time: now-12, value: 0.678 },
+        { time: now-14, value: 0.69 },
+        { time: now-17, value: 0.74 }
     ];
 
 
@@ -74,14 +91,10 @@ function SonarSlider(_container) {
         .attr("stroke", "white")
         .attr("fill", "none")
         .attr("rx", 10).attr("ry", 10)
-        .attr("x", function (d, i) {
-            return 2;
-        })
-        .attr("width", 16)
-        .attr("height", slider.height - 10)
-        .attr("y", function (d) {
-            return 5;
-        });
+        .attr("x", slider.options.outline.border)
+        .attr("y", slider.options.outline.border)
+        .attr("width", slider.options.outline.width)
+        .attr("height", slider.options.height - slider.options.outline.border*2);
 
     this.updateVis();
 
@@ -92,6 +105,8 @@ function SonarSlider(_container) {
 
 SonarSlider.prototype.updateVis = function()
 {
+    var slider = this;
+
     // current set/balance position
     this.controls.targets = this.controls.outline
         .selectAll("g.target")
@@ -108,7 +123,7 @@ SonarSlider.prototype.updateVis = function()
             //.merge(this.controls.targets);
     this.controls.targets
         .transition()
-        .attr("transform",function(d) { return "translate(20, "+d.value+")"; } );
+        .attr("transform",function(d) { return "translate(20, "+slider.unitToPixel(d.value)+")"; } );
 
     // historical lines
     this.controls.history = this.groups.history
@@ -119,32 +134,39 @@ SonarSlider.prototype.updateVis = function()
             .append("line")
             .attr("class", "historical-line")
             .attr("id", function(d) { return "hl-"+d.time; })
-            .attr("stroke", "gray")
-            .attr("stroke-width", 5)
-            .attr("x1", 4)
-            .attr("x2", 16)
-            .attr("y1", function(d) { console.log(d); return 5+d.value; })
-            .attr("y2", function(d) { return 5+d.value; });
-
-    /*outline
-        .data(history)
-        .enter().append("rect")
-        .attr("x",function(d,i) { return x(0); })
-        .attr("width",function(d) { return x(d.value) - x(0); })
-        .attr("height",y.rangeBand())
-        .attr("y",function(d) { return y(d.name); })
-    */
+            .attr("stroke", this.options.history.color)
+            .attr("stroke-width", this.options.history.stroke)
+            .attr("x1", this.options.outline.border + this.options.history.border)
+            .attr("x2", this.options.outline.border + this.options.outline.width - this.options.history.border)
+            .attr("y1", function(d) { return slider.unitToPixel(d.value); })
+            .attr("y2", function(d) { return slider.unitToPixel(d.value); });
 
 };
 
-SonarSlider.prototype.scale = function(y)
+SonarSlider.prototype.pixelToUnit = function(y)
 {
-    return 5 y
-}
+    var range = this.options.height - this.options.outline.border*2;
+    var sc= (y - this.options.outline.border) / range;
+    if(sc<0) sc = 0; else if(sc>1.0) sc=1.0;
+    //console.log("pixelToUnit("+y+") = "+sc);
+    return sc;
+};
+
+SonarSlider.prototype.unitToPixel = function(u)
+{
+    var range = this.options.height - this.options.outline.border*2;
+    if(sc<0) sc = 0; else if(sc>1.0) sc=1.0;
+    var sc= u * range + this.options.outline.border;
+    //console.log("unitToPixel("+u+") = "+sc);
+    return sc;
+};
 
 SonarSlider.prototype.click = function(mouse)
 {
-   this.targets[0].value = mouse[1]; //mouse.y / this.height;
+    var val = this.pixelToUnit(mouse[1]);
+   this.targets[0].value = val; //mouse.y / this.height;
+    var now = Math.floor(new Date() / 1000);
+    this.history.push({ time: now, value:val });
     this.updateVis();
 };
 
