@@ -2,9 +2,9 @@
  * Created by colin on 9/13/2016.
  *
  * TODO:
- *   1. Use domain/range to convert sonar units to pixels
+ *   1. DONE Use domain/range to convert sonar units to pixels
  *   2. Make the time expiration more efficient using transitions
- *   3. Add getter/setter methods for these operations and refactor out the mouse clicking
+ *   3. DONE Add getter/setter methods for these operations and refactor out the mouse clicking
  *         a. get/setTarget but also handle via mouse click event
  *         b. addMeasurement
  *   4. Add labels to target
@@ -29,12 +29,13 @@ function SonarSlider(_container) {
     this.extents = {min: 0.0, max: 100.0};
 
     // the target walker position in sonar units
-    this.target = 40;
+    this.target = 0.2;
     this.targets = [{name: "set", value: this.target}];
 
     this.options = {};
     this.controls = {};
     this.groups = {};
+    this.dispatch = d3.dispatch("current", "target", "change");
 
     var slider = this;
 
@@ -58,9 +59,12 @@ function SonarSlider(_container) {
         }
     };
 
+    this.unitScale = d3.scaleLinear()
+        .domain([0,1])
+        .range([0,this.options.height - this.options.outline.border*2 ]);
 
     this.container.html("");
-    var svg = d3.select(this.container[0]).append("svg")
+    var svg = this.svg = d3.select(this.container[0]).append("svg")
         .attr("width", this.options.width)
         .attr("height", this.options.height)
         .attr("viewBox", "0 0 " + this.options.width + " " + this.options.height);
@@ -196,30 +200,53 @@ SonarSlider.prototype.updateVis = function()
 
 };
 
+SonarSlider.prototype.setCurrent = function(val) {
+    var now = Number(new Date());
+    this.current = { time: now, value:val };
+    slider.history.push(this.current);
+    this.updateVis();
+};
+
+SonarSlider.prototype.getCurrent = function() {
+    return this.current;
+};
+
+SonarSlider.prototype.setTarget = function(value, ordinal) {
+    if(arguments.length<2)
+        ordinal = 0;
+    this.targets[ordinal].value = value;
+    this.updateVis();
+};
+
+SonarSlider.prototype.getTarget = function(ordinal) {
+    if(arguments.length<1)
+        ordinal = 0;
+    return this.targets[ordinal].value;
+};
+
+
+SonarSlider.prototype.on = function(name, callback) {
+  /*  console.log(this.dispatch);
+    console.log(arguments);
+  return this.dispatch.on.apply(this, arguments);*/
+    this.dispatch.on(name, callback);
+};
+
 SonarSlider.prototype.pixelToUnit = function(y)
 {
-    var range = this.options.height - this.options.outline.border*2;
-    var sc= (y - this.options.outline.border) / range;
-    if(sc<0) sc = 0; else if(sc>1.0) sc=1.0;
-    //console.log("pixelToUnit("+y+") = "+sc);
-    return sc;
+    return this.unitScale.invert(y - this.options.outline.border);
 };
 
 SonarSlider.prototype.unitToPixel = function(u)
 {
-    var range = this.options.height - this.options.outline.border*2;
-    if(sc<0) sc = 0; else if(sc>1.0) sc=1.0;
-    var sc= u * range + this.options.outline.border;
-    //console.log("unitToPixel("+u+") = "+sc);
-    return sc;
+    return this.unitScale(u) + this.options.outline.border;
 };
 
 SonarSlider.prototype.click = function(mouse)
 {
     var val = this.pixelToUnit(mouse[1]);
-   this.targets[0].value = val;
-    var now = Number(new Date());
-    this.history.push({ time: now, value:val });
+    this.setTarget(val);
+    this.dispatch.call("change", this, mouse, val);
     this.updateVis();
 };
 

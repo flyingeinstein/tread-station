@@ -45,6 +45,12 @@
 
 <script language="JavaScript">
 	var slider = $("#slider").sonarSlider();
+
+    // when the user clicks, they simulate new sonar measurements
+    slider.on("change", function(mouse, unit){
+        this.setCurrent(unit);
+    });
+
 </script>
 
 
