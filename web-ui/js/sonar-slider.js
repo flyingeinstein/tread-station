@@ -37,10 +37,12 @@ function SonarSlider(_container) {
             // height: determined by formula
         },
         history: {
-            color: "white",
+            color: "cyan",
             stroke: 3,
             border: 3,
-            blur: 3
+//            blur: 2,
+            gooey: 5,
+            expiration: 10000
         }
     };
 
@@ -51,11 +53,29 @@ function SonarSlider(_container) {
         .attr("height", this.options.height)
         .attr("viewBox", "0 0 " + this.options.width + " " + this.options.height);
 
-    var filter = svg.append("defs")
-        .append("filter")
-        .attr("id", "blur")
-        .append("feGaussianBlur")
-        .attr("stdDeviation", this.options.history.blur);
+    var defs = svg.append('defs');
+    var filter=null;
+
+    // setup the history blur
+    if(this.options.history.blur || this.options.history.gooey) {
+        var gStdDev = this.options.history.blur ? this.options.history.blur : this.options.history.gooey;
+        filter = defs.append("filter").attr("id", "gooey");
+        filter.append("feGaussianBlur")
+            .attr("in", "SourceGraphic")
+            .attr("stdDeviation", gStdDev)
+            .attr('result', 'blur');
+        if (this.options.history.gooey) {
+            filter.append('feColorMatrix')
+                .attr('in', 'blur')
+                .attr('mode', 'matrix')
+                .attr('values', '1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -3')
+                .attr('result', 'gooey');
+/*            filter.append('feComposite')
+                .attr('in', 'SourceGraphic')
+                .attr('in2', 'gooey')
+                .attr('operator', 'atop');*/
+        }
+    }
 
     var bg = svg.append("g")
         .attr("class", "background");
@@ -70,19 +90,20 @@ function SonarSlider(_container) {
     this.controls.outline = svg.append("g")
         .attr("class", "outline");
     this.groups.history = this.controls.outline.append("g")
-        .attr("class", "history")
-        .attr("filter", "url(#blur)");
+        .attr("class", "history");
+    if(filter)
+        this.groups.history.style("filter", "url(#gooey)"); //Set the filter on the container svg
 
-    var now = Math.floor(new Date() / 1000);
+    var now = Number(new Date());
     this.history = [
-        { time: now-2, value: 0.2 },
-        { time: now-3, value: 0.21 },
-        { time: now-6, value: 0.22 },
-        { time: now-7, value: 0.24 },
-        { time: now-9, value: 0.67 },
-        { time: now-12, value: 0.678 },
-        { time: now-14, value: 0.69 },
-        { time: now-17, value: 0.74 }
+        { time: now-2000, value: 0.2 },
+        { time: now-3000, value: 0.21 },
+        { time: now-6000, value: 0.22 },
+        { time: now-7000, value: 0.24 },
+        { time: now-9000, value: 0.67 },
+        { time: now-12000, value: 0.678 },
+        { time: now-14000, value: 0.69 },
+        { time: now-17000, value: 0.74 }
     ];
 
 
@@ -96,16 +117,27 @@ function SonarSlider(_container) {
         .attr("width", slider.options.outline.width)
         .attr("height", slider.options.height - slider.options.outline.border*2);
 
+
+    // historical lines
+    this.controls.history = this.groups.history
+        .selectAll("g.historical-line")
+        .data(this.history, function(d) { return d.time; });
+
+
+
     this.updateVis();
 
     svg.on("click",function(){
         slider.click(d3.mouse(svg.node()));
     });
+
+    setInterval(function() { slider.updateVis()}, 250);
 }
 
 SonarSlider.prototype.updateVis = function()
 {
     var slider = this;
+    var now = Number(new Date());
 
     // current set/balance position
     this.controls.targets = this.controls.outline
@@ -125,21 +157,30 @@ SonarSlider.prototype.updateVis = function()
         .transition()
         .attr("transform",function(d) { return "translate(20, "+slider.unitToPixel(d.value)+")"; } );
 
-    // historical lines
+    this.history = this.history.filter(function(e) { return (now - e.time)<slider.options.history.expiration; });
     this.controls.history = this.groups.history
-        .selectAll("g.historical-line")
-        .data(this.history);
+        .selectAll(".historical-line")
+        .data(this.history, function(d) { return d.time; });
     this.controls.history
         .enter()
-            .append("line")
-            .attr("class", "historical-line")
-            .attr("id", function(d) { return "hl-"+d.time; })
-            .attr("stroke", this.options.history.color)
-            .attr("stroke-width", this.options.history.stroke)
-            .attr("x1", this.options.outline.border + this.options.history.border)
-            .attr("x2", this.options.outline.border + this.options.outline.width - this.options.history.border)
-            .attr("y1", function(d) { return slider.unitToPixel(d.value); })
-            .attr("y2", function(d) { return slider.unitToPixel(d.value); });
+        .append("line")
+        .attr("class", "historical-line")
+        .attr("id", function(d) { return "hl-"+d.time; })
+        .attr("stroke", this.options.history.color)
+        .attr("stroke-width", this.options.history.stroke)
+        .style("stroke-opacity", 1.0)
+        .attr("x1", this.options.outline.border + this.options.history.border)
+        .attr("x2", this.options.outline.border + this.options.outline.width - this.options.history.border)
+        .attr("y1", function(d) { return slider.unitToPixel(d.value); })
+        .attr("y2", function(d) { return slider.unitToPixel(d.value); });
+    this.controls.history
+        .exit()
+        //.transition()
+        //.style("stroke-opacity", 0.0)
+        .remove();
+    this.controls.history
+        .transition()
+        .style("stroke-opacity", function(d) { return 1.0 - (now-d.time)/slider.options.history.expiration; });
 
 };
 
@@ -164,8 +205,8 @@ SonarSlider.prototype.unitToPixel = function(u)
 SonarSlider.prototype.click = function(mouse)
 {
     var val = this.pixelToUnit(mouse[1]);
-   this.targets[0].value = val; //mouse.y / this.height;
-    var now = Math.floor(new Date() / 1000);
+   this.targets[0].value = val;
+    var now = Number(new Date());
     this.history.push({ time: now, value:val });
     this.updateVis();
 };
