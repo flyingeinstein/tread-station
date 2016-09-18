@@ -1,5 +1,16 @@
 /**
  * Created by colin on 9/13/2016.
+ *
+ * TODO:
+ *   1. Use domain/range to convert sonar units to pixels
+ *   2. Make the time expiration more efficient using transitions
+ *   3. Add getter/setter methods for these operations and refactor out the mouse clicking
+ *         a. get/setTarget but also handle via mouse click event
+ *         b. addMeasurement
+ *   4. Add labels to target
+ *   5. Can we add labels to historical clusters?
+ *   6. integrate with main project --==>
+ *
  */
 
 
@@ -12,6 +23,7 @@ $(function() {
 
 function SonarSlider(_container) {
     this.container = $(_container);
+
 
     // the extents of the treadmill range in sonar units
     this.extents = {min: 0.0, max: 100.0};
