@@ -25,6 +25,12 @@
 	<script src="../js/sonar-slider.js"></script>
 	<link rel="stylesheet" href="../css/style.css">
 	<link rel="stylesheet" href="../css/brown.css">
+    <style>
+        .slider {
+            width: 80px;
+            display: inline-block;
+        }
+    </style>
 </head>
 <body id="page-top" data-spy="scroll" data-target=".navbar-custom" class="noselect disconnected">
 
@@ -35,29 +41,66 @@
 </div>
 
 <div class="container">
-   <p>This is the sonar slider</p>
+   <p>Sonar Slider</p>
 
-	<div id="slider">
-		<!-- svg dial indicator goes here !-->
-	</div>
+    <div id="slider1" class="slider"></div>
+    <div id="slider2" class="slider" data-options="slider2_options"></div>
+    <div id="slider3" class="slider" data-options="slider3_options"></div>
+    <div id="slider4" class="slider" data-options="slider4_options"></div>
+    <div id="slider5" class="slider" data-options="slider5_options"></div>
+    <div id="slider6" class="slider" data-options="slider6_options"></div>
+
 </div>
 
 
 <script language="JavaScript">
-	var slider = $("#slider").sonarSlider();
     var nextUpdate = null;
 
-    // when the user clicks, they simulate new sonar measurements
-    slider.svg.on("mousemove", function(e) {
-        var mouse = d3.mouse(slider.svg.node());
-        if(mouse[0]>slider.options.outline.border && mouse[0]<slider.options.outline.width+slider.options.outline.border) {
-            var now = Number(new Date());
-            if(now > nextUpdate) {
-                var unit = slider.pixelToUnit(mouse[1]);
-                slider.setCurrent(unit);
-                nextUpdate = now+50;
-            }
+    var slider2_options = {
+        history: {
+            gooey: 7
         }
+    };
+    var slider3_options = {
+        history: {
+            color: "blue",
+            gooey: 7
+        }
+    };
+    var slider4_options = {
+        history: {
+            color: "yellow",
+            gooey: 7
+        }
+    };
+    var slider5_options = {
+        history: {
+            color: "orange",
+            gooey: 7
+        }
+    };
+    var slider6_options = {
+        history: {
+            color: "white",
+            gooey: 7
+        }
+    };
+
+	$(".slider").each(function() {
+        var slider = $(this).sonarSlider();
+
+        // when the user clicks, they simulate new sonar measurements
+        slider.svg.on("mousemove", function (e) {
+            var mouse = slider.mouse();
+            if (mouse[0] > slider.options.outline.border && mouse[0] < slider.options.outline.width + slider.options.outline.border) {
+                var now = Number(new Date());
+                if (now > nextUpdate) {
+                    var unit = slider.pixelToUnit(mouse[1]);
+                    slider.setCurrent(unit);
+                    nextUpdate = now + 50;
+                }
+            }
+        });
     });
 
 </script>

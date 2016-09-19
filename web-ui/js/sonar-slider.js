@@ -3,7 +3,7 @@
  *
  * TODO:
  *   1. DONE Use domain/range to convert sonar units to pixels
- *   2. Make the time expiration more efficient using transitions
+ *   2. DONE Make the time expiration more efficient using transitions
  *   3. DONE Add getter/setter methods for these operations and refactor out the mouse clicking
  *         a. get/setTarget but also handle via mouse click event
  *         b. addMeasurement
@@ -14,22 +14,22 @@
  */
 
 
-$(function() {
-    var sonarSliderDefaults = {
-        // none so far
-    }
-});
-
-
 function SonarSlider(_container) {
     this.container = $(_container);
 
+    // track global number of sonar sliders
+    // we may need to produce unique names for things like filters
+    if(SonarSlider.prototype.instanceCount)
+        SonarSlider.prototype.instanceCount++;
+    else
+        SonarSlider.prototype.instanceCount=1;
+    this.instanceNumber = SonarSlider.prototype.instanceCount;
 
     // the extents of the treadmill range in sonar units
     this.extents = {min: 0.0, max: 100.0};
 
     // the target walker position in sonar units
-    this.target = 0.2;
+    this.target = 0.5;
     this.targets = [{name: "set", value: this.target}];
 
     this.options = {};
@@ -51,13 +51,24 @@ function SonarSlider(_container) {
         },
         history: {
             color: "cyan",
-            stroke: 3,
-            border: 3,
+            stroke: 2,
+            border: 6,
             blur: 4,
             //gooey: 5,
-            expiration: 3000
+            expiration: 3000,
+            limit: 75
         }
     };
+
+    var user_options_object = this.container.data("options");
+    if(user_options_object) {
+        console.log(user_options_object);
+        this.user_options = window[user_options_object];
+        if(this.user_options) {
+            this.options = $.extend(true, {}, this.options, this.user_options);
+        }
+    }
+    console.log(this.options);
 
     this.unitScale = d3.scaleLinear()
         .domain([0,1])
@@ -71,11 +82,13 @@ function SonarSlider(_container) {
 
     var defs = svg.append('defs');
     var filter=null;
+    var filterid = "gooey"+this.instanceNumber;
+    console.log(filterid);
 
     // setup the history blur
     if(this.options.history.blur || this.options.history.gooey) {
         var gStdDev = this.options.history.blur ? this.options.history.blur : this.options.history.gooey;
-        filter = defs.append("filter").attr("id", "gooey");
+        filter = defs.append("filter").attr("id", filterid);
         filter.append("feGaussianBlur")
             .attr("in", "SourceGraphic")
             .attr("stdDeviation", gStdDev)
@@ -108,7 +121,7 @@ function SonarSlider(_container) {
     this.groups.history = this.controls.outline.append("g")
         .attr("class", "history");
     if(filter)
-        this.groups.history.style("filter", "url(#gooey)"); //Set the filter on the container svg
+        this.groups.history.style("filter", "url(#"+filterid+")"); //Set the filter on the container svg
 
     var now = Number(new Date());
     this.history = [
@@ -128,10 +141,10 @@ function SonarSlider(_container) {
         .attr("stroke", "white")
         .attr("fill", "none")
         .attr("rx", 10).attr("ry", 10)
-        .attr("x", slider.options.outline.border)
-        .attr("y", slider.options.outline.border)
-        .attr("width", slider.options.outline.width)
-        .attr("height", slider.options.height - slider.options.outline.border*2);
+        .attr("x", this.options.outline.border)
+        .attr("y", this.options.outline.border)
+        .attr("width", this.options.outline.width)
+        .attr("height", this.options.height - this.options.outline.border*2);
 
 
     // historical lines
@@ -141,23 +154,32 @@ function SonarSlider(_container) {
 
 
 
-    this.updateVis();
+    this.updateTargets();
+    this.updateHistory();
 
     svg.on("click",function(){
         slider.click(d3.mouse(svg.node()));
     });
-
-    setInterval(function() { slider.updateVis()}, 250);
 }
 
-SonarSlider.prototype.updateVis = function()
+SonarSlider.prototype.getMetrics = function() {
+    return {
+        outline: {
+            left: this.options.outline.border,
+            right: this.options.outline.border + this.options.outline.width,
+            top: this.options.outline.border,
+            bottom: this.options.outline.border + this.options.outline.height
+        }
+    };
+};
+
+SonarSlider.prototype.updateTargets = function()
 {
     var slider = this;
+    var metrics = this.getMetrics();
     var now = Number(new Date());
-    var outlineRight = slider.options.outline.border+slider.options.outline.width;
-    var outlineTop = slider.options.outline.border;
 
-    // current set/balance position
+    // update target glyphs
     this.controls.targets = this.controls.outline
         .selectAll("g.target")
         .data(this.targets);
@@ -166,16 +188,26 @@ SonarSlider.prototype.updateVis = function()
             .append("g")
             .attr("class","target")
             .attr("id", function(d) { return "target-"+d.name; })
-            .attr("transform", "translate("+outlineRight+", "+outlineTop+")" )
+            .attr("transform", function(d) { return "translate("+metrics.outline.right+", "+slider.unitToPixel(d.value)+")"; } )
             .append("polygon")
                 .attr("fill", "white")
                 .attr("points", "10,0 0,5 10,10");
-            //.merge(this.controls.targets);
     this.controls.targets
         .transition()
-        .attr("transform",function(d) { return "translate("+outlineRight+", "+slider.unitToPixel(d.value)+")"; } );
+        .attr("transform",function(d) { return "translate("+metrics.outline.right+", "+slider.unitToPixel(d.value)+")"; } );
+};
 
-    this.history = this.history.filter(function(e) { return (now - e.time)<slider.options.history.expiration; });
+SonarSlider.prototype.updateHistory = function()
+{
+    var slider = this;
+    var now = Number(new Date());
+
+    var metrics = this.getMetrics();
+    metrics.outline.left += this.options.history.border;
+    metrics.outline.right -= this.options.history.border;
+
+    // update history
+    //this.history = this.history.filter(function(e) { return (now - e.time)<slider.options.history.expiration; });
     this.controls.history = this.groups.history
         .selectAll(".historical-line")
         .data(this.history, function(d) { return d.time; });
@@ -186,27 +218,31 @@ SonarSlider.prototype.updateVis = function()
         .attr("id", function(d) { return "hl-"+d.time; })
         .attr("stroke", this.options.history.color)
         .attr("stroke-width", this.options.history.stroke)
-        .style("stroke-opacity", 1.0)
-        .attr("x1", this.options.outline.border + this.options.history.border)
-        .attr("x2", this.options.outline.border + this.options.outline.width - this.options.history.border)
+        .attr("x1", metrics.outline.left)
+        .attr("x2", metrics.outline.right)
         .attr("y1", function(d) { return slider.unitToPixel(d.value); })
-        .attr("y2", function(d) { return slider.unitToPixel(d.value); });
+        .attr("y2", function(d) { return slider.unitToPixel(d.value); })
+        .style("stroke-opacity", 1.0)
+        .transition().duration(3000)
+        .style("stroke-opacity", 0.0);
     this.controls.history
         .exit()
-        //.transition()
-        //.style("stroke-opacity", 0.0)
         .remove();
-    this.controls.history
-        .transition()
-        .style("stroke-opacity", function(d) { return 1.0 - (now-d.time)/slider.options.history.expiration; });
-
 };
 
 SonarSlider.prototype.setCurrent = function(val) {
     var now = Number(new Date());
     this.current = { time: now, value:val };
-    slider.history.push(this.current);
-    this.updateVis();
+
+    // add to history
+    this.history.push(this.current);
+
+    // limit history to N elements
+    while(this.history.length > this.options.history.limit)
+        this.history.shift();
+
+    // update visualization
+    this.updateHistory();
 };
 
 SonarSlider.prototype.getCurrent = function() {
@@ -217,7 +253,7 @@ SonarSlider.prototype.setTarget = function(value, ordinal) {
     if(arguments.length<2)
         ordinal = 0;
     this.targets[ordinal].value = value;
-    this.updateVis();
+    this.updateTargets();
 };
 
 SonarSlider.prototype.getTarget = function(ordinal) {
@@ -244,18 +280,22 @@ SonarSlider.prototype.unitToPixel = function(u)
     return this.unitScale(u) + this.options.outline.border;
 };
 
+SonarSlider.prototype.mouse = function()
+{
+    return d3.mouse(this.svg.node());
+}
+
 SonarSlider.prototype.click = function(mouse)
 {
     var val = this.pixelToUnit(mouse[1]);
     this.setTarget(val);
     this.dispatch.call("change", this, mouse, val);
-    this.updateVis();
+    //this.updateTargets();
 };
 
 // extend the jQuery class so we can easily create a dial in a control just by calling dial()
 jQuery.fn.extend({
     sonarSlider: function() {
-        var slider = new SonarSlider($(this));
-        return slider;
+        return new SonarSlider($(this));
     }
 });
