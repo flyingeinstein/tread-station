@@ -42,20 +42,20 @@ function SonarSlider(_container) {
     // control measurements
     this.options = {
         // width and height of outer control
-        width: 40,
+        width: 60,
         height: 450,
 
         outline: {
-            border: 5, width: 16
+            border: 5, width: 24
             // height: determined by formula
         },
         history: {
             color: "cyan",
             stroke: 3,
             border: 3,
-//            blur: 2,
-            gooey: 5,
-            expiration: 10000
+            blur: 4,
+            //gooey: 5,
+            expiration: 3000
         }
     };
 
@@ -154,6 +154,8 @@ SonarSlider.prototype.updateVis = function()
 {
     var slider = this;
     var now = Number(new Date());
+    var outlineRight = slider.options.outline.border+slider.options.outline.width;
+    var outlineTop = slider.options.outline.border;
 
     // current set/balance position
     this.controls.targets = this.controls.outline
@@ -164,14 +166,14 @@ SonarSlider.prototype.updateVis = function()
             .append("g")
             .attr("class","target")
             .attr("id", function(d) { return "target-"+d.name; })
-            .attr("transform", "translate(20, 20)" )
+            .attr("transform", "translate("+outlineRight+", "+outlineTop+")" )
             .append("polygon")
                 .attr("fill", "white")
                 .attr("points", "10,0 0,5 10,10");
             //.merge(this.controls.targets);
     this.controls.targets
         .transition()
-        .attr("transform",function(d) { return "translate(20, "+slider.unitToPixel(d.value)+")"; } );
+        .attr("transform",function(d) { return "translate("+outlineRight+", "+slider.unitToPixel(d.value)+")"; } );
 
     this.history = this.history.filter(function(e) { return (now - e.time)<slider.options.history.expiration; });
     this.controls.history = this.groups.history
