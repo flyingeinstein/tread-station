@@ -113,6 +113,15 @@ function Treadmill()
     this.minIncline = this.inclineGradeToNative(0);
     this.maxIncline = this.inclineGradeToNative(50);
 
+    // check if we are running in simulation mode
+    var simfile = fs.lstatSync('/etc/treadmill/simulate');
+    if(simfile.isFile()) {
+        this.simulation = {
+           active: true
+        };
+        console.log('configured for simulation');
+    }
+
     // variables
     this.runningTime = 0;       // total running millis (accumulates start/stops until a reset)
     this.runningSince = null;   // Date that we started running (non stop)
