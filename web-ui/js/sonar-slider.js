@@ -7,9 +7,7 @@
  *   3. DONE Add getter/setter methods for these operations and refactor out the mouse clicking
  *         a. get/setTarget but also handle via mouse click event
  *         b. addMeasurement
- *   4. Add labels to target
- *   5. Can we add labels to historical clusters?
- *   6. integrate with main project --==>
+ *   4. DONE Add labels to target
  *
  */
 
@@ -28,10 +26,6 @@ function SonarSlider(_container) {
     // the extents of the treadmill range in sonar units
     this.extents = {min: 0.0, max: 100.0};
 
-    // the target walker position in sonar units
-    this.target = 0.5;
-    this.targets = [{name: "set", value: this.target}];
-
     this.options = {};
     this.controls = {};
     this.groups = {};
@@ -42,11 +36,16 @@ function SonarSlider(_container) {
     // control measurements
     this.options = {
         // width and height of outer control
-        width: 60,
+        width: 80,
         height: 450,
 
+        decimals: 2,
+
         outline: {
-            border: 5, width: 24
+            border: 5, width: 24,
+            color: "#444",
+            fill: "none",
+            opacity: 1.0
             // height: determined by formula
         },
         history: {
@@ -57,33 +56,65 @@ function SonarSlider(_container) {
             //gooey: 5,
             expiration: 3000,
             limit: 75
+        },
+        targets: {
+            set: {
+                color: "cyan"
+            },
+            current: {
+                color: "gray"
+            }
         }
     };
 
+    // merge any user supplied options if found
     var user_options_object = this.container.data("options");
     if(user_options_object) {
-        console.log(user_options_object);
         this.user_options = window[user_options_object];
         if(this.user_options) {
             this.options = $.extend(true, {}, this.options, this.user_options);
         }
     }
-    console.log(this.options);
 
+    // the target walker position in sonar units
+    this.target = 0.5;
+    this.current = 0.3;
+    this.targets = [
+        {
+            name: "set",
+            decimals:this.options.decimals,
+            value: this.target,
+            color: this.options.targets.set.color,
+            points: "10,-5 0,0 10,5"
+        },
+        {
+            name: "current",
+            decimals:this.options.decimals,
+            value: this.current,
+            color: this.options.targets.current.color,
+            //points: "-10,-5 0,0 7,0 0,0 -10,5"
+            //points: "-4,0 8,0"
+            points: "-4,0 8,0 8,-4 -4,0"
+
+        }
+    ];
+
+    // build the scale of units between sonar range and visual pixels
     this.unitScale = d3.scaleLinear()
         .domain([0,1])
         .range([0,this.options.height - this.options.outline.border*2 ]);
 
+    // create our SVG container
     this.container.html("");
     var svg = this.svg = d3.select(this.container[0]).append("svg")
         .attr("width", this.options.width)
         .attr("height", this.options.height)
         .attr("viewBox", "0 0 " + this.options.width + " " + this.options.height);
 
-    var defs = svg.append('defs');
+    // build our historical data visualization SVG filter
     var filter=null;
     var filterid = "gooey"+this.instanceNumber;
-    console.log(filterid);
+    var defs = svg.append('defs');
 
     // setup the history blur
     if(this.options.history.blur || this.options.history.gooey) {
@@ -118,33 +149,24 @@ function SonarSlider(_container) {
 
     this.controls.outline = svg.append("g")
         .attr("class", "outline");
-    this.groups.history = this.controls.outline.append("g")
-        .attr("class", "history");
-    if(filter)
-        this.groups.history.style("filter", "url(#"+filterid+")"); //Set the filter on the container svg
-
-    var now = Number(new Date());
-    this.history = [
-        { time: now-2000, value: 0.2 },
-        { time: now-3000, value: 0.21 },
-        { time: now-6000, value: 0.22 },
-        { time: now-7000, value: 0.24 },
-        { time: now-9000, value: 0.67 },
-        { time: now-12000, value: 0.678 },
-        { time: now-14000, value: 0.69 },
-        { time: now-17000, value: 0.74 }
-    ];
-
 
     this.controls.outline
         .append("rect")
-        .attr("stroke", "white")
-        .attr("fill", "none")
+        .attr("stroke", this.options.outline.color)
+        .attr("fill", this.options.outline.fill)
+        .attr("opacity", this.options.outline.opacity)
         .attr("rx", 10).attr("ry", 10)
         .attr("x", this.options.outline.border)
         .attr("y", this.options.outline.border)
         .attr("width", this.options.outline.width)
         .attr("height", this.options.height - this.options.outline.border*2);
+
+    // create historical
+    this.history = [];
+    this.groups.history = this.controls.outline.append("g")
+        .attr("class", "history");
+    if(filter)
+        this.groups.history.style("filter", "url(#"+filterid+")"); //Set the filter on the container svg
 
 
     // historical lines
@@ -152,11 +174,14 @@ function SonarSlider(_container) {
         .selectAll("g.historical-line")
         .data(this.history, function(d) { return d.time; });
 
-
-
+    // update the view
     this.updateTargets();
     this.updateHistory();
 
+    // hide the current value
+    this.svg.select("#target-current").style("opacity", 0.0);
+
+    // clicking in the slider area sets the target position
     svg.on("click",function(){
         slider.click(d3.mouse(svg.node()));
     });
@@ -184,17 +209,29 @@ SonarSlider.prototype.updateTargets = function()
         .selectAll("g.target")
         .data(this.targets);
     this.controls.targets
-        .enter()
-            .append("g")
+        .enter().append("g")
             .attr("class","target")
             .attr("id", function(d) { return "target-"+d.name; })
             .attr("transform", function(d) { return "translate("+metrics.outline.right+", "+slider.unitToPixel(d.value)+")"; } )
-            .append("polygon")
-                .attr("fill", "white")
-                .attr("points", "10,0 0,5 10,10");
+        .call(function(root) {
+            root.append("polygon")
+                .attr("fill", function(d) { return d.color; })
+                .attr("stroke", function(d) { return d.color; })
+                .attr("stroke-width", 1)
+                .attr("points", function(d) { return d.points; });
+            root.append("text")
+                .attr("x", 13)
+                .attr("y", 3)
+                .attr("font-family", "calibri")
+                .attr("font-size", "11px")
+                .attr("fill", "gray")
+                .text(function(d) { return d.value.toFixed(d.decimals); });
+        });
     this.controls.targets
         .transition()
         .attr("transform",function(d) { return "translate("+metrics.outline.right+", "+slider.unitToPixel(d.value)+")"; } );
+    this.controls.targets.selectAll("text")
+        .text(function(d) { return d.value.toFixed(d.decimals); });
 };
 
 SonarSlider.prototype.updateHistory = function()
@@ -232,10 +269,22 @@ SonarSlider.prototype.updateHistory = function()
 
 SonarSlider.prototype.setCurrent = function(val) {
     var now = Number(new Date());
-    this.current = { time: now, value:val };
+    var metrics = this.getMetrics();
+
+    this.current = val;
+    this.targets[1].value = this.current;
+
+    // update visual style of current pointer
+    this.svg.select("#target-current text")
+        .text(this.current.toFixed(this.targets[1].decimals) );
+
+    this.svg.select("#target-current")
+        .attr("transform", "translate("+metrics.outline.right+", "+this.unitToPixel(this.current)+")" )
+        .transition().duration(1000)
+        .styleTween("opacity", function() { return d3.interpolate(1.0, 0.0); });
 
     // add to history
-    this.history.push(this.current);
+    this.history.push({ time:now, value: this.current });
 
     // limit history to N elements
     while(this.history.length > this.options.history.limit)
