@@ -102,7 +102,19 @@ function Treadmill()
     this.desiredIncline = 0;
 
     // sensors
-    this.heartrate = 0;
+    this.sensors = {
+        heartrate: {
+            // no device member, so for now this is ignored
+            value: null
+        },
+        sonar: {
+            device: {
+                mode: "raw",
+                file: "/sys/bus/iio/devices/iio\:device0/in_distance_raw"
+            },
+            value: null 
+        }
+    };
 
     // limits - in native format
     this.speedIncrement = this.MPHtoNative(0.1);
@@ -171,6 +183,9 @@ function Treadmill()
     console.log("Treadmill ready");
 
     var _treadmill = this;
+
+    // set a timer to read sensors
+    this.__sensorInterval = setInterval(function(){ _treadmill.readSensors(); }, 100, this);
 }
 
 Treadmill.prototype.takeOwnershipOfDevice = function(device_path)
@@ -558,6 +573,27 @@ Treadmill.prototype.sendEvent = function(_name, _data)
 	}
 }
 
+Treadmill.prototype.readSensors = function()
+{
+    this.readSensor(this.sensors.sonar);
+}
+
+Treadmill.prototype.readSensor = function(sensor_info)
+{
+    var _treadmill = this;
+    if(sensor_info.device.mode =='raw') {
+        // read the value straight from the file
+        fs.readFile(sensor_info.device.file, function(err, contents) {
+            if(err==null) {
+                sensor_info.value = parseInt(contents);
+                //console.log("sensor: "+sensor_info.value);
+                _treadmill.sendEvent("sonar.value",sensor_info.value);
+            } else
+                _treadmill.sendEvent("sonar.error", err.code);
+            //else console.log("sonar read error: ", sensor_info.device.file, err);
+        });
+    }  
+}
 
 Treadmill.prototype.abortConnection = function()
 {
