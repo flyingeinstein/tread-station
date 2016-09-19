@@ -25,7 +25,15 @@ if(files.length>1) {
 		pwm_endpoint = files[0]+'/';
 		console.log("found PWM P8:13 endpoint at "+pwm_endpoint);
 	}
+} else {
+	// look in pwm location in >4.1 kernels
+	files = glob.sync("/sys/class/pwm/pwmchip0/pwm1");
+	if(files.length==1) {
+		pwm_endpoint = files[0]+'/';
+		console.log("found PWM P8:13 endpoint at "+pwm_endpoint);
+	}
 }
+
 if(!pwm_endpoint) console.log("failed to find the PWM P8:13 endpoint in /sys/devices/ocp.?/pwm_test_P8_13.??");
 
 // instantiate the Web Service
@@ -627,7 +635,7 @@ Date.prototype.unix_timestamp = function()
 
 // ensure we have all config
 var treadmill;
-if(!ocp_root || !pwm_endpoint) {
+if(!pwm_endpoint) {
 	setTimeout(function () { process.exit(5); }, 100);
 } else {
   treadmill = new Treadmill();

@@ -16,6 +16,7 @@ Group staff
 		AllowOverride All
 		Order allow,deny
 		allow from all
+		Require all granted
 	</Directory>
 
 	DirectoryIndex default.html
