@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Tread Station</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link type="text/css" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">
+	<link rel="stylesheet" href="../css/themes/smoothness/jquery-ui.css">
+	<link rel="stylesheet" href="../css/grayscale.css">
+	<link rel="stylesheet" href="../css/font-awesome.min.css">
+	<link rel="stylesheet" href="../bootstrap/css/bootstrap.css">
+	<link rel="stylesheet" href="../bootstrap/css/bootstrap-theme.css">
+	<script src="../js/jquery-1.9.1.js"></script>
+	<script src="../js/jquery-ui.js"></script>
+	<script src="../js/underscore.js"></script>
+	<script src="../js/backbone.js"></script>
+	<script src="../js/side-nav.js"></script>
+	<script src="../js/d3.min.js"></script>
+	<script src="../bootstrap/js/bootstrap.js"></script>
+	<script src="../highcharts/js/highstock.js"></script>
+	<script src="../highcharts/js/exporting.js"></script>
+	<script src="../highcharts/js/highcharts-more.js"></script>
+	<script src="../js/bootstrap.touchspin.js"></script>
+	<script src="../js/qotd.js"></script>
+	<script src="../js/sonar-slider.js"></script>
+	<link rel="stylesheet" href="../css/style.css">
+	<link rel="stylesheet" href="../css/brown.css">
+    <style>
+        .slider {
+            width: 80px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body id="page-top" data-spy="scroll" data-target=".navbar-custom" class="noselect disconnected">
+
+
+<div id="footer" style="display:none">
+	<div id="ConnectionStatus">Not connected</div>
+	<div id="debug"></div>
+</div>
+
+<div class="container">
+   <p>Sonar Slider</p>
+
+    <div id="slider1" class="slider"></div>
+    <div id="slider2" class="slider" data-options="slider2_options"></div>
+    <div id="slider3" class="slider" data-options="slider3_options"></div>
+    <div id="slider4" class="slider" data-options="slider4_options"></div>
+    <div id="slider5" class="slider" data-options="slider5_options"></div>
+    <div id="slider6" class="slider" data-options="slider6_options"></div>
+
+</div>
+
+
+<script language="JavaScript">
+    var nextUpdate = null;
+
+    var slider2_options = {
+        history: {
+            gooey: 7
+        }
+    };
+    var slider3_options = {
+        history: {
+            color: "blue",
+            gooey: 7
+        }
+    };
+    var slider4_options = {
+        history: {
+            color: "yellow",
+            gooey: 7
+        }
+    };
+    var slider5_options = {
+        outline: {
+            color: "none",
+            fill: "orange",
+            opacity: 0.15
+        },
+        targets: {
+            set: {
+                color: "orange"
+            }
+        },
+        history: {
+            color: "orange",
+            gooey: 7
+        }
+    };
+    var slider6_options = {
+        outline: {
+            color: "none",
+            fill: "#181818"
+        },
+        history: {
+            color: "white",
+            gooey: 7
+        }
+    };
+
+	$(".slider").each(function() {
+        var slider = $(this).sonarSlider();
+
+        // when the user clicks, they simulate new sonar measurements
+        slider.svg.on("mousemove", function (e) {
+            var mouse = slider.mouse();
+            if (mouse[0] > slider.options.outline.border && mouse[0] < slider.options.outline.width + slider.options.outline.border) {
+                var now = Number(new Date());
+                if (now > nextUpdate) {
+                    var unit = slider.pixelToUnit(mouse[1]);
+                    slider.setCurrent(unit);
+                    nextUpdate = now + 50;
+                }
+            }
+        });
+    });
+
+</script>
+
+
+</body>
+</html>
