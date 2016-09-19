@@ -1,5 +1,5 @@
-#!/usr/bin/nodejs
 
+var fs = require('fs');
 var bbbPWM = require('./bbb-pwm');
 var DateJS = require('./node_modules/datejs');
 var Aggregate = require('./aggregate');
