@@ -78,6 +78,15 @@ stepintervaldelay: 500 // Time in milliseconds before the spinner starts to spin
 			$(".status-indicator").text("");
 			console.log("wait for it");
 			treadmill.resetTimer = setTimeout(function() { treadmill.reset(); $("#user-select").modal(); }, 10000);
+		} else if(name=="sonar.value") {
+			if(treadmill.sonarSlider) {
+				treadmill.sonarSlider.setCurrent(data);
+			}
+		} else if(name=="sonar.error") {
+			if(treadmill.sonarSlider) {
+				//console.log("sonar error: "+data);
+				treadmill.sonarSlider.error(data);
+			}
 		}
 	}
 	
