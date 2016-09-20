@@ -6,6 +6,16 @@ function zeropad(number) {
     return (number<10) ? '0'+number : number;
 }
 
+function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
 function Treadmill()
 {
     // variables
@@ -18,6 +28,12 @@ function Treadmill()
 	var _treadmill = this;
 	this.eventHandlers = {
 	};
+
+    // determine host
+    this.host = getParameterByName("host");
+    if(!this.host)
+        this.host = window.location.hostname;
+    console.log("treadmill host: "+this.host);
 }
 
 function ws_status(str)
@@ -30,10 +46,10 @@ Treadmill.prototype.connect = function(url)
   if ("WebSocket" in window)
   {
      var _treadmill = this;
-     
+
      // Let us open a web socket
-     ws_status("connecting to "+window.location.hostname+"...");
-     this.connection = new WebSocket("ws://"+window.location.hostname+":27001/echo");
+     ws_status("connecting to "+this.host+"...");
+     this.connection = new WebSocket("ws://"+this.host+":27001/echo");
      this.connection.onopen = function()
      {
         // Web Socket is connected, send data using send()
@@ -126,6 +142,7 @@ Treadmill.prototype.setUser = function(user, weightUpdate)
 	
 Treadmill.prototype.parseEvent = function(name, data)
 {
+    // this should not be edited, the main app will override this member
 }
 
 Treadmill.prototype.setSpeed = function(value) 
