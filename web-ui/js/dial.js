@@ -80,7 +80,7 @@ function Dial(_container)
 
 	
 	var bg = svg.append("g")
-		.attr("class","background")
+		.attr("class","background");
 	bg.append("circle")
 		.attr("class","background-circle")
 		.attr("cx",center.x)
@@ -106,27 +106,27 @@ function Dial(_container)
 	var N=160;
 	var dxAngle = 2*Math.PI/N;
 	this.arcs = {};
-	var tickArc = this.arcs.ticks = d3.svg.arc()
+	var tickArc = this.arcs.ticks = d3.arc()
 		.startAngle(function(d,h) { return d-h; })
 		.endAngle(function(d,h) { return d+h; })
 		.innerRadius(this.radii.ticks.inner)
 		.outerRadius(this.radii.ticks.outer);
-	var bigTickArc = d3.svg.arc()
+	var bigTickArc = d3.arc()
 		.startAngle(function(d,h) { return d-h*3; })
 		.endAngle(function(d,h) { return d+h*3; })
 		.innerRadius(radius-radius*0.24)
 		.outerRadius(radius-5);
-	var currentSpeedArc = d3.svg.arc()
+	var currentSpeedArc = d3.arc()
 		.startAngle(function(d,h) { return d-h*6; })
 		.endAngle(function(d,h) { return d+h*6; })
 		.innerRadius(radius-radius*0.25)
 		.outerRadius(radius);
-	var innerButtonArc = d3.svg.arc()
+	var innerButtonArc = d3.arc()
 		.startAngle(function(a,h) { return a; })
 		.endAngle(function(a,h) { return h; })
 		.innerRadius(radius-radius*0.28)
 		.outerRadius(radius);
-	var outerButtonArc = d3.svg.arc()
+	var outerButtonArc = d3.arc()
 		.startAngle(function(a,h) { return a; })
 		.endAngle(function(a,h) { return h; })
 		.innerRadius(radius+20)
@@ -214,7 +214,7 @@ function Dial(_container)
 	
 	// goal indicator
 	var goalAngle = { begin: 2*Math.PI-ang-dxAngle, end: 2*Math.PI+ang+dxAngle };
-	this.arcs.goal = d3.svg.arc()
+	this.arcs.goal = d3.arc()
 		.startAngle(function(a,h) { return goalAngle.begin; })
 		.endAngle(function(a,h) { return goalAngle.begin + (goalAngle.end-goalAngle.begin)*h; })
 		.innerRadius(radius-radius*0.245-10)
@@ -242,15 +242,14 @@ Dial.prototype.setSpeed = function(speed)
 	} else {
 		ctrl.attr("style","display:none");
 	}
-}
+};
 
 Dial.prototype.setRunningTime = function(seconds,minutes,hours)
 {
 	var percent = Math.min(1.0, (seconds+minutes*60+hours*3600) / this.treadmill.goaltime);
 	this.container.find(".indicators .goal")
-		.attr("d", this.arcs.goal(0, percent))	
-	
-}
+		.attr("d", this.arcs.goal(0, percent));
+};
 
 Dial.prototype.click = function(x,y)
 {
@@ -266,7 +265,7 @@ Dial.prototype.click = function(x,y)
 	if(radius > this.radii.ticks.inner && radius < this.radii.ticks.outer) {
 		console.log("speed "+angle+"  "+this.radii.ticks.inner+" < "+radius+" < "+this.radii.ticks.outer);
 	}
-}
+};
 
 // extend the jQuery class so we can easily create a dial in a control just by calling dial()
 jQuery.fn.extend({
