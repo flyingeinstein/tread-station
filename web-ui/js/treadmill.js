@@ -203,6 +203,12 @@ Treadmill.prototype.floor = function()
     return this.setIncline("FLOOR");
 }
 
+Treadmill.prototype.autopace = function(value)
+{
+    if(this.connection && value)
+        this.connection.send(JSON.stringify({ Autopace: value }));
+}
+
 Treadmill.prototype.updateRunningTime = function(millis)
 {
 	var seconds, minutes, hours;

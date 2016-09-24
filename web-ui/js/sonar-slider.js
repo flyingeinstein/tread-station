@@ -356,7 +356,7 @@ SonarSlider.prototype.mouse = function()
 SonarSlider.prototype.click = function(mouse)
 {
     var val = this.pixelToUnit(mouse[1]);
-    this.setTarget(val);
+    //this.setTarget(val);
     this.dispatch.call("change", this, mouse, val);
     //this.updateTargets();
 };

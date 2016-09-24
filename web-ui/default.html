@@ -187,6 +187,11 @@
 	$(function() {
 		var slider = treadmill.sonarSlider = $(".slider").sonarSlider();
 
+		slider.on("change", function (e) {
+			console.log("autopace");
+			treadmill.autopace("toggle");
+		});
+
 		// when the user clicks, they simulate new sonar measurements
 		slider.svg.on("mousemove", function (e) {
 			var mouse = slider.mouse();
