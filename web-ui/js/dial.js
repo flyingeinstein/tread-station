@@ -30,153 +30,172 @@ function glyph(id, parent, radius, angle, scale, offset)
 		.attr("transform","translate("+pos.x+","+pos.y+") "+((scale!=1.0)?" scale("+scale+")":""));
 }
 
-function Dial(_container)
-{
-	
+function Dial(_container) {
+
 	this.container = $(_container);
 	var _this = this;
-	
+
 	//var svgbase = '<g class="dial"><g class="ticks"><g class="background-ticks" /></g></g>';
 	//dial.svgroot.html( svgbase );
-	var data = [10,20,30,40,50];
-	var extents = this.extents = {width: 640, height: 640 };
+	var data = [10, 20, 30, 40, 50];
+	var extents = this.extents = {width: 640, height: 640};
 	var width = this.width = 550;
 	var height = this.height = 450;
-	var radius = this.radius = extents.height/2;
-	var center = this.center = {x: extents.width - radius, y: extents.height/2 };
+	var radius = this.radius = extents.height / 2;
+	var center = this.center = {x: extents.width - radius, y: extents.height / 2};
 
 	var radians = radians = 1.7 * Math.PI;
-	var dial_button_space = 0.17*Math.PI;
+	var dial_button_space = 0.18 * Math.PI;
 	var dial_begin = -Math.PI + dial_button_space;
 	var dial_end = -dial_begin;// + 0.1*Math.PI;
 
 	this.scales = {
 		speed: d3.scaleLinear()
-				.domain([1, 10])
-				.range([dial_begin, dial_end])
+			.domain([1, 10])
+			.range([dial_begin, dial_end])
 	};
 
 	this.container.html("");
 	var svg = d3.select(this.container[0]).append("svg")
-    	.attr("width", this.width)
-    	.attr("height", this.height)
-		.attr("viewBox","0 0 "+extents.width+" "+extents.height);
+		.attr("width", this.width)
+		.attr("height", this.height)
+		.attr("viewBox", "0 0 " + extents.width + " " + extents.height);
 
 	// add a border
 	radius -= 32;
-	
+
 	var defs = svg.append("defs");
 	var filter = defs.append("filter")
-			.attr("id","fe3")
-			.attr("x","0")
-			.attr("y","0")
-			.attr("width","200%")
-			.attr("height","200%");
+		.attr("id", "fe3")
+		.attr("x", "0")
+		.attr("y", "0")
+		.attr("width", "200%")
+		.attr("height", "200%");
 	filter.append("feOffset")
-		.attr("result","offOut")
-		.attr("in","SourceAlpha")
-		.attr("dx","2")
-		.attr("dy","2");
+		.attr("result", "offOut")
+		.attr("in", "SourceAlpha")
+		.attr("dx", "2")
+		.attr("dy", "2");
 	filter.append("feGaussianBlur")
-		.attr("result","blurOut")
-		.attr("in","offOut")
-		.attr("stdDeviation","10");
+		.attr("result", "blurOut")
+		.attr("in", "offOut")
+		.attr("stdDeviation", "10");
 	filter.append("feBlend")
-		.attr("in","SourceGraphic")
-		.attr("in2","blurOut")
-		.attr("mode","normal");
+		.attr("in", "SourceGraphic")
+		.attr("in2", "blurOut")
+		.attr("mode", "normal");
 	filter.append("feComponentTransfer")
 		.append("feFuncA")
-			.attr("type","linear")
-			.attr("slope","0.4");
+		.attr("type", "linear")
+		.attr("slope", "0.4");
 
-	
+
 	var bg = svg.append("g")
-		.attr("class","background");
+		.attr("class", "background");
 	bg.append("circle")
-		.attr("class","background-circle")
-		.attr("cx",center.x)
-		.attr("cy",center.y)
-		.attr("r",radius)
-		.attr("filter","url(#fe3)")
-		;
-		
+		.attr("class", "background-circle")
+		.attr("cx", center.x)
+		.attr("cy", center.y)
+		.attr("r", radius)
+		.attr("filter", "url(#fe3)")
+	;
+
 	var ticks = svg.append("g")
-		.attr("class","ticks");
+		.attr("class", "ticks");
 	var bgticks = ticks.append("g")
-		.attr("class","background-ticks");
+		.attr("class", "background-ticks");
 	var indicators = ticks.append("g")
-		.attr("class","indicators");
+		.attr("class", "indicators");
 	var buttons = ticks.append("g")
-		.attr("class","buttons");
-	
+		.attr("class", "buttons");
+
 	// give radius positions of control parts
 	this.radii = {
-		ticks : { inner:radius-radius*0.24, outer:radius-5 }
+		ticks: {inner: radius - radius * 0.24, outer: radius - 5}
 	};
 
-	var N=160;
-	var dxAngle = 2*Math.PI/N;
+	var N = 160;
+	var dxAngle = 2 * Math.PI / N;
 	this.arcs = {};
 	var tickArc = this.arcs.ticks = d3.arc()
-		.startAngle(function(d,h) { return d-h; })
-		.endAngle(function(d,h) { return d+h; })
+		.startAngle(function (d, h) {
+			return d - h;
+		})
+		.endAngle(function (d, h) {
+			return d + h;
+		})
 		.innerRadius(this.radii.ticks.inner)
 		.outerRadius(this.radii.ticks.outer);
 	var bigTickArc = d3.arc()
-		.startAngle(function(d,h) { return d-h*3; })
-		.endAngle(function(d,h) { return d+h*3; })
-		.innerRadius(radius-radius*0.24)
-		.outerRadius(radius-5);
-
-	var currentSpeedArc = d3.arc()
-		.startAngle(function(d,h) { return d-h*6; })
-		.endAngle(function(d,h) { return d+h*6; })
-		.innerRadius(radius-radius*0.25)
-		.outerRadius(radius);
+		.startAngle(function (d, h) {
+			return d - h * 3;
+		})
+		.endAngle(function (d, h) {
+			return d + h * 3;
+		})
+		.innerRadius(radius - radius * 0.24)
+		.outerRadius(radius - 5);
 	var innerButtonArc = d3.arc()
-		.startAngle(function(a,h) { return a; })
-		.endAngle(function(a,h) { return h; })
-		.innerRadius(radius-radius*0.28)
+		.startAngle(function (a, h) {
+			return a;
+		})
+		.endAngle(function (a, h) {
+			return h;
+		})
+		.innerRadius(radius - radius * 0.28)
 		.outerRadius(radius);
 	var outerButtonArc = d3.arc()
-		.startAngle(function(a,h) { return a; })
-		.endAngle(function(a,h) { return h; })
-		.innerRadius(radius+20)
-		.outerRadius(radius+radius*0.17);
-	
-	
-	var ang = Math.PI*0.82;
+		.startAngle(function (a, h) {
+			return a;
+		})
+		.endAngle(function (a, h) {
+			return h;
+		})
+		.innerRadius(radius + 20)
+		.outerRadius(radius + radius * 0.17);
+
+
+	var ang = Math.PI * 0.82;
 	var divisor = 9;
-	var divisorAngle = this.divisorAngle = ang*2 / divisor;
-	var n=0;
-	if(1) {
-		for (a = -ang; a < ang; a += dxAngle) {
-			var _n = Math.floor((a + ang) / divisorAngle);
-			bgticks.append("path")
-				.attr("d", (_n == n) ? tickArc(a, dxAngle * 0.1) : bigTickArc(a, dxAngle * 0.1))
-				.attr("transform", "translate(" + center.x + "," + center.y + ")");
-			n = _n;
-		}
-	}
-	for(d=2; d<=8; d++)
-	{
-		var a = ((d-divisor/2 - 0.5)*divisorAngle )*180/Math.PI;
-		bgticks.append("text")
-			.attr("class","dial-ordinals")
-			.attr("text-anchor","middle")
-			.attr("x",center.x)
-			.attr("y",center.y-radius*0.80)
-			.attr("transform","rotate("+a+","+center.x+","+center.y+")")
-			.text(d);
-	}
+	var divisorAngle = this.divisorAngle = ang * 2 / divisor;
+
+	// speed ticks
+	var tick_points = this.scales.speed.ticks(this.scales.speed.domain()[1]*10);
+	var ticks = bgticks
+		.selectAll(".tick")
+		.data(tick_points)
+		.enter()
+			.append("path")
+			.attr("class", function (d, i) { return (d == Math.floor(d)) ? "tick major" : "tick"; })
+			.attr("transform", "translate(" + center.x + "," + center.y + ")")
+			.attr("d", function (d, i) {
+				return (d == Math.floor(d))
+					? bigTickArc(_this.scales.speed(d), dxAngle * 0.1)
+					: tickArc(_this.scales.speed(d), dxAngle * 0.1);
+			});
+
+	// dial speed number labels
+	var ticks = bgticks
+		.selectAll(".dial-ordinals")
+		.data(this.scales.speed.ticks())
+		.enter()
+			.append("text")
+			.filter(function(d) { return d!=1 && d!=9; })
+			.attr("class", "dial-ordinals")
+			.attr("text-anchor", "middle")
+			.attr("x", center.x)
+			.attr("y", center.y - radius * 0.80)
+			.attr("transform", function(d,i) { return "rotate(" + (((d - divisor / 2 - 0.5) * divisorAngle ) * 180 / Math.PI) + "," + center.x + "," + center.y + ")"; })
+			.text(function(d,i) { return d; });
+
+	// current speed indicator
 	this.defaultTranslate="translate("+center.x+","+center.y+")";
 	indicators.append("path")
 		.attr("class","current-speed-indicator")
-		.attr("d", currentSpeedArc(-ang, dxAngle*0.1) )
-		.attr("transform",this.defaultTranslate+" rotate("+(this.divisorAngle*180/Math.PI)+")");
-			
-	
+		.attr("d", bigTickArc(0.18*Math.PI, dxAngle*0.3) )
+		.attr("transform",this.defaultTranslate+" rotate("+(2*this.divisorAngle*180/Math.PI)+")");
+
+
 	// inner buttons - faster/slower
 	buttons.append("path")
 		.attr("id","speed-increase")
@@ -191,7 +210,7 @@ function Dial(_container)
 	// button glyphs
 	glyph(0, buttons, radius*0.87, Math.PI-(Math.PI-ang)/2, 1.0, center);
 	glyph(1, buttons, radius*0.87, Math.PI+(Math.PI-ang)/2, 1.0, center);
-	
+
 	// outer buttons - incline/decline
 	var incdec_rotation = 1.35;
 	var incdec_width = 0.03;
@@ -239,25 +258,9 @@ function Dial(_container)
 		.attr("d", this.arcs.goal(0, 0.25))
 		.attr("transform","translate("+center.x+","+center.y+")");
 
-	// NEW CODE
-	//console.log(this.scales.speed.ticks(90));
-	var tick_points = this.scales.speed.ticks();
-	bgticks
-		.selectAll(".tick")
-		.data(tick_points)
-		.enter()
-			.append("path")
-				.attr("class", "tick")
-				.attr("fill","red")
-				.attr("d", function(d, i) { console.log("p"+d+"="+_this.scales.speed(d)); return tickArc(_this.scales.speed(d), dxAngle * 0.1); })
-				.attr("transform", "translate(" + center.x + "," + center.y + ")");
 
-
-
-
-	var dial = this;
 	this.container.on("click",function(){
-		dial.click(event.layerX, event.layerY);
+		_this.click(event.layerX, event.layerY);
 	});
 }
 
@@ -266,7 +269,8 @@ Dial.prototype.setSpeed = function(speed)
 	var ctrl = this.container.find(".indicators .current-speed-indicator");
 	if(speed>2)
 	{
-		var val = (speed-1) * (this.divisorAngle*180/Math.PI);
+		var val = this.scales.speed(speed-1) *180/Math.PI;
+		console.log("speed "+speed+"="+val);
 		ctrl.attr("style","");
 		ctrl.attr("transform",this.defaultTranslate+" rotate("+val+")");
 	} else {

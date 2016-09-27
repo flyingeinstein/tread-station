@@ -46,6 +46,13 @@ body {
 	height:150px;
 }
 
+body #speed-dial .ticks path.tick {
+	fill: yellow;
+}
+body #speed-dial .ticks path.tick.major {
+	fill: red;
+}
+
 body.disconnected {
 /*	background-color: #5F0505;*/
 	background-color: black;
@@ -101,11 +108,6 @@ body.disconnected .quick-dial {
 
 body.running #speed-dial .background circle.background-circle {
 	fill: #770303;
-}
-
-body.disconnected #speed-dial .ticks path.tick {
-	fill: yellow !important;
-	stroke: yellow !important;
 }
 
 #speed-dial .ticks .background-ticks line {
