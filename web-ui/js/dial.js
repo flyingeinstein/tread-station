@@ -34,6 +34,7 @@ function Dial(_container)
 {
 	
 	this.container = $(_container);
+	var _this = this;
 	
 	//var svgbase = '<g class="dial"><g class="ticks"><g class="background-ticks" /></g></g>';
 	//dial.svgroot.html( svgbase );
@@ -43,7 +44,18 @@ function Dial(_container)
 	var height = this.height = 450;
 	var radius = this.radius = extents.height/2;
 	var center = this.center = {x: extents.width - radius, y: extents.height/2 };
-		
+
+	var radians = radians = 1.7 * Math.PI;
+	var dial_button_space = 0.17*Math.PI;
+	var dial_begin = -Math.PI + dial_button_space;
+	var dial_end = -dial_begin;// + 0.1*Math.PI;
+
+	this.scales = {
+		speed: d3.scaleLinear()
+				.domain([1, 10])
+				.range([dial_begin, dial_end])
+	};
+
 	this.container.html("");
 	var svg = d3.select(this.container[0]).append("svg")
     	.attr("width", this.width)
@@ -102,7 +114,7 @@ function Dial(_container)
 	this.radii = {
 		ticks : { inner:radius-radius*0.24, outer:radius-5 }
 	};
-	
+
 	var N=160;
 	var dxAngle = 2*Math.PI/N;
 	this.arcs = {};
@@ -116,6 +128,7 @@ function Dial(_container)
 		.endAngle(function(d,h) { return d+h*3; })
 		.innerRadius(radius-radius*0.24)
 		.outerRadius(radius-5);
+
 	var currentSpeedArc = d3.arc()
 		.startAngle(function(d,h) { return d-h*6; })
 		.endAngle(function(d,h) { return d+h*6; })
@@ -137,15 +150,16 @@ function Dial(_container)
 	var divisor = 9;
 	var divisorAngle = this.divisorAngle = ang*2 / divisor;
 	var n=0;
-	for(a=-ang; a<ang; a+=dxAngle)
-	{
-		var _n = Math.floor((a+ang) / divisorAngle);
-		bgticks.append("path")
-			.attr("d", (_n==n) ? tickArc(a, dxAngle*0.1) : bigTickArc(a, dxAngle*0.1))
-			.attr("transform","translate("+center.x+","+center.y+")");
-		n = _n;
+	if(1) {
+		for (a = -ang; a < ang; a += dxAngle) {
+			var _n = Math.floor((a + ang) / divisorAngle);
+			bgticks.append("path")
+				.attr("d", (_n == n) ? tickArc(a, dxAngle * 0.1) : bigTickArc(a, dxAngle * 0.1))
+				.attr("transform", "translate(" + center.x + "," + center.y + ")");
+			n = _n;
+		}
 	}
-	for(d=2; d<=8; d++) 
+	for(d=2; d<=8; d++)
 	{
 		var a = ((d-divisor/2 - 0.5)*divisorAngle )*180/Math.PI;
 		bgticks.append("text")
@@ -224,7 +238,23 @@ function Dial(_container)
 		.attr("class","goal")
 		.attr("d", this.arcs.goal(0, 0.25))
 		.attr("transform","translate("+center.x+","+center.y+")");
-	
+
+	// NEW CODE
+	//console.log(this.scales.speed.ticks(90));
+	var tick_points = this.scales.speed.ticks();
+	bgticks
+		.selectAll(".tick")
+		.data(tick_points)
+		.enter()
+			.append("path")
+				.attr("class", "tick")
+				.attr("fill","red")
+				.attr("d", function(d, i) { console.log("p"+d+"="+_this.scales.speed(d)); return tickArc(_this.scales.speed(d), dxAngle * 0.1); })
+				.attr("transform", "translate(" + center.x + "," + center.y + ")");
+
+
+
+
 	var dial = this;
 	this.container.on("click",function(){
 		dial.click(event.layerX, event.layerY);

@@ -103,6 +103,11 @@ body.running #speed-dial .background circle.background-circle {
 	fill: #770303;
 }
 
+body.disconnected #speed-dial .ticks path.tick {
+	fill: yellow !important;
+	stroke: yellow !important;
+}
+
 #speed-dial .ticks .background-ticks line {
 	stroke: #788088;
 }
