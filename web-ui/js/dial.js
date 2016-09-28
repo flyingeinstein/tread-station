@@ -58,7 +58,18 @@ function Dial(_container) {
 	this.controls = {
 		speed: {},
 		incline: {},
-		goal: {}
+		goal: {},
+		groups: {}
+	};
+
+	// plugins API to dynamically add controls to the dial
+	this.plugins = {};
+
+	// lanes are concentric circles around the dial for controls. They can be inside the dial, such as the
+	// goal progress indicator, or they can be outer lanes such as incline, autopace, etc.
+	this.lanes = {
+		inner: [],
+		outer: []
 	};
 
 	this.container.html("");
@@ -115,8 +126,17 @@ function Dial(_container) {
 	var buttons = ticks.append("g")
 		.attr("class", "buttons");
 
+	// lane control groups
+	this.controls.lanes = svg.append("g")
+		.attr("class", "lanes");
+	this.lanes.inner.container = this.controls.lanes.inner = this.controls.lanes.append("g")
+		.attr("class", "inner-lanes");
+	this.lanes.outer.container = this.controls.lanes.outer = this.controls.lanes.append("g")
+		.attr("class", "outer-lanes");
+
 	// give radius positions of control parts
 	this.radii = {
+		outer: radius+15,
 		ticks: {inner: radius - radius * 0.24, outer: radius - 5}
 	};
 
@@ -150,15 +170,6 @@ function Dial(_container) {
 		})
 		.innerRadius(radius - radius * 0.28)
 		.outerRadius(radius);
-	var outerButtonArc = d3.arc()
-		.startAngle(function (a, h) {
-			return a;
-		})
-		.endAngle(function (a, h) {
-			return h;
-		})
-		.innerRadius(radius + 20)
-		.outerRadius(radius + radius * 0.17);
 
 
 	var ang = Math.PI * 0.82;
@@ -216,18 +227,7 @@ function Dial(_container) {
 	// button glyphs
 	glyph(0, buttons, radius*0.87, Math.PI-(Math.PI-ang)/2, 1.0, center);
 	glyph(1, buttons, radius*0.87, Math.PI+(Math.PI-ang)/2, 1.0, center);
-
-	// outer buttons - incline/decline
-	var incdec_rotation = 1.35;
-	var incdec_width = 0.03;
-	buttons.append("path")
-		.attr("class","incline-background")
-		.attr("d", outerButtonArc(1.2*Math.PI, 1.65*Math.PI))
-		.attr("transform","translate("+center.x+","+center.y+")");
-	this.controls.incline.indicator = buttons.append("path")
-		.attr("class","incline-indicator")
-		.attr("d", outerButtonArc((incdec_rotation-incdec_width)*Math.PI, incdec_rotation*Math.PI-0.01))
-		.attr("transform","translate("+center.x+","+center.y+")");
+	
 
 	// speed indicator
 	var status = svg.append("g")
@@ -250,7 +250,7 @@ function Dial(_container) {
 		.attr("x",center.x)
 		.attr("y",center.y+70)
 		.text("");
-	
+
 	// goal indicator
 	var goalAngle = { begin: 2*Math.PI-ang-dxAngle, end: 2*Math.PI+ang+dxAngle };
 	this.arcs.goal = d3.arc()
@@ -274,7 +274,7 @@ Dial.prototype.setSpeed = function(speed, doTransition)
 {
 	// our scale is in radians, so we must convert it to degrees for the transform attribute
 	var degrees = this.scales.speed(speed - 1) * 180 / Math.PI;
-	(doTransition ? this.controls.speed.indicator : this.controls.speed.indicator.transition().duration(1000))
+	(doTransition ? this.controls.speed.indicator.transition().duration(1000) : this.controls.speed.indicator)
 		.attr("fill-opacity", (speed>2) ? "1" : "0")	// fade in/out when we transition between stopped and running
 		.attr("transform", "translate(" + this.center.x + "," + this.center.y + ") rotate(" + degrees + ")");
 };
@@ -289,19 +289,137 @@ Dial.prototype.setRunningTime = function(seconds,minutes,hours)
 
 Dial.prototype.click = function(x,y)
 {
-	var scale = { 
-		x: (this.width / this.extents.width), 
-		y: (this.height / this.extents.height) 
+	var scale = {
+		x: (this.width / this.extents.width),
+		y: (this.height / this.extents.height)
 	};
-	var x1=x/scale.x - this.center.x, 
+	var x1=x/scale.x - this.center.x,
 	    y1=y/scale.y - this.center.y;
-	var angle = Math.atan2(y1,x1), 
+	var angle = Math.atan2(y1,x1),
 	    radius = Math.sqrt(x1*x1 + y1*y1);
 	console.log("click @ "+x1+":"+y1+"   a:"+(angle*180/Math.PI)+"  r:"+radius);
 	if(radius > this.radii.ticks.inner && radius < this.radii.ticks.outer) {
 		console.log("speed "+angle+"  "+this.radii.ticks.inner+" < "+radius+" < "+this.radii.ticks.outer);
 	}
 };
+
+
+
+/****** Dial Plugin API ******/
+
+Dial.prototype.createLane = function(ordinal)
+{
+	// create lane is identical to getLane() unless
+	if(isNaN(ordinal))
+		return null;
+
+	var n = ordinal = Number(ordinal);
+
+	// figure out what collection of lanes we need to check
+	var lanes;
+	if (n < 0) {
+		n = Math.abs(n) - 1;	// decrement N since we are use negative lane
+		lanes = this.lanes.inner;
+	} else {
+		lanes = this.lanes.outer;
+	}
+
+	// return existing lane if it exists
+	if (n < lanes.length)
+		return lanes[n];
+
+	// create a new lane
+	var lane = {
+		ordinal: ordinal,
+		dial: this,
+		container: lanes.container.append("g")
+			.attr("class", "lane"+ordinal),
+
+		controls: [],
+
+		offset: this.radii.outer,
+		width: 25,
+
+		arc: d3.arc()
+			.startAngle(function (a, h) {
+				return a;
+			})
+			.endAngle(function (a, h) {
+				return h;
+			})
+			.innerRadius(function() { return this.offset; })
+			.outerRadius(function() { return this.offset + this.width })
+	};
+
+	if(lane==null) return null;
+	lanes.push( lane );
+	return lane;
+};
+
+Dial.prototype.getLane = function(laneNameOrOrdinal)
+{
+	if(!isNaN(laneNameOrOrdinal)) {
+		var n = Number(laneNameOrOrdinal);
+		if(n<0) {
+			n = Math.abs(n)-1;
+			return (n < this.lanes.inner.length) ? this.lanes.inner[n] : null;
+		} else
+			return (n < this.lanes.outer.length) ? this.lanes.outer[n] : null;
+	}
+	for(i=0; i<this.lanes.outer.length; i++)
+		if(this.lanes.outer[i].name == laneNameOrOrdinal)
+			return this.lanes.outer[i];
+	for(i=0; i<this.lanes.outer.length; i++)
+		if(this.lanes.outer[i].name == laneNameOrOrdinal)
+			return this.lanes.outer[i];
+	return null;
+};
+
+Dial.prototype.attachToLane = function(plugin, lane_request)
+{
+	// find the right lane or create one
+	if(lane_request==null)
+		return false;
+
+	var lane;
+	if(lane_request.ordinal)
+		lane  = this.createLane(lane_request.ordinal);
+	if(lane==null)
+		return false;
+
+	// set the lane_request so new plugin can access the lane container
+	plugin.lane = lane;
+	lane.controls.push(plugin);
+
+	// set the arc range for this control within the lane
+	if(lane_request.alignment=='left')
+	{
+
+	}
+	else if(lane_request.alignment=='right')
+	{
+
+	}
+
+	return lane;
+};
+
+Dial.prototype.plugin = function(name, klass)
+{
+	this.plugins[name] = klass;
+	klass.container = this;
+	var lane;
+	if(klass.lane)
+		// this is a special control that attaches to lanes inside or outside the dial
+		lane = this.attachToLane(klass, klass.lane);
+
+	// add some properties to the plugin
+	if(!klass.controls) klass.controls = {};
+
+	if(typeof klass.attach ==="function")
+		klass.attach(lane);
+};
+
 
 // extend the jQuery class so we can easily create a dial in a control just by calling dial()
 jQuery.fn.extend({

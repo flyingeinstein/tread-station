@@ -23,6 +23,7 @@
 	<script src="../js/bootstrap.touchspin.js"></script>
 	<script src="../js/qotd.js"></script>
     <script src="../js/dial.js"></script>
+    <script src="../js/dial-incline.js"></script>
 	<link rel="stylesheet" href="../css/style.css">
 	<link rel="stylesheet" href="../css/brown.css">
     <style>
@@ -87,7 +88,10 @@
                 distance: 1    // miles
             }
         };
-        dial.setSpeed(4.2);
+
+        dial.plugin("incline",  new DialIncline() );
+
+        dial.setSpeed(4.2, true);
         dial.setRunningTime(36, 5, 0);
 
         setTimeout(function() { dial.setSpeed(2.5, true); }, 2000);

@@ -5,7 +5,7 @@ body {
 .panel {
 	background-color: rgba(92,84,84,0.7);
   -moz-border-radius: 2px;
-  border-radius: 2px;	
+  border-radius: 2px;
 }
 
 
@@ -29,7 +29,7 @@ body {
 	color: #f0f0f0;
 	font-family: arial;
 	-moz-border-radius: 2px;
-	border-radius: 2px;	
+	border-radius: 2px;
 }
 
 .highlight {
@@ -41,7 +41,7 @@ body {
 
 
 #SpeedIndicator {
-	text-align: center;	
+	text-align: center;
 	vertical-align: middle;
 	height:150px;
 }
@@ -89,8 +89,8 @@ body.connected #SpeedIndicator {
 }
 
 #speeddial svg {
-	
-	
+
+
 }
 
 body.disconnected #speed-dial .background circle.background-circle {
@@ -125,16 +125,16 @@ body.running #speed-dial .background circle.background-circle {
 #speed-dial .ticks .buttons path:hover {
 	fill: #C18E8E;
 }
-#speed-dial .ticks .buttons path.incline-background {
-	fill: #805252;
+#speed-dial .lanes path.incline-background {
+	fill: #2f363e;
 }
-#speed-dial .ticks .buttons path.incline-indicator {
+#speed-dial .lanes path.incline-indicator {
 	fill: #C5B5B5;
 }
-#speed-dial .ticks .buttons path.incline-background:hover {
-	fill: #B36E6E;
+#speed-dial .lanes path.incline-background:hover {
+	fill: #1f2429;
 }
-#speed-dial .ticks .indicators path.goal {
+#speed-dial .indicators path.goal {
 	fill: #E2E2E2;
 }
 #speed-dial .indicators .current-speed-indicator {
@@ -185,13 +185,13 @@ body.connected #speed-dial .ticks .buttons path.outer {
 body.connected #speed-dial .ticks .buttons path:hover {
 	fill: #C18E8E;
 }
-body.connected #speed-dial .ticks .buttons path.incline-background {
+body.connected #speed-dial .lanes path.incline-background {
 	fill: #2B3035;
 }
-body.connected #speed-dial .ticks .buttons path.incline-indicator {
+body.connected #speed-dial .lanes path.incline-indicator {
 	fill: #D8D6D6;
 }
-body.connected #speed-dial .ticks .buttons path.incline-background:hover {
+body.connected #speed-dial .lanes path.incline-background:hover {
 	fill: #202225;
 }
 body.connected #speed-dial .ticks .buttons path.glyph {
