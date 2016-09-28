@@ -21,8 +21,18 @@ function Treadmill()
     // variables
 	this.speed = -1;
     this.incline = -1;
-	
-	this.goaltime = 1.5*3600;
+
+    // Research suggests walking 5 miles a day is the magic number when it comes to health and fitness. For this reason
+    // we choose a goal distance of 5 miles. Based on an average human walking speed of 3.1 miles/hour (wikipedia) this
+    // translates to about 90 minutes of of walking. The user will choose a goal based on either time or distance but
+    // either choice they will walk the magic number if they accept the defaults.
+    // references:
+    //     https://en.wikipedia.org/wiki/Preferred_walking_speed
+    //     http://www.livescience.com/10406-fast-walk-predict-long-youll-live.html
+	this.goal = {
+        time: 1.5 * 3600,       // hour and a half
+        distance: 5             // 5 miles
+    };
     
     // internals
 	var _treadmill = this;
@@ -77,7 +87,7 @@ Treadmill.prototype.connect = function(url)
      this.connection.onerror = function(evt)
      {
         ws_status("Connection error : "+evt.data);
-	setTimeout(function(){ _treadmill.connect(url); }, 5000);
+	    setTimeout(function(){ _treadmill.connect(url); }, 5000);
      }
   } else
     alert("web sockets not supported");
@@ -124,8 +134,8 @@ Treadmill.prototype.parseMessage = function(msg)
 			if(msg.response && msg.response.userid>0) {
 				this.user = msg.response;
 				this.users[this.user.userid] = this.user;
-				this.goaltime = this.user.goaltime;
-				this.goaldistance = this.user.goaldistance;
+				this.goal.time = this.user.goaltime;
+				this.goal.distance = this.user.goaldistance;
 			}
 		}
 		

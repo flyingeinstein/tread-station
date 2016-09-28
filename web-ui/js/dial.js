@@ -55,6 +55,12 @@ function Dial(_container) {
 			.range([dial_begin, dial_end])
 	};
 
+	this.controls = {
+		speed: {},
+		incline: {},
+		goal: {}
+	};
+
 	this.container.html("");
 	var svg = d3.select(this.container[0]).append("svg")
 		.attr("width", this.width)
@@ -190,19 +196,19 @@ function Dial(_container) {
 
 	// current speed indicator
 	this.defaultTranslate="translate("+center.x+","+center.y+")";
-	indicators.append("path")
+	this.controls.speed.indicator = indicators.append("path")
 		.attr("class","current-speed-indicator")
-		.attr("d", bigTickArc(0.18*Math.PI, dxAngle*0.3) )
+		.attr("d", bigTickArc(0.18*Math.PI, dxAngle*0.2) )
+		.attr("fill-opacity", "0")
 		.attr("transform",this.defaultTranslate+" rotate("+(2*this.divisorAngle*180/Math.PI)+")");
 
-
 	// inner buttons - faster/slower
-	buttons.append("path")
+	this.controls.speed.increment = buttons.append("path")
 		.attr("id","speed-increase")
 		.attr("class","inner speed-increase")
 		.attr("d", innerButtonArc(ang+dxAngle, Math.PI-0.01))
 		.attr("transform","translate("+center.x+","+center.y+")");
-	buttons.append("path")
+	this.controls.speed.decrement = buttons.append("path")
 		.attr("id","speed-decrease")
 		.attr("class","inner speed-decrease")
 		.attr("d", innerButtonArc(Math.PI+0.01, 2*Math.PI-ang-dxAngle))
@@ -218,7 +224,7 @@ function Dial(_container) {
 		.attr("class","incline-background")
 		.attr("d", outerButtonArc(1.2*Math.PI, 1.65*Math.PI))
 		.attr("transform","translate("+center.x+","+center.y+")");
-	buttons.append("path")
+	this.controls.incline.indicator = buttons.append("path")
 		.attr("class","incline-indicator")
 		.attr("d", outerButtonArc((incdec_rotation-incdec_width)*Math.PI, incdec_rotation*Math.PI-0.01))
 		.attr("transform","translate("+center.x+","+center.y+")");
@@ -226,19 +232,19 @@ function Dial(_container) {
 	// speed indicator
 	var status = svg.append("g")
 		.attr("class","status");
-	status.append("text")
+	this.controls.status = status.append("text")
 		.attr("class","status-indicator")
 		.attr("text-anchor","middle")
 		.attr("x",center.x)
 		.attr("y",center.y-140)
 		.text("...");
-	status.append("text")
+	this.controls.runningTime = status.append("text")
 		.attr("class","running-time")
 		.attr("text-anchor","middle")
 		.attr("x",center.x)
 		.attr("y",center.y-100)
 		.text("0:00");
-	status.append("text")
+	this.controls.speed.display = status.append("text")
 		.attr("class","speed-indicator")
 		.attr("text-anchor","middle")
 		.attr("x",center.x)
@@ -252,7 +258,7 @@ function Dial(_container) {
 		.endAngle(function(a,h) { return goalAngle.begin + (goalAngle.end-goalAngle.begin)*h; })
 		.innerRadius(radius-radius*0.245-10)
 		.outerRadius(radius-radius*0.245-5);
-	indicators.append("path")
+	this.controls.goal.indicator = indicators.append("path")
 		.attr("id","goal")
 		.attr("class","goal")
 		.attr("d", this.arcs.goal(0, 0.25))
@@ -264,24 +270,20 @@ function Dial(_container) {
 	});
 }
 
-Dial.prototype.setSpeed = function(speed)
+Dial.prototype.setSpeed = function(speed, doTransition)
 {
-	var ctrl = this.container.find(".indicators .current-speed-indicator");
-	if(speed>2)
-	{
-		var val = this.scales.speed(speed-1) *180/Math.PI;
-		console.log("speed "+speed+"="+val);
-		ctrl.attr("style","");
-		ctrl.attr("transform",this.defaultTranslate+" rotate("+val+")");
-	} else {
-		ctrl.attr("style","display:none");
-	}
+	// our scale is in radians, so we must convert it to degrees for the transform attribute
+	var degrees = this.scales.speed(speed - 1) * 180 / Math.PI;
+	(doTransition ? this.controls.speed.indicator : this.controls.speed.indicator.transition().duration(1000))
+		.attr("fill-opacity", (speed>2) ? "1" : "0")	// fade in/out when we transition between stopped and running
+		.attr("transform", "translate(" + this.center.x + "," + this.center.y + ") rotate(" + degrees + ")");
 };
 
 Dial.prototype.setRunningTime = function(seconds,minutes,hours)
 {
-	var percent = Math.min(1.0, (seconds+minutes*60+hours*3600) / this.treadmill.goaltime);
-	this.container.find(".indicators .goal")
+	var percent = Math.min(1.0, (seconds+minutes*60+hours*3600) / this.treadmill.goal.time);
+	console.log("goal "+(seconds+minutes*60+hours*3600)+" of "+this.treadmill.goal.time+"  ("+(percent*100).toFixed(1)+"%)");
+	this.controls.goal.indicator
 		.attr("d", this.arcs.goal(0, percent));
 };
 

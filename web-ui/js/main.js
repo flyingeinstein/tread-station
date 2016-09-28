@@ -168,12 +168,6 @@ Treadmill.prototype.onUpdateRunningTime = function(seconds, minutes, hours)
 	if(this.dial) this.dial.setRunningTime(seconds,minutes,hours);
 }
 
-function SetFavSpeed(event)
-{
-    treadmill.setSpeed($(event.target).text());
-}
-
-
 
 function decline(event)
 {

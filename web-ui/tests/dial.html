@@ -82,11 +82,17 @@
 	$(".dial").each(function() {
         var dial = $(this).dial();
         dial.treadmill = {
-            goaltime: 90
-
+            goal: {
+                time: 90 * 60,    // seconds
+                distance: 1    // miles
+            }
         };
         dial.setSpeed(4.2);
         dial.setRunningTime(36, 5, 0);
+
+        setTimeout(function() { dial.setSpeed(2.5, true); }, 2000);
+        setTimeout(function() { dial.setSpeed(0, true); }, 4000);
+        setTimeout(function() { dial.setSpeed(3.3, true); }, 6000);
     });
 
 
