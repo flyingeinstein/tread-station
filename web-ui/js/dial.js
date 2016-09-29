@@ -318,7 +318,7 @@ Dial.prototype.createLane = function(ordinal)
 		return null;
 
 	var n = ordinal = Number(ordinal);
-	var offset = this.radii.inner;
+	var offset = this.radii.inner - 10;
 
 	// figure out what collection of lanes we need to check
 	var lanes;
