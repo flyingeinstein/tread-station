@@ -172,6 +172,9 @@ function Dial(_container) {
 		.innerRadius(radius - radius * 0.28)
 		.outerRadius(radius);
 
+	// create the speed lane (lane 0)
+	var speedLane = this.createLane(0);
+	speedLane.width = this.radii.outer - this.radii.inner;
 
 	var ang = Math.PI * 0.82;
 	var divisor = 9;
@@ -315,7 +318,7 @@ Dial.prototype.createLane = function(ordinal)
 		return null;
 
 	var n = ordinal = Number(ordinal);
-	var offset;
+	var offset = this.radii.inner;
 
 	// figure out what collection of lanes we need to check
 	var lanes;
@@ -323,13 +326,12 @@ Dial.prototype.createLane = function(ordinal)
 		// inner lane
 		n = Math.abs(n) - 1;	// decrement N since we are use negative lane
 		lanes = this.lanes.inner;
-		offset = this.radii.inner;
 		// TODO: calculate offset radius
 	} else {
 		// outer lane
 		lanes = this.lanes.outer;
-		offset = this.radii.outer;
-		for(i=0; i<lanes.length; i++)
+		console.log("create lane "+ordinal+" offset "+offset);
+		for(i=0; i<lanes.length && i<n; i++)
 			offset += 10+lanes[i].width;
 		offset += 15;
 	}
@@ -353,7 +355,7 @@ Dial.prototype.createLane = function(ordinal)
 		targets: {
 			current: {
 				value: 0,
-				width: 0.1	// in percent
+				width: 0.015	// in percent
 			}
 		},
 
@@ -407,19 +409,26 @@ Dial.prototype.attachToLane = function(plugin, lane_request)
 	// set the arc range for this control within the lane
 	if(lane_request.alignment=='left')
 	{
-		lane.scale = d3.scaleLinear()
+		plugin.scale = d3.scaleLinear()
 			.domain([0, 1.0])
 			.range([1.2*Math.PI, 1.65*Math.PI]);
 	}
 	else if(lane_request.alignment=='right')
 	{
-		lane.scale = d3.scaleLinear()
+		plugin.scale = d3.scaleLinear()
 			.domain([0, 1.0])
 			.range([-1.2*Math.PI, -1.65*Math.PI]);
 	}
 
+	// add a function to return the polarity of the output range
+	plugin.scale.polarity = function() { var range=this.range(); return (range[0] < range[1]) ? 1 : -1; };
+
+	// return the scaled output, but in degrees instead of the default radians
+	plugin.scale.degrees = function(value) { return this(value) * 180 / Math.PI; };
+
 	// set the lane_request so new plugin can access the lane container
 	plugin.lane = lane;
+	plugin.alignment = lane_request.alignment;
 	lane.controls.push(plugin);
 
 	return lane;

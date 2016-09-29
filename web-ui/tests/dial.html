@@ -90,7 +90,10 @@
         };
 
         dial.plugin("incline",  new DialIncline() );
-        dial.plugin("incline2",  new DialIncline() );
+        dial.plugin("incline2",  new DialIncline({
+            ordinal: 2,
+            alignment: 'right'
+        }) );
         dial.plugin("incline3",  new DialIncline({
                 ordinal: 1,
                 alignment: 'left'
@@ -104,6 +107,8 @@
         setTimeout(function() { dial.setSpeed(3.3, true); }, 6000);
 
         setTimeout(function() { dial.incline.set(0.6); }, 1500);
+        setTimeout(function() { dial.incline2.set(0.4); }, 1500);
+        setTimeout(function() { dial.incline3.set(0.5); }, 1500);
 
     });
 
