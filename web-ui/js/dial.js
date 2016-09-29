@@ -137,6 +137,7 @@ function Dial(_container) {
 	// give radius positions of control parts
 	this.radii = {
 		outer: radius+15,
+		inner: radius - radius*0.024,
 		ticks: {inner: radius - radius * 0.24, outer: radius - 5}
 	};
 
@@ -227,7 +228,7 @@ function Dial(_container) {
 	// button glyphs
 	glyph(0, buttons, radius*0.87, Math.PI-(Math.PI-ang)/2, 1.0, center);
 	glyph(1, buttons, radius*0.87, Math.PI+(Math.PI-ang)/2, 1.0, center);
-	
+
 
 	// speed indicator
 	var status = svg.append("g")
@@ -314,14 +315,23 @@ Dial.prototype.createLane = function(ordinal)
 		return null;
 
 	var n = ordinal = Number(ordinal);
+	var offset;
 
 	// figure out what collection of lanes we need to check
 	var lanes;
 	if (n < 0) {
+		// inner lane
 		n = Math.abs(n) - 1;	// decrement N since we are use negative lane
 		lanes = this.lanes.inner;
+		offset = this.radii.inner;
+		// TODO: calculate offset radius
 	} else {
+		// outer lane
 		lanes = this.lanes.outer;
+		offset = this.radii.outer;
+		for(i=0; i<lanes.length; i++)
+			offset += 10+lanes[i].width;
+		offset += 15;
 	}
 
 	// return existing lane if it exists
@@ -337,8 +347,15 @@ Dial.prototype.createLane = function(ordinal)
 
 		controls: [],
 
-		offset: this.radii.outer,
+		offset: offset,
 		width: 25,
+
+		targets: {
+			current: {
+				value: 0,
+				width: 0.1	// in percent
+			}
+		},
 
 		arc: d3.arc()
 			.startAngle(function (a, h) {
@@ -387,26 +404,30 @@ Dial.prototype.attachToLane = function(plugin, lane_request)
 	if(lane==null)
 		return false;
 
-	// set the lane_request so new plugin can access the lane container
-	plugin.lane = lane;
-	lane.controls.push(plugin);
-
 	// set the arc range for this control within the lane
 	if(lane_request.alignment=='left')
 	{
-
+		lane.scale = d3.scaleLinear()
+			.domain([0, 1.0])
+			.range([1.2*Math.PI, 1.65*Math.PI]);
 	}
 	else if(lane_request.alignment=='right')
 	{
-
+		lane.scale = d3.scaleLinear()
+			.domain([0, 1.0])
+			.range([-1.2*Math.PI, -1.65*Math.PI]);
 	}
+
+	// set the lane_request so new plugin can access the lane container
+	plugin.lane = lane;
+	lane.controls.push(plugin);
 
 	return lane;
 };
 
 Dial.prototype.plugin = function(name, klass)
 {
-	this.plugins[name] = klass;
+	this[name] = this.plugins[name] = klass;
 	klass.container = this;
 	var lane;
 	if(klass.lane)
