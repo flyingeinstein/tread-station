@@ -25,6 +25,7 @@
     <script src="../js/dial.js"></script>
     <script src="../js/dial-indicator.js"></script>
     <script src="../js/incline-indicator.js"></script>
+    <script src="../js/jizz.js"></script>
     <script src="../js/autopace-indicator.js"></script>
 	<link rel="stylesheet" href="../css/style.css">
 	<link rel="stylesheet" href="../css/brown.css">
@@ -93,9 +94,11 @@
 
         dial.plugin("incline",  new InclineIndicator() );
         dial.plugin("autopace",  new AutoPaceIndicator({
+            lane: {
                 ordinal: 1,
                 alignment: 'left'
-            }));
+            }
+        }));
 
         dial.setSpeed(4.2, true);
         dial.setRunningTime(36, 5, 0);

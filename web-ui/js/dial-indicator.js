@@ -5,11 +5,14 @@
 
 function DialIndicator(options)
 {
-    this.lane = {
-        ordinal: 1,
-        alignment: 'right'
+    this.options = {
+        lane: {
+            ordinal: 1,
+            alignment: 'right'
+        }
     };
-    $.extend(this.lane, options);
+    if(options)
+        $.extend(this.options, options);
 }
 
 DialIndicator.prototype.attach = function(lane)
@@ -22,7 +25,7 @@ DialIndicator.prototype.attach = function(lane)
     var _this = this;
 
     // background
-    this.lane.container.append("path")
+    this.container.append("path")
         .attr("class", "incline-background")
         .attr("d", this.lane.arc(range[0], range[1]))
         .attr("transform", "translate(" + center.x + "," + center.y + ")");
@@ -37,7 +40,7 @@ DialIndicator.prototype.attach = function(lane)
 
             }
         }*/
-        this.bands.controls = this.lane.container
+        this.bands.controls = this.container
             .selectAll(".band")
             .data(this.bands);
         this.bands.controls
@@ -51,7 +54,7 @@ DialIndicator.prototype.attach = function(lane)
     }
 
     // current target
-    this.controls.indicator = this.lane.container.append("path")
+    this.controls.indicator = this.container.append("path")
         .attr("class","incline-indicator")
         .attr("d", this.lane.arc(-target.width, target.width))
         .attr("transform","translate("+center.x+","+center.y+") rotate("+this.scale.degrees(target.value)+")");

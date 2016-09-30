@@ -5,6 +5,7 @@
 
 function InclineIndicator(options)
 {
-    $.extend(this.lane, options);
+    if(options)
+        $.extend(this.options, options);
 }
 InclineIndicator.prototype = new DialIndicator();

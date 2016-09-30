@@ -59,7 +59,8 @@ function Dial(_container) {
 		speed: {},
 		incline: {},
 		goal: {},
-		groups: {}
+		groups: {},
+		plugins: {}
 	};
 
 	// plugins API to dynamically add controls to the dial
@@ -73,7 +74,7 @@ function Dial(_container) {
 	};
 
 	this.container.html("");
-	var svg = d3.select(this.container[0]).append("svg")
+	var svg = this.svg = d3.select(this.container[0]).append("svg")
 		.attr("width", this.width)
 		.attr("height", this.height)
 		.attr("viewBox", "0 0 " + extents.width + " " + extents.height);
@@ -429,6 +430,8 @@ Dial.prototype.attachToLane = function(plugin, lane_request)
 	// set the lane_request so new plugin can access the lane container
 	plugin.lane = lane;
 	plugin.alignment = lane_request.alignment;
+
+	// add plugin to lane
 	lane.controls.push(plugin);
 
 	return lane;
@@ -437,13 +440,35 @@ Dial.prototype.attachToLane = function(plugin, lane_request)
 Dial.prototype.plugin = function(name, klass)
 {
 	this[name] = this.plugins[name] = klass;
-	klass.container = this;
 	var lane;
-	if(klass.lane)
+	console.log(klass);
+	if(klass.options && klass.options.lane) {
 		// this is a special control that attaches to lanes inside or outside the dial
-		lane = this.attachToLane(klass, klass.lane);
+		lane = this.attachToLane(klass, klass.options.lane);
+
+		// add a new container for the plugin
+		klass.container = lane.container
+			.append("g")
+			.attr("id", name)
+			.attr("class","plugin plugin-"+klass.constructor.name);
+	} else {
+		// create the plugins group if not already created (holds all plugins that arent in lanes)
+		if(!this.controls.groups.plugins)
+			this.controls.groups.plugins = this.svg
+				.append("g")
+				.attr("class","plugins");
+
+		// create a container for this plugin
+		klass.container = this.controls.plugins[name] = this.controls.groups.plugins
+			.append("g")
+			.attr("id", name)
+			.attr("class","plugin plugin-"+klass.constructor.name);
+
+		klass.container = this;
+	}
 
 	// add some properties to the plugin
+	klass.svg = this.svg;
 	if(!klass.controls) klass.controls = {};
 
 	if(typeof klass.attach ==="function")
