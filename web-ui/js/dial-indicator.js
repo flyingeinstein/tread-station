@@ -9,6 +9,8 @@ function DialIndicator(options)
         lane: {
             ordinal: 1,
             alignment: 'right'
+        },
+        background: {
         }
     };
     if(options)
@@ -25,10 +27,14 @@ DialIndicator.prototype.attach = function(lane)
     var _this = this;
 
     // background
-    this.container.append("path")
-        .attr("class", "incline-background")
-        .attr("d", this.lane.arc(range[0], range[1]))
-        .attr("transform", "translate(" + center.x + "," + center.y + ")");
+    if(this.options.background) {
+        this.controls.background = this.container.append("path")
+            .attr("class", "incline-background")
+            .attr("d", this.lane.arc(range[0], range[1]))
+            .attr("transform", "translate(" + center.x + "," + center.y + ")");
+    }
+
+    // color bands
     if(this.bands) {
         //paint by bands
         /*var domain = this.scale.domain();

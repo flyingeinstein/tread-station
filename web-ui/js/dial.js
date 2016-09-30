@@ -308,7 +308,20 @@ Dial.prototype.click = function(x,y)
 	}
 };
 
-
+Dial.prototype.mouse = function()
+{
+	var _this = this;
+	var m = d3.mouse(this.svg.node());
+	var c = {
+		x: m[0] - this.center.x,
+		y: m[1] - this.center.y
+	};
+	c.radius = Math.atan2(c.x, -c.y);
+	c.length = Math.sqrt(c.x*c.x + c.y*c.y);
+	c.degrees = function() { return c.radius * 180/Math.PI; };
+	c.domain = function(scale) { return scale ? scale.invert(c.radius) : _this.scales.speed.invert(c.radius); };
+	return c;
+};
 
 /****** Dial Plugin API ******/
 
@@ -412,13 +425,15 @@ Dial.prototype.attachToLane = function(plugin, lane_request)
 	{
 		plugin.scale = d3.scaleLinear()
 			.domain([0, 1.0])
-			.range([1.2*Math.PI, 1.65*Math.PI]);
+			//.range([1.2*Math.PI, 1.65*Math.PI]);
+			.range([-0.8*Math.PI, -0.35*Math.PI]);
 	}
 	else if(lane_request.alignment=='right')
 	{
 		plugin.scale = d3.scaleLinear()
 			.domain([0, 1.0])
-			.range([-1.2*Math.PI, -1.65*Math.PI]);
+			//.range([-1.2*Math.PI, -1.65*Math.PI]);
+			.range([0.8*Math.PI, 0.35*Math.PI]);
 	}
 
 	// add a function to return the polarity of the output range

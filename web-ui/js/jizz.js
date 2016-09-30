@@ -13,6 +13,13 @@ function Jizz(options, svg_group, svg)
     }*/
     this.svg = svg;
 
+    // track global number of sonar sliders
+    // we may need to produce unique names for things like filters
+    if(Jizz.prototype.instanceCount)
+        Jizz.prototype.instanceCount++;
+    else
+        Jizz.prototype.instanceCount=1;
+    this.instanceNumber = Jizz.prototype.instanceCount;
 
     // control measurements
     this.options = {
@@ -28,18 +35,18 @@ function Jizz(options, svg_group, svg)
         // possible types: 1D, 2D (rectangular coordinates), radial (1D circle/arc), polar (2D polar coordinates)
         type: 'radial',
 
-        // if set, then the drawing is done around the given focal point (radial vizualization)
-        //focal: [x, y],
-
+        // if set, then the drawing is done around the given focal point (radial visualization)
+        //focal: {x:, y:, radius],
+        
         stroke: {
             color: "cyan",
-            width: 2
+            width: 3
             // opacity = 1.0
         },
         border: 6,
         blur: 4,
-        //gooey: 5,
-        expiration: 3000,
+        gooey: 5,
+        expiration: 5000,
         limit: 75
     };
     $.extend(this.options, options);
@@ -111,7 +118,22 @@ function Jizz(options, svg_group, svg)
 
 Jizz.prototype.xy = function(domain_value) {
     // TODO: handle radial viz
-    return [this.options.width/2, this.unitScale(domain_value)];
+    var focal = this.options.focal;
+    var radians = this.unitScale(domain_value);
+    var pos = {
+        value: domain_value,
+        radians: radians,
+        // I know the sin/cos seems backwards, but it's just the nature of how svg sees radial origin vs Math.sin/cos()
+        x: focal.x + focal.radius * Math.sin(radians),
+        y: focal.y - focal.radius * Math.cos(radians)
+    };
+    return [pos.x, pos.y];
+};
+
+Jizz.prototype.domain = function(pixel_xy, mode) {
+    if(mode==null || mode=='local') {
+        return this.unitScale.invert(pixel_xy);
+    }
 };
 
 Jizz.prototype.updateHistory = function()
@@ -120,8 +142,11 @@ Jizz.prototype.updateHistory = function()
     var now = Number(new Date());
     var line_width = 5;
 
+    // clear expired history from the data collection
+    var expiration = now - this.options.expiration;
+    this.history = this.history.filter(function(e) { return !e.expired && e.time > expiration; });
+
     // update history
-    //this.history = this.history.filter(function(e) { return (now - e.time)<slider.options.expiration; });
     var dots = this.container
         .selectAll(".historical-line")
         .data(this.history, function(d) { return d.time; });
@@ -138,8 +163,10 @@ Jizz.prototype.updateHistory = function()
         .attr("x2", function(d) { return _this.xy(d.value)[0]+line_width; })
         .attr("y1", function(d) { return _this.xy(d.value)[1]; })
         .attr("y2", function(d) { return _this.xy(d.value)[1]; })
-        .transition().duration(3000)
-        .style("stroke-opacity", 0.0);
+        .transition().duration(this.options.expiration)
+        .style("stroke-opacity", 0.0)
+        .on("end", function(d,i) { d.expired = true; })
+        .remove();
     dots
         .exit()
         .remove();
@@ -147,9 +174,15 @@ Jizz.prototype.updateHistory = function()
 
 Jizz.prototype.add = function(value, timestamp)
 {
-    if(timestamp==null)
-        timesetamp = Number(new Date());
+    if(arguments.length<2 || timestamp==null)
+        timestamp = Number(new Date());
 
     // add to history
     this.history.push({ time:timestamp, value: value });
+    this.updateHistory();
+};
+
+Jizz.prototype.mouse = function()
+{
+    return d3.mouse(this.container.node());
 };

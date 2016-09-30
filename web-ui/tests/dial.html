@@ -110,6 +110,26 @@
         setTimeout(function() { dial.incline.set(0.6); }, 1500);
         setTimeout(function() { dial.autopace.set(0.5); }, 1500);
 
+        dial.svg.on("mousemove", function (e) {
+            if (!dial.autopace) return;
+            var mouse = dial.mouse();
+            mouse._domain = mouse.domain();
+            mouse._degrees = mouse.degrees();
+        });
+
+        dial.autopace.container.on("mousemove", function (e) {
+            var mouse = dial.mouse();
+            if(!mouse || !dial.autopace) return;
+            var value = mouse.domain(dial.autopace.scale);
+            if (value) {
+                var now = Number(new Date());
+                if (now > nextUpdate) {
+                    dial.autopace.jizz.add(value);
+                    nextUpdate = now + 50;
+                }
+            }
+        });
+
     });
 
 

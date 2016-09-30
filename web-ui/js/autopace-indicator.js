@@ -22,13 +22,7 @@ function AutoPaceIndicator(options)
         sonar: {
             range: [0,1]
         },
-        outline: {
-            border: 5, width: 24,
-            color: "#444",
-            fill: "none",
-            opacity: 1.0
-            // height: determined by formula
-        },
+
         targets: {
             set: {
                 color: "cyan"
@@ -38,8 +32,10 @@ function AutoPaceIndicator(options)
             }
         },
         jizz: {
-            width: 80,
-            height: 450
+            background: false
+            /*stroke: {
+                color: "yellow"
+            }*/
         }
     };
     $.extend(this.options, options);
@@ -58,20 +54,32 @@ console.log(this.options);
         {
             name: 'low',
             color: 'red',
-            opacity: 0.5,
+            opacity: 0.3,
             range: [0,0.2]
+        },
+        {
+            name: 'good',
+            color: 'green',
+            opacity: 0.3,
+            range: [0.2,0.35]
         },
         {
             name: 'balanced',
             color: 'green',
+            opacity: 0.5,
+            range: [0.35,0.6]
+        },
+        {
+            name: 'good',
+            color: 'green',
             opacity: 0.3,
-            range: [0.4,0.6]
+            range: [0.6,0.75]
         },
         {
             name: 'high',
-            color: 'red',
-            opacity: 0.5,
-            range: [0.95,1.0]
+            color: 'cyan',
+            opacity: 0.3,
+            range: [0.75,1.0]
         }
     ];
 
@@ -83,4 +91,17 @@ AutoPaceIndicator.prototype.attach = function(lane)
 {
     DialIndicator.prototype.attach.call(this, lane);
     this.jizz = new Jizz(this.options.jizz, this.container, this.svg);
+    this.jizz.options.type = 'radial';
+    this.jizz.options.focal = {
+        x: this.lane.dial.center.x,
+        y: this.lane.dial.center.y,
+        radius: this.lane.offset + this.lane.width / 2
+    };
+    //this.jizz.unitScale.range( this.scale.range() );
+    this.jizz.unitScale = this.scale;
+};
+
+AutoPaceIndicator.prototype.mouse = function(node)
+{
+    return d3.mouse(node ? node.node() : this.svg.node());
 };
