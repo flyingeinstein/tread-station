@@ -175,6 +175,7 @@ function Dial(_container) {
 
 	// create the speed lane (lane 0)
 	var speedLane = this.createLane(0);
+	speedLane.offset = 0;
 	speedLane.width = this.radii.outer - this.radii.inner;
 
 	var ang = Math.PI * 0.82;
@@ -270,8 +271,27 @@ function Dial(_container) {
 		.attr("transform","translate("+center.x+","+center.y+")");
 
 
-	this.container.on("click",function(){
-		_this.click(event.layerX, event.layerY);
+	// resolve clicks to one of the lanes by comparing radius,
+	// then to one of the controls by comparing the plugin/control scale ranges
+	this.svg.on("click",function(){
+		var m = _this.mouse();	// returns mouse coords as x,y and polar
+		for(var l in _this.lanes.outer) {
+			var lane = _this.lanes.outer[l];
+			// find what lane the mouse falls in
+			if(m.length > lane.offset && m.length < lane.offset + lane.width) {
+				console.log("lane ", lane);
+				for(var c in lane.controls) {
+					var ctrl = lane.controls[c];
+					if(ctrl.scale) {
+						var _range = ctrl.scale.range();
+						if(_range && m.radius > _range[0] && m.radius < _range[1]) {
+							console.log("   plugin "+ctrl.name+"   "+m.domain(ctrl.scale));
+							return true;
+						}
+					}
+				}
+			}
+		}
 	});
 }
 
@@ -290,22 +310,6 @@ Dial.prototype.setRunningTime = function(seconds,minutes,hours)
 	console.log("goal "+(seconds+minutes*60+hours*3600)+" of "+this.treadmill.goal.time+"  ("+(percent*100).toFixed(1)+"%)");
 	this.controls.goal.indicator
 		.attr("d", this.arcs.goal(0, percent));
-};
-
-Dial.prototype.click = function(x,y)
-{
-	var scale = {
-		x: (this.width / this.extents.width),
-		y: (this.height / this.extents.height)
-	};
-	var x1=x/scale.x - this.center.x,
-	    y1=y/scale.y - this.center.y;
-	var angle = Math.atan2(y1,x1),
-	    radius = Math.sqrt(x1*x1 + y1*y1);
-	console.log("click @ "+x1+":"+y1+"   a:"+(angle*180/Math.PI)+"  r:"+radius);
-	if(radius > this.radii.ticks.inner && radius < this.radii.ticks.outer) {
-		console.log("speed "+angle+"  "+this.radii.ticks.inner+" < "+radius+" < "+this.radii.ticks.outer);
-	}
 };
 
 Dial.prototype.mouse = function()
@@ -454,9 +458,9 @@ Dial.prototype.attachToLane = function(plugin, lane_request)
 
 Dial.prototype.plugin = function(name, klass)
 {
-	this[name] = this.plugins[name] = klass;
 	var lane;
-	console.log(klass);
+	this[name] = this.plugins[name] = klass;
+	klass.name = name;
 	if(klass.options && klass.options.lane) {
 		// this is a special control that attaches to lanes inside or outside the dial
 		lane = this.attachToLane(klass, klass.options.lane);

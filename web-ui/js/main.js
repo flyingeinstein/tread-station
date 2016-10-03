@@ -137,8 +137,23 @@ stepintervaldelay: 500 // Time in milliseconds before the spinner starts to spin
 	$("div#debug").html(s);
 		
     treadmill.connect("treadmill");
-	
-	$("#user-select").modal();
+
+	// show the user selector screen (unless it is supplied on the query line)
+	var _user = getParameterByName("user");
+	if(_user) {
+		// this is just meant for bypassing the screen during development,
+		// so dont log a weight.
+		/* WAS GOING TO compare to user collection to convert the username to userid, but
+		   it seems I only have a simple UserID for each user anyway...so we can just pass
+		   the name through.
+		for(var u in treadmill.users) {
+			var user = users[u];
+			if(u.name ==_user)
+			treadmill.setUser(u.userid, null);
+		}*/
+		treadmill.setUser(_user, null);
+	} else
+		$("#user-select").modal();
 });
 
 
