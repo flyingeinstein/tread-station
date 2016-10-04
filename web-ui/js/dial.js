@@ -135,34 +135,28 @@ function Dial(_container) {
 	this.lanes.outer.container = this.controls.lanes.outer = this.controls.lanes.append("g")
 		.attr("class", "outer-lanes");
 
-	// give radius positions of control parts
-	this.radii = {
-		outer: radius+15,
-		inner: radius - radius*0.024,
-		ticks: {inner: radius - radius * 0.24, outer: radius - 5}
-	};
+
+	// create the speed lane (lane 0)
+	var speedLane = this.speed = this.createLane(0, {
+		offset: radius - radius * 0.24,
+		width: 65
+	});
+
 
 	var N = 160;
 	var dxAngle = 2 * Math.PI / N;
 	this.arcs = {};
-	var tickArc = this.arcs.ticks = d3.arc()
+	var tickArc = this.speed.arc;
+		/*this.arcs.ticks = d3.arc()
 		.startAngle(function (d, h) {
 			return d - h;
 		})
 		.endAngle(function (d, h) {
 			return d + h;
 		})
-		.innerRadius(this.radii.ticks.inner)
-		.outerRadius(this.radii.ticks.outer);
-	var bigTickArc = d3.arc()
-		.startAngle(function (d, h) {
-			return d - h * 3;
-		})
-		.endAngle(function (d, h) {
-			return d + h * 3;
-		})
-		.innerRadius(radius - radius * 0.24)
-		.outerRadius(radius - 5);
+		.innerRadius(this.speed.offset)
+		.outerRadius(this.speed.offset + this.speed.width);
+*/
 	var innerButtonArc = d3.arc()
 		.startAngle(function (a, h) {
 			return a;
@@ -172,15 +166,6 @@ function Dial(_container) {
 		})
 		.innerRadius(radius - radius * 0.28)
 		.outerRadius(radius);
-
-	// create the speed lane (lane 0)
-	var speedLane = this.createLane(0);
-	speedLane.offset = 0;
-	speedLane.width = this.radii.outer - this.radii.inner;
-
-	var ang = Math.PI * 0.82;
-	var divisor = 9;
-	var divisorAngle = this.divisorAngle = ang * 2 / divisor;
 
 	// speed ticks
 	var tick_points = this.scales.speed.ticks(this.scales.speed.domain()[1]*10);
@@ -192,12 +177,18 @@ function Dial(_container) {
 			.attr("class", function (d, i) { return (d == Math.floor(d)) ? "tick major" : "tick"; })
 			.attr("transform", "translate(" + center.x + "," + center.y + ")")
 			.attr("d", function (d, i) {
-				return (d == Math.floor(d))
-					? bigTickArc(_this.scales.speed(d), dxAngle * 0.1)
-					: tickArc(_this.scales.speed(d), dxAngle * 0.1);
+				var sp = _this.scales.speed(d);
+				var dxAngle = ((d == Math.floor(d)) ? 0.3 : 0.1);
+				console.log(d, sp, dxAngle);
+				return tickArc(sp-dxAngle, sp+dxAngle);
 			});
 
 	// dial speed number labels
+	// TODO: We can get rid of these variables when we redo the dial ordinals (based on the scale instead of this)
+	var ang = Math.PI * 0.82;
+	var divisor = 9;
+	var divisorAngle = this.divisorAngle = ang * 2 / divisor;
+
 	var ticks = bgticks
 		.selectAll(".dial-ordinals")
 		.data(this.scales.speed.ticks())
@@ -215,7 +206,7 @@ function Dial(_container) {
 	this.defaultTranslate="translate("+center.x+","+center.y+")";
 	this.controls.speed.indicator = indicators.append("path")
 		.attr("class","current-speed-indicator")
-		.attr("d", bigTickArc(0.18*Math.PI, dxAngle*0.2) )
+		.attr("d", tickArc(0.18*Math.PI, dxAngle*0.6) )
 		.attr("fill-opacity", "0")
 		.attr("transform",this.defaultTranslate+" rotate("+(2*this.divisorAngle*180/Math.PI)+")");
 
@@ -274,24 +265,36 @@ function Dial(_container) {
 	// resolve clicks to one of the lanes by comparing radius,
 	// then to one of the controls by comparing the plugin/control scale ranges
 	this.svg.on("click",function(){
+		var lane, control;
 		var m = _this.mouse();	// returns mouse coords as x,y and polar
+		console.log(m);
 		for(var l in _this.lanes.outer) {
-			var lane = _this.lanes.outer[l];
+			lane = _this.lanes.outer[l];
 			// find what lane the mouse falls in
 			if(m.length > lane.offset && m.length < lane.offset + lane.width) {
-				console.log("lane ", lane);
-				for(var c in lane.controls) {
-					var ctrl = lane.controls[c];
-					if(ctrl.scale) {
-						var _range = ctrl.scale.range();
-						if(_range && m.radius > _range[0] && m.radius < _range[1]) {
-							console.log("   plugin "+ctrl.name+"   "+m.domain(ctrl.scale));
-							return true;
+				if(lane.controls) {
+					for (var c in lane.controls) {
+						var ctrl = lane.controls[c];
+						if (ctrl.scale) {
+							var _range = ctrl.scale.range();
+							if (_range[1] < _range[0])
+								_range = _range.reverse();
+							if (_range && m.radius > _range[0] && m.radius < _range[1]) {
+								control = ctrl;
+								break;
+							}
 						}
 					}
 				}
-			}
+				break;	// exit loop if we found a control
+			} else lane = null;
 		}
+		if(lane && control && control.scale)
+			console.log("click: control "+control.name+"   domain:"+m.domain(control.scale));
+		else if(lane && control)
+			console.log("click: control "+control.name+"   mouse:"+m);
+		else if(lane!=null)
+			console.log("click: lane ",lane)
 	});
 }
 
@@ -329,14 +332,23 @@ Dial.prototype.mouse = function()
 
 /****** Dial Plugin API ******/
 
-Dial.prototype.createLane = function(ordinal)
+Dial.prototype.createLane = function(ordinal, options)
 {
 	// create lane is identical to getLane() unless
-	if(isNaN(ordinal))
+	if(isNaN(ordinal)) {
+		console.log("dial.createLane: required ordinal parameter is not a number");
 		return null;
+	}
 
 	var n = ordinal = Number(ordinal);
-	var offset = this.radii.inner - 10;
+	var offset = 0;
+
+	if(!options) {
+		options = {
+			margin: 15,
+			width: 25
+		};
+	}
 
 	// figure out what collection of lanes we need to check
 	var lanes;
@@ -348,10 +360,16 @@ Dial.prototype.createLane = function(ordinal)
 	} else {
 		// outer lane
 		lanes = this.lanes.outer;
+		var last_lane = lanes[lanes.length-1];
+		if(options.offset) {
+			// specified offset
+			offset = options.offset;
+		} else {
+			// calculate the offset
+			offset = last_lane.offset + last_lane.width;
+			offset += options.margin;	// TODO: Add offset based on margin
+		}
 		console.log("create lane "+ordinal+" offset "+offset);
-		for(i=0; i<lanes.length && i<n; i++)
-			offset += 10+lanes[i].width;
-		offset += 15;
 	}
 
 	// return existing lane if it exists
@@ -368,7 +386,8 @@ Dial.prototype.createLane = function(ordinal)
 		controls: [],
 
 		offset: offset,
-		width: 25,
+		width: options.width,
+		margin: options.margin,
 
 		targets: {
 			current: {
@@ -388,7 +407,11 @@ Dial.prototype.createLane = function(ordinal)
 			.outerRadius(function() { return this.offset + this.width })
 	};
 
-	if(lane==null) return null;
+	if(lane==null) {
+		console.log("dial.createLane: lane creation error");
+		return null;
+	}
+
 	lanes.push( lane );
 	return lane;
 };
@@ -419,10 +442,12 @@ Dial.prototype.attachToLane = function(plugin, lane_request)
 		return false;
 
 	var lane;
-	if(lane_request.ordinal)
-		lane  = this.createLane(lane_request.ordinal);
-	if(lane==null)
+	if(lane_request.ordinal!=null)
+		lane = this.createLane(lane_request.ordinal);
+	if(lane==null) {
+		console.log("attachToLane: failed to create lane", lane_request);
 		return false;
+	}
 
 	// set the arc range for this control within the lane
 	if(lane_request.alignment=='left')

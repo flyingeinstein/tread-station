@@ -92,13 +92,19 @@
             }
         };
 
-        dial.plugin("incline",  new InclineIndicator() );
+        /*dial.plugin("incline",  new InclineIndicator() );
         dial.plugin("autopace",  new AutoPaceIndicator({
             lane: {
                 ordinal: 1,
                 alignment: 'left'
             }
-        }));
+        }));*/
+        /*dial.plugin("shit",  new InclineIndicator({
+            lane: {
+                ordinal: 0,
+                alignment: 'left'
+            }
+        }));*/
 
         dial.setSpeed(4.2, true);
         dial.setRunningTime(36, 5, 0);
@@ -107,9 +113,6 @@
         setTimeout(function() { dial.setSpeed(0, true); }, 4000);
         setTimeout(function() { dial.setSpeed(3.3, true); }, 6000);
 
-        setTimeout(function() { dial.incline.set(0.6); }, 1500);
-        setTimeout(function() { dial.autopace.set(0.5); }, 1500);
-
         dial.svg.on("mousemove", function (e) {
             if (!dial.autopace) return;
             var mouse = dial.mouse();
@@ -117,18 +120,28 @@
             mouse._degrees = mouse.degrees();
         });
 
-        dial.autopace.container.on("mousemove", function (e) {
-            var mouse = dial.mouse();
-            if(!mouse || !dial.autopace) return;
-            var value = mouse.domain(dial.autopace.scale);
-            if (value) {
-                var now = Number(new Date());
-                if (now > nextUpdate) {
-                    dial.autopace.jizz.add(value);
-                    nextUpdate = now + 50;
+        if(dial.incline) {
+            setTimeout(function () {
+                dial.incline.set(0.6);
+            }, 1500);
+        }
+
+        if(dial.autopace) {
+            setTimeout(function() { dial.autopace.set(0.5); }, 1500);
+
+            dial.autopace.container.on("mousemove", function (e) {
+                var mouse = dial.mouse();
+                if (!mouse || !dial.autopace) return;
+                var value = mouse.domain(dial.autopace.scale);
+                if (value) {
+                    var now = Number(new Date());
+                    if (now > nextUpdate) {
+                        dial.autopace.jizz.add(value);
+                        nextUpdate = now + 50;
+                    }
                 }
-            }
-        });
+            });
+        }
 
     });
 
