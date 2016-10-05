@@ -45,11 +45,7 @@ function Dial(_container) {
 	var dial_begin = -Math.PI + dial_button_space;
 	var dial_end = -dial_begin;// + 0.1*Math.PI;
 
-	this.scales = {
-		speed: d3.scaleLinear()
-			.domain([1, 10])
-			.range([dial_begin, dial_end])
-	};
+	this.scales = {};
 
 	this.controls = {
 		speed: {},
@@ -68,6 +64,12 @@ function Dial(_container) {
 		inner: [],
 		outer: []
 	};
+
+	// add some properties to each lanes collection
+	this.lanes.outer.margin = 15;
+	this.lanes.outer.width = 25;
+	this.lanes.inner.margin = 5;
+	this.lanes.inner.width = 5;
 
 	this.container.html("");
 	var svg = this.svg = d3.select(this.container[0]).append("svg")
@@ -114,13 +116,13 @@ function Dial(_container) {
 		.attr("filter", "url(#fe3)")
 	;
 
-	var ticks = svg.append("g")
+	var ticks = this.controls.groups.ticks = svg.append("g")
 		.attr("class", "ticks");
-	var bgticks = ticks.append("g")
+	var bgticks = this.controls.groups.bgticks = ticks.append("g")
 		.attr("class", "background-ticks");
-	var indicators = ticks.append("g")
+	var indicators = this.controls.groups.indicators = ticks.append("g")
 		.attr("class", "indicators");
-	var buttons = ticks.append("g")
+	var buttons = this.controls.groups.buttons = ticks.append("g")
 		.attr("class", "buttons");
 
 	// lane control groups
@@ -131,75 +133,42 @@ function Dial(_container) {
 	this.lanes.outer.container = this.controls.lanes.outer = this.controls.lanes.append("g")
 		.attr("class", "outer-lanes");
 
+	// TODO: remove when goal is in it's own lane
+	this.arcs = {};
+
+	this.scales.speed = d3.scaleLinear()
+		.domain([1, 10])
+		.range([dial_begin, dial_end]
+		);
+	this.scales.progress = d3.scaleLinear()
+		.domain([0, 1])
+		.range(this.scales.speed.range());
 
 	// create the speed lane (lane 0)
-	var speedLane = this.speed = this.createLane(0, {
+	var speedLane = this.lane0 = this.createLane(0, {
 		offset: radius - radius * 0.24,
 		width: 65
 	});
 
+	this.plugin("speed",  new GraduatedIndicator({
+			scale: this.scales.speed,
+			lane: {
+				ordinal: 0
+			}
+		})
+	);
 
-	// TODO: remove when goal is in it's own lane
-	this.arcs = {};
+	this.plugin("progress",  new DialIndicator({
+			scale: this.scales.progress,
+			type: 'progress',
+			background: 'none',
+			lane: {
+				ordinal: -1
+			}
+		})
+	);
 
-	// speed ticks
-	var tick_points = this.scales.speed.ticks(this.scales.speed.domain()[1]*10);
-	var ticks = bgticks
-		.selectAll(".tick")
-		.data(tick_points)
-		.enter()
-			.append("path")
-			.attr("class", function (d, i) { return (d == Math.floor(d)) ? "tick major" : "tick"; })
-			.attr("transform", "translate(" + center.x + "," + center.y + ")")
-			.attr("d", function (d, i) {
-				var sp = _this.scales.speed(d);
-				var dxAngle = ((d == Math.floor(d)) ? 0.015 : 0.003);
-				//return _this.speed.arc(sp-dxAngle, sp+dxAngle);
-				return _this.speed.tick(sp, dxAngle);
-			});
-
-	// dial speed number labels
-	var ticks = bgticks
-		.selectAll(".dial-ordinals")
-		.data(this.scales.speed.ticks())
-		.enter()
-			.append("text")
-			.filter(function(d) { return d!=1 && d!=9; })
-			.attr("class", "dial-ordinals")
-			.attr("text-anchor", "middle")
-			.attr("x", center.x)
-			.attr("y", center.y - radius * 0.80)
-			.attr("transform", function(d,i) { return "rotate(" + (_this.scales.speed(d+0.5) * 180 / Math.PI) + "," + center.x + "," + center.y + ")"; })
-			.text(function(d,i) { return d; });
-
-	// current speed indicator
-	this.controls.speed.indicator = indicators.append("path")
-		.attr("class","current-speed-indicator")
-		.attr("d", this.speed.tick(0, 0.03) )
-		.attr("fill-opacity", "0")
-		.attr("transform","translate("+center.x+","+center.y+") rotate(0)");
-
-	// inner buttons - faster/slower
-	// TODO: We can use the range to determine our buttons in this way
-	// but when this becomes a ButtonIndicator then we need to get smarter
-	var speedRange = this.scales.speed.range();
-	speedRange[0] -= 0.03; 	speedRange[1] += 0.03;
-	this.controls.speed.increment = buttons.append("path")
-		.attr("id","speed-increase")
-		.attr("class","inner speed-increase")
-		.attr("d", this.speed.arc(speedRange[1], Math.PI-0.01, { inner: -12, outer: 4 }))
-		.attr("transform","translate("+center.x+","+center.y+")");
-	this.controls.speed.decrement = buttons.append("path")
-		.attr("id","speed-decrease")
-		.attr("class","inner speed-decrease")
-		.attr("d", this.speed.arc(speedRange[0], -Math.PI+0.01, { inner: -12, outer: 4 }))
-		.attr("transform","translate("+center.x+","+center.y+")");
-	// button glyphs
-	glyph(0, buttons, radius*0.87, Math.PI-(Math.PI-speedRange[1])/2, 1.0, center);
-	glyph(1, buttons, radius*0.87, Math.PI+(Math.PI-speedRange[1])/2, 1.0, center);
-
-
-	// speed indicator
+	// center text indicators
 	var status = svg.append("g")
 		.attr("class","status");
 	this.controls.status = status.append("text")
@@ -220,21 +189,6 @@ function Dial(_container) {
 		.attr("x",center.x)
 		.attr("y",center.y+70)
 		.text("");
-
-	// goal indicator
-	//TODO: move to inner lane
-	var goalAngle = { begin: speedRange[0], end: speedRange[1] };
-	this.arcs.goal = d3.arc()
-		.startAngle(function(a,h) { return speedRange[0]; })
-		.endAngle(function(a,h) { return (h>1.0) ? speedRange[1] : speedRange[0] + (speedRange[1]-speedRange[0])*h; })
-		.innerRadius(radius-radius*0.245-10)
-		.outerRadius(radius-radius*0.245-5);
-	this.controls.goal.indicator = indicators.append("path")
-		.attr("id","goal")
-		.attr("class","goal")
-		.attr("d", this.arcs.goal(0, 0.25))
-		.attr("transform","translate("+center.x+","+center.y+")");
-
 
 	// resolve clicks to one of the lanes by comparing radius,
 	// then to one of the controls by comparing the plugin/control scale ranges
@@ -272,15 +226,6 @@ function Dial(_container) {
 	});
 }
 
-Dial.prototype.setSpeed = function(speed, doTransition)
-{
-	// our scale is in radians, so we must convert it to degrees for the transform attribute
-	var degrees = this.scales.speed(speed) * 180 / Math.PI;
-	(doTransition ? this.controls.speed.indicator.transition().duration(1000) : this.controls.speed.indicator)
-		.attr("fill-opacity", (speed>2) ? "1" : "0")	// fade in/out when we transition between stopped and running
-		.attr("transform", "translate(" + this.center.x + "," + this.center.y + ") rotate(" + degrees + ")");
-};
-
 Dial.prototype.setRunningTime = function(seconds,minutes,hours)
 {
 	var percent = Math.min(1.0, (seconds+minutes*60+hours*3600) / this.treadmill.goal.time);
@@ -317,34 +262,45 @@ Dial.prototype.createLane = function(ordinal, options)
 	var n = ordinal = Number(ordinal);
 	var offset = 0;
 
+	// figure out what collection of lanes we need to check
+	var lanes;
+	if(n<0) {
+		// inner lane
+		n = Math.abs(n)-1;
+		lanes = this.lanes.inner;
+	} else {
+		// outer lane (including lane0)
+		lanes = this.lanes.outer;
+	}
+
+	// see if the lane exists
+	if(n < lanes.length)
+		return lanes[n];	// existing lane
+
+	// default lane options
 	if(!options) {
 		options = {
-			margin: 15,
-			width: 25
+			margin: lanes.margin,
+			width: lanes.width
 		};
 	}
 
-	// figure out what collection of lanes we need to check
-	var lanes;
-	if (n < 0) {
+	var last_lane = (lanes.length>0) ? lanes[lanes.length-1] : {
+		offset: this.lane0 ? this.lane0.offset : 0,
+		margin: 0
+	};
+
+	// figure out the offset
+	if(options.offset)
+		offset = options.offset;
+	else if (ordinal < 0) {
 		// inner lane
-		n = Math.abs(n) - 1;	// decrement N since we are use negative lane
-		lanes = this.lanes.inner;
-		// TODO: calculate offset radius
+		offset = last_lane.offset - options.margin - options.width;
 	} else {
-		// outer lane
-		lanes = this.lanes.outer;
-		var last_lane = lanes[lanes.length-1];
-		if(options.offset) {
-			// specified offset
-			offset = options.offset;
-		} else {
-			// calculate the offset
-			offset = last_lane.offset + last_lane.width;
-			offset += options.margin;	// TODO: Add offset based on margin
-		}
-		console.log("create lane "+ordinal+" offset "+offset);
+		// outer lane, including lane0
+		offset = last_lane.offset + last_lane.width + options.margin;
 	}
+	console.log("create lane "+ordinal+" offset "+offset);
 
 	// return existing lane if it exists
 	if (n < lanes.length)
@@ -405,19 +361,24 @@ Dial.prototype.createLane = function(ordinal, options)
 Dial.prototype.getLane = function(laneNameOrOrdinal)
 {
 	if(!isNaN(laneNameOrOrdinal)) {
+		// search by number
 		var n = Number(laneNameOrOrdinal);
 		if(n<0) {
+			// inner lane
 			n = Math.abs(n)-1;
 			return (n < this.lanes.inner.length) ? this.lanes.inner[n] : null;
 		} else
+			// outer lane (including lane0)
 			return (n < this.lanes.outer.length) ? this.lanes.outer[n] : null;
 	}
+
+	// search by name
 	for(i=0; i<this.lanes.outer.length; i++)
 		if(this.lanes.outer[i].name == laneNameOrOrdinal)
 			return this.lanes.outer[i];
-	for(i=0; i<this.lanes.outer.length; i++)
-		if(this.lanes.outer[i].name == laneNameOrOrdinal)
-			return this.lanes.outer[i];
+	for(i=0; i<this.lanes.inner.length; i++)
+		if(this.lanes.inner[i].name == laneNameOrOrdinal)
+			return this.lanes.inner[i];
 	return null;
 };
 
@@ -436,19 +397,19 @@ Dial.prototype.attachToLane = function(plugin, lane_request)
 	}
 
 	// set the arc range for this control within the lane
-	if(lane_request.alignment=='left')
-	{
-		plugin.scale = d3.scaleLinear()
-			.domain([0, 1.0])
-			//.range([1.2*Math.PI, 1.65*Math.PI]);
-			.range([-0.8*Math.PI, -0.35*Math.PI]);
-	}
-	else if(lane_request.alignment=='right')
-	{
-		plugin.scale = d3.scaleLinear()
-			.domain([0, 1.0])
-			//.range([-1.2*Math.PI, -1.65*Math.PI]);
-			.range([0.8*Math.PI, 0.35*Math.PI]);
+	if(plugin.scale==null) {
+		if(plugin.options.scale)
+			plugin.scale = plugin.options.scale;
+		else if (lane_request.alignment == 'left') {
+			plugin.scale = d3.scaleLinear()
+				.domain([0, 1.0])
+				.range([-0.8 * Math.PI, -0.35 * Math.PI]);
+		}
+		else if (lane_request.alignment == 'right') {
+			plugin.scale = d3.scaleLinear()
+				.domain([0, 1.0])
+				.range([0.8 * Math.PI, 0.35 * Math.PI]);
+		}
 	}
 
 	// add a function to return the polarity of the output range

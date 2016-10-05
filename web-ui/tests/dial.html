@@ -24,6 +24,7 @@
 	<script src="../js/qotd.js"></script>
     <script src="../js/dial.js"></script>
     <script src="../js/dial-indicator.js"></script>
+    <script src="../js/graduated-indicator.js"></script>
     <script src="../js/incline-indicator.js"></script>
     <script src="../js/jizz.js"></script>
     <script src="../js/autopace-indicator.js"></script>
@@ -106,12 +107,13 @@
             }
         }));*/
 
-        dial.setSpeed(4.2, true);
-        dial.setRunningTime(36, 5, 0);
+        dial.speed.set(4.2, true);
+        //dial.progress.set(36, 5, 0);
+        dial.progress.set(0.35, 1000);
 
-        setTimeout(function() { dial.setSpeed(2.5, true); }, 2000);
-        setTimeout(function() { dial.setSpeed(0, true); }, 4000);
-        setTimeout(function() { dial.setSpeed(3.3, true); }, 6000);
+        setTimeout(function() { dial.speed.set(2.5, true); }, 2000);
+        setTimeout(function() { dial.speed.set(0, true); }, 4000);
+        setTimeout(function() { dial.speed.set(3.3, true); }, 6000);
 
         dial.svg.on("mousemove", function (e) {
             if (!dial.autopace) return;
