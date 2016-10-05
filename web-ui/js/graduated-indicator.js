@@ -5,6 +5,24 @@
 
 function GraduatedIndicator(options)
 {
+    this.options = {
+        lane: {
+            ordinal: 1,
+            alignment: 'right'
+        },
+        background: {
+        },
+        ticks: {
+          color: {
+              fill: 'white'
+          }
+        },
+        indicator: {
+            color: {
+                fill: 'white'
+            }
+        }
+    };
     if(options)
         $.extend(this.options, options);
 }
@@ -49,10 +67,11 @@ GraduatedIndicator.prototype.attach = function(lane)
         .text(function(d,i) { return d; });
 
     // current speed indicator
-    this.controls.indicator = lane.dial.controls.groups.indicators.append("path")
+    this.controls.indicator = this.container.append("path")
         .attr("class","current-speed-indicator")
-        .attr("d", lane.tick(0, 0.03) )
+        .attr("d", lane.tick(0, 0.024) )
         .attr("fill-opacity", "0")
+        .attr("fill", this.options.indicator.color.fill)
         .attr("transform","translate("+center.x+","+center.y+") rotate(0)");
 
     // inner buttons - faster/slower
@@ -71,15 +90,16 @@ GraduatedIndicator.prototype.attach = function(lane)
         .attr("d", lane.arc(speedRange[0], -Math.PI+0.01, { inner: -12, outer: 4 }))
         .attr("transform","translate("+center.x+","+center.y+")");
     // button glyphs
-    glyph(0, lane.dial.controls.groups.buttons, lane.dial.radius*0.87, Math.PI-(Math.PI-speedRange[1])/2, 1.0, center);
-    glyph(1, lane.dial.controls.groups.buttons, lane.dial.radius*0.87, Math.PI+(Math.PI-speedRange[1])/2, 1.0, center);
+    glyph(0, lane.dial.controls.groups.buttons, lane.offset+lane.width/2, Math.PI-(Math.PI-speedRange[1])/2, 1.0, center);
+    glyph(1, lane.dial.controls.groups.buttons, lane.offset+lane.width/2, Math.PI+(Math.PI-speedRange[1])/2, 1.0, center);
 };
 
 GraduatedIndicator.prototype.set = function(value, transition)
 {
     // our scale is in radians, so we must convert it to degrees for the transform attribute
     var degrees = this.scale(value) * 180 / Math.PI;
+    if(transition==true) transition=1000;
     (transition ? this.controls.indicator.transition().duration(transition) : this.controls.indicator)
-        .attr("fill-opacity", (speed>2) ? "1" : "0")	// fade in/out when we transition between stopped and running
+        .attr("fill-opacity", (value>2) ? "1" : "0")	// fade in/out when we transition between stopped and running
         .attr("transform", "translate(" + this.lane.dial.center.x + "," + this.lane.dial.center.y + ") rotate(" + degrees + ")");
 };

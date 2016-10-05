@@ -15,7 +15,6 @@ function DialIndicator(options)
         color: {
             fill: 'white'
         }
-
     };
     if(options)
         $.extend(this.options, options);

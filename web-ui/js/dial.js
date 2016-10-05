@@ -146,8 +146,8 @@ function Dial(_container) {
 
 	// create the speed lane (lane 0)
 	var speedLane = this.lane0 = this.createLane(0, {
-		offset: radius - radius * 0.24,
-		width: 65
+		offset: radius - radius * 0.26,
+		width: 72
 	});
 
 	this.plugin("speed",  new GraduatedIndicator({
