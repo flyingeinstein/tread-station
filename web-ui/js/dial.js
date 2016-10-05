@@ -22,7 +22,7 @@ var __glyphs = [
 	]
 function glyph(id, parent, radius, angle, scale, offset)
 {
-	var pos = polar2rect(radius, angle, offset)
+	var pos = polar2rect(radius, angle, offset);
 	return parent.append("path")
 		.attr("class","glyph")
 		.attr("d",__glyphs[id])
@@ -35,16 +35,12 @@ function Dial(_container) {
 	this.container = $(_container);
 	var _this = this;
 
-	//var svgbase = '<g class="dial"><g class="ticks"><g class="background-ticks" /></g></g>';
-	//dial.svgroot.html( svgbase );
-	var data = [10, 20, 30, 40, 50];
 	var extents = this.extents = {width: 640, height: 640};
 	var width = this.width = 550;
 	var height = this.height = 450;
 	var radius = this.radius = extents.height / 2;
 	var center = this.center = {x: extents.width - radius, y: extents.height / 2};
 
-	var radians = radians = 1.7 * Math.PI;
 	var dial_button_space = 0.18 * Math.PI;
 	var dial_begin = -Math.PI + dial_button_space;
 	var dial_end = -dial_begin;// + 0.1*Math.PI;
@@ -143,29 +139,8 @@ function Dial(_container) {
 	});
 
 
-	var N = 160;
-	var dxAngle = 2 * Math.PI / N;
+	// TODO: remove when goal is in it's own lane
 	this.arcs = {};
-	var tickArc = this.speed.arc;
-		/*this.arcs.ticks = d3.arc()
-		.startAngle(function (d, h) {
-			return d - h;
-		})
-		.endAngle(function (d, h) {
-			return d + h;
-		})
-		.innerRadius(this.speed.offset)
-		.outerRadius(this.speed.offset + this.speed.width);
-*/
-	var innerButtonArc = d3.arc()
-		.startAngle(function (a, h) {
-			return a;
-		})
-		.endAngle(function (a, h) {
-			return h;
-		})
-		.innerRadius(radius - radius * 0.28)
-		.outerRadius(radius);
 
 	// speed ticks
 	var tick_points = this.scales.speed.ticks(this.scales.speed.domain()[1]*10);
@@ -178,17 +153,12 @@ function Dial(_container) {
 			.attr("transform", "translate(" + center.x + "," + center.y + ")")
 			.attr("d", function (d, i) {
 				var sp = _this.scales.speed(d);
-				var dxAngle = ((d == Math.floor(d)) ? 0.3 : 0.1);
-				console.log(d, sp, dxAngle);
-				return tickArc(sp-dxAngle, sp+dxAngle);
+				var dxAngle = ((d == Math.floor(d)) ? 0.015 : 0.003);
+				//return _this.speed.arc(sp-dxAngle, sp+dxAngle);
+				return _this.speed.tick(sp, dxAngle);
 			});
 
 	// dial speed number labels
-	// TODO: We can get rid of these variables when we redo the dial ordinals (based on the scale instead of this)
-	var ang = Math.PI * 0.82;
-	var divisor = 9;
-	var divisorAngle = this.divisorAngle = ang * 2 / divisor;
-
 	var ticks = bgticks
 		.selectAll(".dial-ordinals")
 		.data(this.scales.speed.ticks())
@@ -199,31 +169,34 @@ function Dial(_container) {
 			.attr("text-anchor", "middle")
 			.attr("x", center.x)
 			.attr("y", center.y - radius * 0.80)
-			.attr("transform", function(d,i) { return "rotate(" + (((d - divisor / 2 - 0.5) * divisorAngle ) * 180 / Math.PI) + "," + center.x + "," + center.y + ")"; })
+			.attr("transform", function(d,i) { return "rotate(" + (_this.scales.speed(d+0.5) * 180 / Math.PI) + "," + center.x + "," + center.y + ")"; })
 			.text(function(d,i) { return d; });
 
 	// current speed indicator
-	this.defaultTranslate="translate("+center.x+","+center.y+")";
 	this.controls.speed.indicator = indicators.append("path")
 		.attr("class","current-speed-indicator")
-		.attr("d", tickArc(0.18*Math.PI, dxAngle*0.6) )
+		.attr("d", this.speed.tick(0, 0.03) )
 		.attr("fill-opacity", "0")
-		.attr("transform",this.defaultTranslate+" rotate("+(2*this.divisorAngle*180/Math.PI)+")");
+		.attr("transform","translate("+center.x+","+center.y+") rotate(0)");
 
 	// inner buttons - faster/slower
+	// TODO: We can use the range to determine our buttons in this way
+	// but when this becomes a ButtonIndicator then we need to get smarter
+	var speedRange = this.scales.speed.range();
+	speedRange[0] -= 0.03; 	speedRange[1] += 0.03;
 	this.controls.speed.increment = buttons.append("path")
 		.attr("id","speed-increase")
 		.attr("class","inner speed-increase")
-		.attr("d", innerButtonArc(ang+dxAngle, Math.PI-0.01))
+		.attr("d", this.speed.arc(speedRange[1], Math.PI-0.01, { inner: -12, outer: 4 }))
 		.attr("transform","translate("+center.x+","+center.y+")");
 	this.controls.speed.decrement = buttons.append("path")
 		.attr("id","speed-decrease")
 		.attr("class","inner speed-decrease")
-		.attr("d", innerButtonArc(Math.PI+0.01, 2*Math.PI-ang-dxAngle))
+		.attr("d", this.speed.arc(speedRange[0], -Math.PI+0.01, { inner: -12, outer: 4 }))
 		.attr("transform","translate("+center.x+","+center.y+")");
 	// button glyphs
-	glyph(0, buttons, radius*0.87, Math.PI-(Math.PI-ang)/2, 1.0, center);
-	glyph(1, buttons, radius*0.87, Math.PI+(Math.PI-ang)/2, 1.0, center);
+	glyph(0, buttons, radius*0.87, Math.PI-(Math.PI-speedRange[1])/2, 1.0, center);
+	glyph(1, buttons, radius*0.87, Math.PI+(Math.PI-speedRange[1])/2, 1.0, center);
 
 
 	// speed indicator
@@ -249,10 +222,11 @@ function Dial(_container) {
 		.text("");
 
 	// goal indicator
-	var goalAngle = { begin: 2*Math.PI-ang-dxAngle, end: 2*Math.PI+ang+dxAngle };
+	//TODO: move to inner lane
+	var goalAngle = { begin: speedRange[0], end: speedRange[1] };
 	this.arcs.goal = d3.arc()
-		.startAngle(function(a,h) { return goalAngle.begin; })
-		.endAngle(function(a,h) { return goalAngle.begin + (goalAngle.end-goalAngle.begin)*h; })
+		.startAngle(function(a,h) { return speedRange[0]; })
+		.endAngle(function(a,h) { return (h>1.0) ? speedRange[1] : speedRange[0] + (speedRange[1]-speedRange[0])*h; })
 		.innerRadius(radius-radius*0.245-10)
 		.outerRadius(radius-radius*0.245-5);
 	this.controls.goal.indicator = indicators.append("path")
@@ -301,7 +275,7 @@ function Dial(_container) {
 Dial.prototype.setSpeed = function(speed, doTransition)
 {
 	// our scale is in radians, so we must convert it to degrees for the transform attribute
-	var degrees = this.scales.speed(speed - 1) * 180 / Math.PI;
+	var degrees = this.scales.speed(speed) * 180 / Math.PI;
 	(doTransition ? this.controls.speed.indicator.transition().duration(1000) : this.controls.speed.indicator)
 		.attr("fill-opacity", (speed>2) ? "1" : "0")	// fade in/out when we transition between stopped and running
 		.attr("transform", "translate(" + this.center.x + "," + this.center.y + ") rotate(" + degrees + ")");
@@ -396,15 +370,27 @@ Dial.prototype.createLane = function(ordinal, options)
 			}
 		},
 
+		// draws an arc
+		// arguments:
+		//		angleStart - the angle around the lane of which the center of the tick mark will be drawn (North is zero radians)
+		//		angleEnd - the thickness of the tick mark in radians
+		//		margin - (optional) adjust the width of the tick { inner: , outer:  }
 		arc: d3.arc()
-			.startAngle(function (a, h) {
-				return a;
-			})
-			.endAngle(function (a, h) {
-				return h;
-			})
-			.innerRadius(function() { return this.offset; })
-			.outerRadius(function() { return this.offset + this.width })
+			.startAngle(function (angleStart, angleEnd) { return angleStart; })
+			.endAngle(function (angleStart, angleEnd) { return angleEnd; })
+			.innerRadius(function(angleStart, angleEnd, margin) { return this.offset + ((margin!=null && margin.inner!=null) ? margin.inner : 0); })
+			.outerRadius(function(angleStart, angleEnd, margin) { return this.offset + this.width + ((margin && margin.outer) ? margin.outer : 0); }),
+
+		// draws a tick mark in the lane
+		// arguments:
+		//		angle - the angle around the lane of which the center of the tick mark will be drawn (North is zero radians)
+		//		width - the thickness of the tick mark in radians
+		//		margin - (optional) adjust the width of the tick { inner: , outer:  }
+		tick: d3.arc()
+			.startAngle(function (angle, width) { return angle-width; })
+			.endAngle(function (angle, width) { return angle+width; })
+			.innerRadius(function(angle, width, margin) { return this.offset + ((margin && margin.inner) ? margin.inner : 0); })
+			.outerRadius(function(angle, width, margin) { return this.offset + this.width + ((margin && margin.outer) ? margin.outer : 0); })
 	};
 
 	if(lane==null) {
