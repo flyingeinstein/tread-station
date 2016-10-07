@@ -115,6 +115,9 @@
         setTimeout(function() { dial.speed.set(0, true); }, 4000);
         setTimeout(function() { dial.speed.set(3.3, true); }, 6000);
 
+        setTimeout(function() { dial.progress.set(0.15, true); }, 2000);
+        setTimeout(function() { dial.progress.set(0.50, true); }, 5000);
+
         dial.svg.on("mousemove", function (e) {
             if (!dial.autopace) return;
             var mouse = dial.mouse();

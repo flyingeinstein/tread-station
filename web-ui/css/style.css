@@ -149,7 +149,7 @@ background: -webkit-linear-gradient(left,  rgba(0,0,0,0.65) 0%,rgba(0,0,0,0) 100
 background: -o-linear-gradient(left,  rgba(0,0,0,0.65) 0%,rgba(0,0,0,0) 100%); /* Opera 11.10+ */
 background: -ms-linear-gradient(left,  rgba(0,0,0,0.65) 0%,rgba(0,0,0,0) 100%); /* IE10+ */
 background: linear-gradient(to right,  rgba(0,0,0,0.65) 0%,rgba(0,0,0,0) 100%); /* W3C */
-filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a6000000', endColorstr='#00000000',GradientType=1 ); /* IE6-9 */	
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a6000000', endColorstr='#00000000',GradientType=1 ); /* IE6-9 */
 }
 .command-panel h6 {
 	margin-top: 40px;
@@ -181,7 +181,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a6000000', e
 .callouts {
 	position:absolute;
 	top: 0px; left:-300px; width: 300px; bottom:0px;
-	padding-top: 80px; 
+	padding-top: 80px;
 	padding-left: 10px;
 	padding-right: 20px;
 	padding-bottom: 20px;
@@ -214,7 +214,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', e
 }
 .modal.dark .modal-body {
 	padding-top: 0px;
-}	
+}
 .modal.dark .modal-body p {
 	font-size: 14px;
 }
@@ -303,7 +303,7 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', e
 }
 
 command-panel li {
-	cursor: pointer;	
+	cursor: pointer;
 }
 
 #callout-indicator {
@@ -339,7 +339,7 @@ command-panel li {
 }
 
 #page1 .page-left {
-	
+
 }
 
 #speed-dial {
@@ -353,17 +353,14 @@ command-panel li {
 	font-family: "Akkurat Medium"; /*,Helvetica,sans-serif;*/
 }
 #speed-dial svg g.status text.status-indicator {
-	font-size: 30px;
 	fill: #ccc;
 	font-family: Akkurat; /*,Helvetica,sans-serif;*/
 }
 #speed-dial svg g.status text.running-time {
-	font-size: 30px;
 	fill: #ccc;
 	font-family: Akkurat; /*,Helvetica,sans-serif;*/
 }
 #speed-dial svg g.background-ticks text.dial-ordinals {
-	font-size:20px;
 	fill: #FDFDFD;
 	font-family: Akkurat; /*,Helvetica,sans-serif;*/
 }
@@ -374,7 +371,7 @@ ul.quick-dial {
     position: absolute;
     right: 40px;
     top: 90px;
-	
+
 	-webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
@@ -403,7 +400,7 @@ ul.left-buttons {
     left: -20px;
     top: 140px;
 	z-index:1000;
-	
+
 	-webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;

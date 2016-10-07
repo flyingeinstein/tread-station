@@ -3,7 +3,8 @@
 $(function() {
 	var dialDefaults = {
 		// none so far
-	}
+
+	};
 });
 
 function polar2rect(radius, angle, offset)
@@ -32,14 +33,27 @@ function glyph(id, parent, radius, angle, scale, offset)
 
 function Dial(_container) {
 
+	this.options = {
+		text: {
+			style: "font-size: 200px"
+		}
+	};
+
 	this.container = $(_container);
 	var _this = this;
 
-	var extents = this.extents = {width: 640, height: 640};
 	var width = this.width = 550;
 	var height = this.height = 450;
-	var radius = this.radius = extents.height / 2;
-	var center = this.center = {x: extents.width - radius, y: extents.height / 2};
+
+	//var extents = this.extents = {width: 640, height: 640};
+	//var radius = this.radius = extents.height / 2;
+	//var center = this.center = {x: extents.width - radius, y: extents.height / 2};
+
+	// viewbox starts at 1000pixel radius to encompass the root lane
+	// if we add outer lanes then we will adjust the viewbox larger but keep the lane0 dial in the 1000,1000 extents
+	var radius = this.radius = 1000;
+	var extents = this.extents = {width: 1000, height: 1000};
+	var center = this.center = {x: 0, y: 0};
 
 	var dial_button_space = 0.18 * Math.PI;
 	var dial_begin = -Math.PI + dial_button_space;
@@ -68,14 +82,14 @@ function Dial(_container) {
 	// add some properties to each lanes collection
 	this.lanes.outer.margin = 15;
 	this.lanes.outer.width = 25;
-	this.lanes.inner.margin = 5;
-	this.lanes.inner.width = 5;
+	this.lanes.inner.margin = 15;
+	this.lanes.inner.width = 20;
 
 	this.container.html("");
 	var svg = this.svg = d3.select(this.container[0]).append("svg")
 		.attr("width", this.width)
 		.attr("height", this.height)
-		.attr("viewBox", "0 0 " + extents.width + " " + extents.height);
+		.attr("viewBox", "-1000 -1000 2000 2000");// + extents.width + " " + extents.height);
 
 	// add a border
 	radius -= 32;
@@ -147,7 +161,7 @@ function Dial(_container) {
 	// create the speed lane (lane 0)
 	var speedLane = this.lane0 = this.createLane(0, {
 		offset: radius - radius * 0.26,
-		width: 72
+		width: radius*0.26
 	});
 
 	this.plugin("speed",  new GraduatedIndicator({
@@ -174,20 +188,23 @@ function Dial(_container) {
 	this.controls.status = status.append("text")
 		.attr("class","status-indicator")
 		.attr("text-anchor","middle")
+		.attr("style", "font-size: 100px")
 		.attr("x",center.x)
-		.attr("y",center.y-140)
+		.attr("y",center.y-radius*0.34)
 		.text("...");
 	this.controls.runningTime = status.append("text")
 		.attr("class","running-time")
 		.attr("text-anchor","middle")
+		.attr("style",  "font-size: 120px")
 		.attr("x",center.x)
-		.attr("y",center.y-100)
+		.attr("y",center.y-radius*0.20)
 		.text("0:00");
 	this.controls.speed.display = status.append("text")
 		.attr("class","speed-indicator")
 		.attr("text-anchor","middle")
+		.attr("style", "font-size: 240px")
 		.attr("x",center.x)
-		.attr("y",center.y+70)
+		.attr("y",center.y+radius*0.10)
 		.text("");
 
 	// resolve clicks to one of the lanes by comparing radius,

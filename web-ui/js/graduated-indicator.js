@@ -35,6 +35,7 @@ GraduatedIndicator.prototype.attach = function(lane)
     var _this = this;
 
     var center = lane.dial.center;
+    var buttonInnerMargin = -(lane.dial.lanes.inner.margin + lane.dial.lanes.inner.width);
 
     // speed ticks
     var tick_points = this.scale.ticks(this.scale.domain()[1]*10);
@@ -82,12 +83,12 @@ GraduatedIndicator.prototype.attach = function(lane)
     this.controls.increment = lane.dial.controls.groups.buttons.append("path")
         .attr("id","speed-increase")
         .attr("class","inner speed-increase")
-        .attr("d", lane.arc(speedRange[1], Math.PI-0.01, { inner: -12, outer: 4 }))
+        .attr("d", lane.arc(speedRange[1], Math.PI-0.01, { inner: buttonInnerMargin, outer: 4 }))
         .attr("transform","translate("+center.x+","+center.y+")");
     this.controls.decrement = lane.dial.controls.groups.buttons.append("path")
         .attr("id","speed-decrease")
         .attr("class","inner speed-decrease")
-        .attr("d", lane.arc(speedRange[0], -Math.PI+0.01, { inner: -12, outer: 4 }))
+        .attr("d", lane.arc(speedRange[0], -Math.PI+0.01, { inner: buttonInnerMargin, outer: 4 }))
         .attr("transform","translate("+center.x+","+center.y+")");
     // button glyphs
     glyph(0, lane.dial.controls.groups.buttons, lane.offset+lane.width/2, Math.PI-(Math.PI-speedRange[1])/2, 1.0, center);
