@@ -24,6 +24,7 @@
 	<script src="../js/qotd.js"></script>
     <script src="../js/dial.js"></script>
     <script src="../js/dial-indicator.js"></script>
+    <script src="../js/button-indicator.js"></script>
     <script src="../js/graduated-indicator.js"></script>
     <script src="../js/incline-indicator.js"></script>
     <script src="../js/jizz.js"></script>
@@ -93,8 +94,8 @@
             }
         };
 
-        /*dial.plugin("incline",  new InclineIndicator() );
-        dial.plugin("autopace",  new AutoPaceIndicator({
+        dial.plugin("incline",  new InclineIndicator() );
+        /*dial.plugin("autopace",  new AutoPaceIndicator({
             lane: {
                 ordinal: 1,
                 alignment: 'left'
@@ -106,6 +107,17 @@
                 alignment: 'left'
             }
         }));*/
+
+        // speed macro buttons
+        dial.plugin("quickdial",  new ButtonGroupIndicator({
+            lane: {
+                ordinal: 2,
+                alignment: 'right'
+            },
+            buttons: [
+                    "A","B"
+            ]
+        }));
 
         dial.speed.set(4.2, true);
         //dial.progress.set(36, 5, 0);

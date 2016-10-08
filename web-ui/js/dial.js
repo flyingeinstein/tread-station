@@ -392,6 +392,14 @@ Dial.prototype.attachToLane = function(plugin, lane_request)
 	if(lane_request==null)
 		return false;
 
+	// the radial length of the control in the lane
+	if(plugin.arcrange==null) {
+		if(lane_request.arcrange)
+			plugin.arcrange = lane_request.arc;
+		else
+			plugin.arcrange = [ 0.8*Math.PI, 0.35*Math.PI ];
+	}
+
 	var lane;
 	if(lane_request.ordinal!=null)
 		lane = this.createLane(lane_request.ordinal);
@@ -402,17 +410,18 @@ Dial.prototype.attachToLane = function(plugin, lane_request)
 
 	// set the arc range for this control within the lane
 	if(plugin.scale==null) {
+		console.log(plugin.arcrange);
 		if(plugin.options.scale)
 			plugin.scale = plugin.options.scale;
 		else if (lane_request.alignment == 'left') {
 			plugin.scale = d3.scaleLinear()
 				.domain([0, 1.0])
-				.range([-0.8 * Math.PI, -0.35 * Math.PI]);
+				.range([-plugin.arcrange[0], -plugin.arcrange[1]]);
 		}
 		else if (lane_request.alignment == 'right') {
 			plugin.scale = d3.scaleLinear()
 				.domain([0, 1.0])
-				.range([0.8 * Math.PI, 0.35 * Math.PI]);
+				.range(plugin.arcrange);
 		}
 	}
 
