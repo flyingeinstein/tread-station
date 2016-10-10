@@ -86,19 +86,49 @@
             }
         };
 
-        var right_arcrange = [ 0.7*Math.PI, 0.1*Math.PI ];
+        // speed increment/decrement buttons
+        dial.plugin("increment",  new ButtonGroupIndicator({
+            lane: {
+                ordinal: 0,
+                //offset: dial.getLane(-1).offset,     // make this lane start at the same offset as lane 1
+                alignment: 'bottom'
+            },
+            arcrange: [ 0.83*Math.PI, 1.17*Math.PI ],
+            button_options: {
+                background: {
+                    fill: '#222',
+                    margin: { inner: dial.progress.lane.offset - dial.speed.lane.offset }
+                },
+                text: {
+                    color: '#aaa',
+                    size: '90px'
+                }
+            },
+            buttons: [
+                {
+                    id: "speed-increase",
+                    caption: "$up"
+                },
+                {
+                    id: "speed-decrease",
+                    caption: "$down"
+                }
+            ]
+        }));
 
         dial.plugin("incline",  new InclineIndicator({
             lane: {
                 ordinal: 1,
                 alignment: 'left'
-            }
+            },
+            arcrange: 0.6*Math.PI
         }));
         dial.plugin("autopace",  new AutoPaceIndicator({
             lane: {
                 ordinal: 2,
                 alignment: 'left'
-            }
+            },
+            arcrange: 0.6*Math.PI
         }));
 
         // speed macro buttons
@@ -109,7 +139,7 @@
                 width: 400,                         // set as a large width for our buttons
                 alignment: 'right'
             },
-            arcrange: right_arcrange,
+            arcrange: [ 0.7*Math.PI, 0.1*Math.PI ],
             button_options: {
                 background: {
                     fill: '#222'

@@ -47,7 +47,7 @@ DialIndicator.prototype.attach = function(lane)
         this.controls.background = this.container.append("path")
             .attr("class", "background")
             .attr("fill", this.options.background.fill)
-            .attr("d", lane.arc(range[0], range[1]));
+            .attr("d", lane.arc(range[0], range[1], this.options.background.margin));
     }
 
     // color bands
@@ -76,20 +76,44 @@ DialIndicator.prototype.attach = function(lane)
 
     // draw caption
     if(this.caption) {
-        var xofs = lane.offset + lane.width/2, yofs = 0;
-        var rofs = -90;
-        console.log(this.caption);
-        this.controls.caption = this.container.append("text")
-            .attr("class", "caption "+this.name+"-caption")
-            .attr("text-anchor", "middle")
-            .attr("x", xofs)
-            .attr("y", yofs)
-            .attr("dy", 40)
-            .attr("font-family", this.options.text.font)
-            .attr("font-size", this.options.text.size)
-            .attr("fill", this.options.text.color)
-            .attr("transform", function(d,i) { return "rotate(" + (rofs + _this.scale(0.5) * 180 / Math.PI) + ")"; })
-            .text(this.caption);
+        if(this.caption.length>1 && this.caption[0]=='$') {
+            var yofs = lane.offset + lane.width / 2, xofs = 0;
+            var rofs = -180;
+            // glyph
+            var glyphname = this.caption.substr(1);
+            var glyphcode = lane.dial.glyphs[glyphname];
+            console.log("caption:"+this.caption, glyphname, glyphcode);
+            if(glyphcode)
+                return this.container.append("path")
+                    .attr("class","glyph")
+                    .attr("d",glyphcode)
+                    .attr("stroke-width","4")
+                    .attr("stroke", "whitesmoke")
+                    .attr("fill", "transparent")
+                    //.attr("x", xofs)
+                    //.attr("y", yofs)
+                    .attr("transform", function (d, i) {
+                        return "translate("+xofs+","+yofs+") rotate(" + (rofs + _this.scale(0.5) * 180 / Math.PI) + ","+(-xofs)+","+(-yofs)+") scale("+4+")";
+                    });
+//                this.controls.caption = glyph(glyphcode, this.container, lane.offset+lane.width/2, Math.PI+(Math.PI-speedRange[1])/2, 4.0, center);
+
+        } else {
+            var xofs = lane.offset + lane.width / 2, yofs = 0;
+            var rofs = -90;
+            this.controls.caption = this.container.append("text")
+                .attr("class", "caption " + this.name + "-caption")
+                .attr("text-anchor", "middle")
+                .attr("x", xofs)
+                .attr("y", yofs)
+                .attr("dy", 40)
+                .attr("font-family", this.options.text.font)
+                .attr("font-size", this.options.text.size)
+                .attr("fill", this.options.text.color)
+                .attr("transform", function (d, i) {
+                    return "rotate(" + (rofs + _this.scale(0.5) * 180 / Math.PI) + ")";
+                })
+                .text(this.caption);
+        }
     }
 
     // current target

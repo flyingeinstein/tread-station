@@ -3,19 +3,6 @@
  */
 
 
-var __glyphs = [
-    "M -20 10 L 0 -10 L 20 10",
-    "M -20 -10 L 0 10 L 20 -10"
-]
-function glyph(id, parent, radius, angle, scale, offset)
-{
-    var pos = polar2rect(radius, angle, offset);
-    return parent.append("path")
-        .attr("class","glyph")
-        .attr("d",__glyphs[id])
-        .attr("stroke-width","4")
-        .attr("transform","translate("+pos.x+","+pos.y+") "+((scale!=1.0)?" scale("+scale+")":""));
-}
 
 function GraduatedIndicator(options)
 {
@@ -91,7 +78,7 @@ GraduatedIndicator.prototype.attach = function(lane)
         .attr("fill-opacity", "0")
         .attr("fill", this.options.indicator.color.fill)
         .attr("transform","translate("+center.x+","+center.y+") rotate(0)");
-
+/*
     // inner buttons - faster/slower
     // TODO: We can use the range to determine our buttons in this way
     // but when this becomes a ButtonIndicator then we need to get smarter
@@ -110,6 +97,7 @@ GraduatedIndicator.prototype.attach = function(lane)
     // button glyphs
     glyph(0, lane.dial.controls.groups.buttons, lane.offset+lane.width/2, Math.PI-(Math.PI-speedRange[1])/2, 4.0, center);
     glyph(1, lane.dial.controls.groups.buttons, lane.offset+lane.width/2, Math.PI+(Math.PI-speedRange[1])/2, 4.0, center);
+    */
 };
 
 GraduatedIndicator.prototype.set = function(value, transition)

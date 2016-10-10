@@ -88,12 +88,15 @@ ButtonGroupIndicator.prototype.attach = function(lane)
             button.caption = b;
         } else if (typeof b ==="object") {
             // button was an object of options, combine with other options
-            options = $.extend({}, this.button_options, b);
+            options = $.extend(true, {}, options, b);
             button = new ButtonIndicator(options);
+            if(b.id) name = b.id;
+            button.caption = b.caption;
+            console.log(button);
         }
 
         //options.lane.arcrange = [ offset, offset + button_width ];
-        button.arcrange = [ offset, offset + 0.98*button_width ];
+        button.options.arcrange = [ offset, offset + 0.98*button_width ];
         offset += button_width;
 
         lane.dial.plugin(name, button);

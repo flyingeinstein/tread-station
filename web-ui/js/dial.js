@@ -170,7 +170,8 @@ function Dial(_container, options) {
 			type: 'progress',
 			background: 'none',
 			lane: {
-				ordinal: -1
+				ordinal: -1,
+				alignment: 'left'
 			}
 		})
 	);
@@ -205,7 +206,7 @@ function Dial(_container, options) {
 	this.svg.on("click",function(){
 		var lane, control;
 		var m = _this.mouse();	// returns mouse coords as x,y and polar
-		console.log(m);
+		//console.log(m);
 		for(var l in _this.lanes.outer) {
 			lane = _this.lanes.outer[l];
 			// find what lane the mouse falls in
@@ -228,13 +229,18 @@ function Dial(_container, options) {
 			} else lane = null;
 		}
 		if(lane && control && control.scale)
-			console.log("click: control "+control.name+"   domain:"+m.domain(control.scale));
+			console.log("click: control "+control.name+"   domain:"+m.domain(control.scale), control);
 		else if(lane && control)
-			console.log("click: control "+control.name+"   mouse:"+m);
+			console.log("click: control "+control.name+"   mouse:"+m, control);
 		else if(lane!=null)
 			console.log("click: lane ",lane)
 	});
 }
+
+Dial.prototype.glyphs = {
+	up: "M -20 10 L 0 -10 L 20 10",
+	down: "M -20 -10 L 0 10 L 20 -10"
+};
 
 Dial.prototype.setRunningTime = function(seconds,minutes,hours)
 {
@@ -438,6 +444,8 @@ Dial.prototype.getLane = function(laneNameOrOrdinal)
 
 Dial.prototype.attachToLane = function(plugin, lane_request)
 {
+	var _this = this;
+
 	// find the right lane or create one
 	if(lane_request==null)
 		return false;
@@ -458,21 +466,62 @@ Dial.prototype.attachToLane = function(plugin, lane_request)
 		return false;
 	}
 
-	// set the arc range for this control within the lane
-	if(plugin.scale==null) {
-		if(plugin.options.scale)
+	// get the lane0 root dial
+	var dial = this.speed;
+
+	// set the scale
+	if (plugin.scale == null) {
+		if (plugin.options.scale)
 			plugin.scale = plugin.options.scale;
-		else if (lane_request.alignment == 'left') {
+		else
+		// default 0 => 1 domain
 			plugin.scale = d3.scaleLinear()
-				.domain([0, 1.0])
-				.range([-plugin.arcrange[0], -plugin.arcrange[1]]);
-		}
-		else if (lane_request.alignment == 'right') {
-			plugin.scale = d3.scaleLinear()
-				.domain([0, 1.0])
-				.range(plugin.arcrange);
-		}
+				.domain([0, 1.0]);
 	}
+
+	var dial_range2, align2;
+	plugin.computeRange = function() {
+		var dial_range = (dial && dial.scale) ? dial.scale.range() : null;
+		var arcrange = isNaN(plugin.options.arcrange) ? null :  plugin.options.arcrange;
+		dial_range2 = dial_range;
+		align2 = lane_request.alignment;
+		var out=null;
+
+		// set the arc range for this control within the lane
+		if (typeof plugin.options.arcrange ==="object" && plugin.options.arcrange.constructor==Array)
+			out= plugin.options.arcrange;
+		else if (dial_range) {
+			if (lane_request.alignment == null)
+				out= dial_range;	// default to the same range as the main dial
+			else if (lane_request.alignment == 'left') {
+				out= [dial_range[0], arcrange ? dial_range[0] + arcrange : 0];
+			} else if (lane_request.alignment == 'right') {
+				out= [dial_range[1], arcrange ? dial_range[1] - arcrange : 0];
+			} else if (lane_request.alignment == 'bottom') {
+				if(!arcrange) arcrange = Math.PI/2;
+				out= [Math.PI - arcrange / 2, Math.PI + arcrange / 2];
+			} else if (lane_request.alignment == 'top') {
+				if(!arcrange) arcrange = Math.PI/2;
+				out= [-arcrange / 2, +arcrange / 2];
+			} else {
+				out= dial_range;	// default to the same range as the main dial
+			}
+		} else {
+			// no dial range available, fill any leftover space
+			//var controls =
+			out= [-Math.PI, Math.PI];
+		}
+		if(out) {
+			out.alignment = lane_request.alignment;
+			out.arcrange = arcrange;
+			out.dialrange = dial_range;
+		}
+		return out;
+	};
+
+	var r;
+	plugin.scale.range( r = plugin.computeRange() );
+	//console.log("range: ", r, "    dial: ",dial_range2, "    align:"+align2);
 
 	// add a function to return the polarity of the output range
 	plugin.scale.polarity = function() { var range=this.range(); return (range[0] < range[1]) ? 1 : -1; };
