@@ -11,6 +11,7 @@ function DialIndicator(options)
             alignment: 'right'
         },
         background: {
+            fill: '#2a2a2a'
         },
         color: {
             fill: 'white'
@@ -24,7 +25,7 @@ function DialIndicator(options)
         }
     };
     if(options)
-        $.extend(true, this.options, options);
+        this.options = $.extend(true, this.options, options);
 }
 
 DialIndicator.prototype.attach = function(lane)
@@ -45,7 +46,7 @@ DialIndicator.prototype.attach = function(lane)
     if(this.options.background && this.options.background!='none') {
         this.controls.background = this.container.append("path")
             .attr("class", "background")
-            .attr("fill", this.options.background.color)
+            .attr("fill", this.options.background.fill)
             .attr("d", lane.arc(range[0], range[1]));
     }
 

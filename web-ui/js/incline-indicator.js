@@ -7,6 +7,7 @@ function InclineIndicator(options)
 {
     DialIndicator.call(this);
     if(options)
-        $.extend(this.options, options);
+        this.options = $.extend(true, this.options, options);
+    console.log(this.options);
 }
 InclineIndicator.prototype = new DialIndicator();

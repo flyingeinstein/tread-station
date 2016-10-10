@@ -18,7 +18,7 @@ function polar2rect(radius, angle, offset)
 }
 
 
-function Dial(_container) {
+function Dial(_container, options) {
 
 	this.options = {
 		text: {
@@ -26,6 +26,8 @@ function Dial(_container) {
 		},
 		zoom: 1.0
 	};
+	if(options)
+		this.options = $.extend(true, this.options, options);
 
 	this.container = $(_container);
 	var _this = this;
@@ -75,9 +77,12 @@ function Dial(_container) {
 
 	this.container.html("");
 	var svg = this.svg = d3.select(this.container[0]).append("svg")
+		.attr("id", this.options.id)
+		.attr("class","dial"
+			+(this.options.class ? " "+this.options.class : ""))
 		.attr("width", this.width)
 		.attr("height", this.height)
-		.attr("viewBox", "-1000 -1000 2000 2000");// + extents.width + " " + extents.height);
+		.attr("viewBox", "-1000 -1000 2000 2000");
 
 	// add a border
 	radius -= 32;
@@ -503,8 +508,11 @@ Dial.prototype.plugin = function(name, klass)
 		// add a new container for the plugin
 		klass.container = lane.container
 			.append("g")
-			.attr("id", name)
-			.attr("class","plugin plugin-"+klass.constructor.name);
+			.attr("id", klass.id ? klass.id : name)
+			.attr("class","plugin plugin-"+klass.constructor.name.toLowerCase()
+				+(klass.options.class ? " "+klass.options.class : "")
+				+(klass.options.type ? " "+klass.options.type+"-indicator" : "")
+			);
 	} else {
 		// create the plugins group if not already created (holds all plugins that arent in lanes)
 		if(!this.controls.groups.plugins)
@@ -532,9 +540,9 @@ Dial.prototype.plugin = function(name, klass)
 
 // extend the jQuery class so we can easily create a dial in a control just by calling dial()
 jQuery.fn.extend({
-    	dial: function() {
+    	dial: function(options) {
     		//return this.each(function() {
-    			var dial = new Dial($(this));
+    			var dial = new Dial($(this), options);
 				return dial;
 			//});
 		}

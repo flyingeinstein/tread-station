@@ -7,6 +7,7 @@
 	<!--link type="text/css" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700"-->
 	<link rel="stylesheet" href="../css/themes/smoothness/jquery-ui.css">
 	<link rel="stylesheet" href="../css/grayscale.css">
+    <link rel="stylesheet" href="../css/dial/metal.css">
 	<link rel="stylesheet" href="../css/font-awesome.min.css">
 	<link rel="stylesheet" href="../bootstrap/css/bootstrap.css">
 	<link rel="stylesheet" href="../bootstrap/css/bootstrap-theme.css">
@@ -75,7 +76,9 @@
     };
 
 	$(".dial").each(function() {
-        var dial = $(this).dial();
+        var dial = $(this).dial({
+            id: "dial1"
+        });
         dial.treadmill = {
             goal: {
                 time: 90 * 60,    // seconds
@@ -85,13 +88,13 @@
 
         var right_arcrange = [ 0.7*Math.PI, 0.1*Math.PI ];
 
-        dial.plugin("autopace",  new AutoPaceIndicator({
+        dial.plugin("incline",  new InclineIndicator({
             lane: {
                 ordinal: 1,
                 alignment: 'left'
             }
         }));
-        dial.plugin("incline",  new InclineIndicator({
+        dial.plugin("autopace",  new AutoPaceIndicator({
             lane: {
                 ordinal: 2,
                 alignment: 'left'
@@ -109,7 +112,7 @@
             arcrange: right_arcrange,
             button_options: {
                 background: {
-                    color: '#511'
+                    fill: '#222'
                 },
                 text: {
                     color: '#aaa',

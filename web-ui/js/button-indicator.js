@@ -20,8 +20,7 @@ ButtonIndicator.prototype = new DialIndicator();
 ButtonIndicator.prototype.attach = function(lane)
 {
     DialIndicator.prototype.attach.call(this, lane);
-
-
+    this.container.attr("style","cursor:hand");
 };
 
 
@@ -77,7 +76,6 @@ ButtonGroupIndicator.prototype.attach = function(lane)
     $.each(this.options.buttons, function(k, b) {
         var name = (b && b.name) ? b.name : "button"+k;
         var options = $.extend(true, {}, _this.options.button_options);
-        console.log(options);
 
         if(!options.lane)
             options.lane = $.extend({}, _this.options.lane);

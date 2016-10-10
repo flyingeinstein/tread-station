@@ -91,6 +91,7 @@ AutoPaceIndicator.prototype = new DialIndicator();
 AutoPaceIndicator.prototype.attach = function(lane)
 {
     DialIndicator.prototype.attach.call(this, lane);
+    this.options.jizz.lane = lane;
     this.jizz = new Jizz(this.options.jizz, this.container, this.svg);
     this.jizz.options.type = 'radial';
     this.jizz.options.focal = {

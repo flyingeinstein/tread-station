@@ -40,16 +40,17 @@ function Jizz(options, svg_group, svg)
         
         stroke: {
             color: "cyan",
-            width: 3
+            width: 0.003,
+            contract: 20
             // opacity = 1.0
         },
         border: 6,
-        blur: 4,
-        gooey: 5,
+        blur: 25,
+        gooey: 20,
         expiration: 5000,
         limit: 75
     };
-    $.extend(this.options, options);
+    this.options = $.extend(true, this.options, options);
 
     this.controls = {};
     this.groups = {};
@@ -58,7 +59,6 @@ function Jizz(options, svg_group, svg)
     this.unitScale = d3.scaleLinear()
         .domain(this.options.range)
         .range([0,this.options.height - this.options.width ]);
-
 
     // build our historical data visualization SVG filter
     var filter=null;
@@ -152,19 +152,22 @@ Jizz.prototype.updateHistory = function()
         .data(this.history, function(d) { return d.time; });
     dots
         .enter()
-        .append("line")
+        .append("path")
         .attr("class", "historical-line")
         .attr("id", function(d) { return "hl-"+d.time; })
-        .attr("stroke", this.options.stroke.color)
-        .attr("stroke-width", this.options.stroke.width)
-        .style("stroke-opacity", this.options.stroke.opacity ? this.options.stroke.opacity : 1.0 )
-        // TODO: Anyway to reduce the redundant xy() function calls here?
-        .attr("x1", function(d) { return _this.xy(d.value)[0]-line_width; })
-        .attr("x2", function(d) { return _this.xy(d.value)[0]+line_width; })
-        .attr("y1", function(d) { return _this.xy(d.value)[1]; })
-        .attr("y2", function(d) { return _this.xy(d.value)[1]; })
+        //.attr("stroke", this.options.stroke.color)
+        //.attr("stroke-width", this.options.stroke.width)
+        .attr("fill", this.options.stroke.color)
+        // TODO: Any way to reduce the redundant xy() function calls here?
+        //.attr("x1", function(d) { return _this.xy(d.value)[0]-line_width; })
+        //.attr("x2", function(d) { return _this.xy(d.value)[0]+line_width; })
+        //.attr("y1", function(d) { return _this.xy(d.value)[1]; })
+        //.attr("y2", function(d) { return _this.xy(d.value)[1]; })
+        .attr("d", this.options.lane.tick(0, this.options.stroke.width, { inner: this.options.stroke.contract, outer: -this.options.stroke.contract }))
+        .attr("transform", function(d) { return "rotate(" + (_this.unitScale(d.value)* 180 / Math.PI) + ")"; })
+        .style("opacity", this.options.stroke.opacity)
         .transition().duration(this.options.expiration)
-        .style("stroke-opacity", 0.0)
+        .style("opacity", 0.0)
         .on("end", function(d,i) { d.expired = true; })
         .remove();
     dots
