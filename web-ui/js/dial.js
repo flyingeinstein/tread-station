@@ -23,7 +23,8 @@ function Dial(_container) {
 	this.options = {
 		text: {
 			style: "font-size: 200px"
-		}
+		},
+		zoom: 1.0
 	};
 
 	this.container = $(_container);
@@ -67,8 +68,8 @@ function Dial(_container) {
 	};
 
 	// add some properties to each lanes collection
-	this.lanes.outer.margin = 15;
-	this.lanes.outer.width = 25;
+	this.lanes.outer.margin = 25;
+	this.lanes.outer.width = 115;
 	this.lanes.inner.margin = 15;
 	this.lanes.inner.width = 20;
 
@@ -207,7 +208,7 @@ function Dial(_container) {
 				if(lane.controls) {
 					for (var c in lane.controls) {
 						var ctrl = lane.controls[c];
-						if (ctrl.scale) {
+						if (ctrl.options.clickable!=false && ctrl.scale) {
 							var _range = ctrl.scale.range();
 							if (_range[1] < _range[0])
 								_range = _range.reverse();
@@ -253,6 +254,32 @@ Dial.prototype.mouse = function()
 	return c;
 };
 
+Dial.prototype.zoom = function(value, transitionTimeMs)
+{
+	var _this = this;
+	 var zoomFormat = function (v) {
+		var z = 1000 * v;
+		var nz = -z;
+		return nz + " " + nz + " " + (z * 2) + " " + (z * 2);
+	};
+
+	if(transitionTimeMs) {
+		// our local tween function
+		var interpolator = d3.interpolate(this.options.zoom, value);
+
+		function zoomTween() {
+			return function(t) {
+				return _this.options.zoom = zoomFormat(interpolator(t));
+			}
+		}
+
+		this.svg.transition().duration(transitionTimeMs)
+			.attrTween("viewBox", zoomTween);
+	} else
+		this.svg.attr("viewBox", zoomFormat(this.options.zoom = value));
+
+}
+
 /****** Dial Plugin API ******/
 
 Dial.prototype.createLane = function(ordinal, options)
@@ -282,12 +309,10 @@ Dial.prototype.createLane = function(ordinal, options)
 		return lanes[n];	// existing lane
 
 	// default lane options
-	if(!options) {
-		options = {
+	options = $.extend( {
 			margin: lanes.margin,
 			width: lanes.width
-		};
-	}
+		}, options);
 
 	var last_lane = (lanes.length>0) ? lanes[lanes.length-1] : {
 		offset: this.lane0 ? this.lane0.offset : 0,
@@ -339,7 +364,7 @@ Dial.prototype.createLane = function(ordinal, options)
 			.startAngle(function (angleStart, angleEnd) { return angleStart; })
 			.endAngle(function (angleStart, angleEnd) { return angleEnd; })
 			.innerRadius(function(angleStart, angleEnd, margin) { return this.offset + ((margin!=null && margin.inner!=null) ? margin.inner : 0); })
-			.outerRadius(function(angleStart, angleEnd, margin) { return this.offset + this.width + ((margin && margin.outer) ? margin.outer : 0); }),
+			.outerRadius(function(angleStart, angleEnd, margin) { return this.offset + ((margin && margin.width) ? margin.width : this.width) + ((margin && margin.outer) ? margin.outer : 0); }),
 
 		// draws a tick mark in the lane
 		// arguments:
@@ -353,10 +378,30 @@ Dial.prototype.createLane = function(ordinal, options)
 			.outerRadius(function(angle, width, margin) { return this.offset + this.width + ((margin && margin.outer) ? margin.outer : 0); })
 	};
 
+	// add an alternate width arc function in cases where the plugin may
+	// want to be larger than the lane default
+	// WARNING  This arc function copy doesnt work because of the 'this' references in the functions which need to resolve to the above
+	//          lane object. For this to work, those this references would need to be converted into references on lane.
+	/*lane.arc.width = function(width) {
+		console.log("creating alternative arc for lane "+ordinal+" of width "+width);
+		return lane.arc
+			//.startAngle(function (angleStart, angleEnd) { return angleStart; })
+			//.endAngle(function (angleStart, angleEnd) { return angleEnd; })
+			//.innerRadius(function(angleStart, angleEnd, margin) { return this.offset + ((margin!=null && margin.inner!=null) ? margin.inner : 0); })
+			.outerRadius(function(angleStart, angleEnd, margin) { return this.offset + width  + ((margin && margin.outer) ? margin.outer : 0); });
+	};*/
+
 	if(lane==null) {
 		console.log("dial.createLane: lane creation error");
 		return null;
 	}
+
+	// have the lane fade-in
+	lane.container
+		.attr("opacity", 0.0)
+		.transition()
+		.duration(1500)
+		.attr("opacity", 1.0);
 
 	lanes.push( lane );
 	return lane;
@@ -402,7 +447,7 @@ Dial.prototype.attachToLane = function(plugin, lane_request)
 
 	var lane;
 	if(lane_request.ordinal!=null)
-		lane = this.createLane(lane_request.ordinal);
+		lane = this.createLane(lane_request.ordinal, lane_request);
 	if(lane==null) {
 		console.log("attachToLane: failed to create lane", lane_request);
 		return false;
@@ -410,7 +455,6 @@ Dial.prototype.attachToLane = function(plugin, lane_request)
 
 	// set the arc range for this control within the lane
 	if(plugin.scale==null) {
-		console.log(plugin.arcrange);
 		if(plugin.options.scale)
 			plugin.scale = plugin.options.scale;
 		else if (lane_request.alignment == 'left') {
@@ -446,6 +490,12 @@ Dial.prototype.plugin = function(name, klass)
 	var lane;
 	this[name] = this.plugins[name] = klass;
 	klass.name = name;
+
+	if(klass.options) {
+		if(klass.options.arcrange)
+			klass.arcrange = klass.options.arcrange;
+	}
+
 	if(klass.options && klass.options.lane) {
 		// this is a special control that attaches to lanes inside or outside the dial
 		lane = this.attachToLane(klass, klass.options.lane);

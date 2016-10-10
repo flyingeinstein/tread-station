@@ -14,27 +14,39 @@ function DialIndicator(options)
         },
         color: {
             fill: 'white'
+        },
+
+        caption: "",
+        text: {
+            font: 'arial',
+            size: '100px',
+            color: 'white'
         }
     };
     if(options)
-        $.extend(this.options, options);
+        $.extend(true, this.options, options);
 }
 
 DialIndicator.prototype.attach = function(lane)
 {
     //console.log("attached to ", lane);
     //var radius = this.lane.dial.radii.outer + 20;
-    var center = this.lane.dial.center;
     var target = this.lane.targets.current;
     var range = this.scale.range();
     var _this = this;
 
+    /*	WARNING  This arc function copy doesnt work because of the 'this' references in the functions which need to resolve to the above
+                 lane object. For this to work, those this references would need to be converted into references on lane.
+     this.arc = isNaN(this.options.lane.width)
+        ? lane.arc
+        : lane.arc.width(this.options.lane.width);*/
+
     // background
     if(this.options.background && this.options.background!='none') {
         this.controls.background = this.container.append("path")
-            .attr("class", "incline-background")
-            .attr("d", this.lane.arc(range[0], range[1]))
-            .attr("transform", "translate(" + center.x + "," + center.y + ")");
+            .attr("class", "background")
+            .attr("fill", this.options.background.color)
+            .attr("d", lane.arc(range[0], range[1]));
     }
 
     // color bands
@@ -58,8 +70,25 @@ DialIndicator.prototype.attach = function(lane)
                 .attr("class", "band")
                 .attr("fill", function(b,i) { return b.color ? b.color : null; })
                 .attr("fill-opacity", function(b,i) { return b.opacity ? b.opacity : 1.0; })
-                .attr("d", function(b,i) { return lane.arc(_this.scale(b.range[0]), _this.scale(b.range[1])); })
-                .attr("transform", "translate(" + center.x + "," + center.y + ")");
+                .attr("d", function(b,i) { return lane.arc(_this.scale(b.range[0]), _this.scale(b.range[1])); });
+    }
+
+    // draw caption
+    if(this.caption) {
+        var xofs = lane.offset + lane.width/2, yofs = 0;
+        var rofs = -90;
+        console.log(this.caption);
+        this.controls.caption = this.container.append("text")
+            .attr("class", "caption "+this.name+"-caption")
+            .attr("text-anchor", "middle")
+            .attr("x", xofs)
+            .attr("y", yofs)
+            .attr("dy", 40)
+            .attr("font-family", this.options.text.font)
+            .attr("font-size", this.options.text.size)
+            .attr("fill", this.options.text.color)
+            .attr("transform", function(d,i) { return "rotate(" + (rofs + _this.scale(0.5) * 180 / Math.PI) + ")"; })
+            .text(this.caption);
     }
 
     // current target
@@ -67,14 +96,13 @@ DialIndicator.prototype.attach = function(lane)
         this.controls.indicator = this.container.append("path")
             .attr("class", "incline-indicator")
             .attr("d", this.lane.tick(0, target.width))
-            .attr("transform", "translate(" + center.x + "," + center.y + ") rotate(" + this.scale.degrees(target.value) + ")");
+            .attr("transform", "rotate(" + this.scale.degrees(target.value) + ")");
     } else if (this.options.type=='progress') {
         this.controls.indicator = this.container.append("path")
             .attr("class","goal")   // TODO: this should be generic
             .attr("stroke", this.options.color.stroke)
             .attr("fill", this.options.color.fill)
-            .attr("d", lane.arc(this.scale.range()[0], this.scale(0.25)))
-            .attr("transform","translate("+center.x+","+center.y+")");
+            .attr("d", lane.arc(this.scale.range()[0], this.scale(0.25)));
     }
 };
 
@@ -88,10 +116,9 @@ DialIndicator.prototype.set = function(value, transition)
 
     // update current target
     if(this.options.type==null || this.options.type=='tick') {
-        var center = this.lane.dial.center;
         indicator
             .transition().duration(1000)
-            .attr("transform", "translate(" + center.x + "," + center.y + ") rotate(" + this.scale.degrees(value) + ")");
+            .attr("transform", "rotate(" + this.scale.degrees(value) + ")");
     } else if (this.options.type=='progress') {
         // our local tween function
         var interpolator = d3.interpolate(this.scale(oldValue), this.scale(value));

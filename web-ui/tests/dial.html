@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<title>Tread Station</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link type="text/css" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">
+	<!--link type="text/css" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700"-->
 	<link rel="stylesheet" href="../css/themes/smoothness/jquery-ui.css">
 	<link rel="stylesheet" href="../css/grayscale.css">
 	<link rel="stylesheet" href="../css/font-awesome.min.css">
@@ -48,17 +48,6 @@
 
 <div class="container">
     <div id="page1" class="page">
-        <!--ul class="left-buttons">
-            <li class="stop">STOP</li>
-            <li class="reset"  data-toggle="modal" data-target="#user-select">RESET</li>
-        </ul-->
-        <ul class="quick-dial">
-            <li>3.2</li>
-            <li>3.6</li>
-            <li>4.2</li>
-            <li>4.8</li>
-            <li>5.5</li>
-        </ul>
         <div id="speed-dial" class="dial">
             <!-- svg dial indicator goes here !-->
         </div>
@@ -94,41 +83,56 @@
             }
         };
 
-        dial.plugin("incline",  new InclineIndicator() );
-        /*dial.plugin("autopace",  new AutoPaceIndicator({
+        var right_arcrange = [ 0.7*Math.PI, 0.1*Math.PI ];
+
+        dial.plugin("autopace",  new AutoPaceIndicator({
             lane: {
                 ordinal: 1,
                 alignment: 'left'
             }
-        }));*/
-        /*dial.plugin("shit",  new InclineIndicator({
+        }));
+        dial.plugin("incline",  new InclineIndicator({
             lane: {
-                ordinal: 0,
+                ordinal: 2,
                 alignment: 'left'
             }
-        }));*/
+        }));
 
         // speed macro buttons
         dial.plugin("quickdial",  new ButtonGroupIndicator({
             lane: {
-                ordinal: 2,
+                ordinal: 3,
+                offset: dial.getLane(1).offset,     // make this lane start at the same offset as lane 1
+                width: 400,                         // set as a large width for our buttons
                 alignment: 'right'
             },
+            arcrange: right_arcrange,
+            button_options: {
+                background: {
+                    color: '#511'
+                },
+                text: {
+                    color: '#aaa',
+                    size: '90px'
+                }
+            },
             buttons: [
-                    "A","B"
+                    "3.2","3.6","4.2","4.8","5.5"
             ]
         }));
 
+
         dial.speed.set(4.2, true);
         //dial.progress.set(36, 5, 0);
-        dial.progress.set(0.35, 1000);
+        dial.progress.set(0.45, 1000);
 
         setTimeout(function() { dial.speed.set(2.5, true); }, 2000);
         setTimeout(function() { dial.speed.set(0, true); }, 4000);
         setTimeout(function() { dial.speed.set(3.3, true); }, 6000);
 
-        setTimeout(function() { dial.progress.set(0.15, true); }, 2000);
+        setTimeout(function() { dial.progress.set(0.11, true); }, 2000);
         setTimeout(function() { dial.progress.set(0.50, true); }, 5000);
+        dial.zoom(1.5, 1000);
 
         dial.svg.on("mousemove", function (e) {
             if (!dial.autopace) return;
@@ -139,7 +143,7 @@
 
         if(dial.incline) {
             setTimeout(function () {
-                dial.incline.set(0.6);
+                dial.incline.set(0.75);
             }, 1500);
         }
 

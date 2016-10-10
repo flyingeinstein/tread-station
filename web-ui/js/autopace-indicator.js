@@ -5,6 +5,7 @@
 function AutoPaceIndicator(options)
 {
     var slider = this;
+    DialIndicator.call(this);
 
     // control measurements
     this.options = {
@@ -39,7 +40,7 @@ function AutoPaceIndicator(options)
         }
     };
     $.extend(this.options, options);
-console.log(this.options);
+
     /*// merge any user supplied options if found
     var user_options_object = this.container.data("options");
     if(user_options_object) {

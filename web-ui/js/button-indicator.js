@@ -5,14 +5,14 @@
 
 function ButtonIndicator(options)
 {
-    this.options = {
-      value: 1,  // the value of the button (optional)
-      caption: "button",
-      fill: "gray",
-      stroke: null
+    DialIndicator.call(this);
+    var default_options = {
+        type: 'button',
+        value: 1  // the value of the button (optional)
     };
+
     if(options)
-        $.extend(this.options, options);
+        $.extend(true, this.options, default_options, options);
 }
 ButtonIndicator.prototype = new DialIndicator();
 
@@ -34,6 +34,18 @@ ButtonIndicator.prototype.attach = function(lane)
 function ButtonGroupIndicator(options)
 {
     this.options = {
+        lane: {
+            ordinal: 1,
+            alignment: 'right'
+        },
+        background: {
+            fill: 'red'
+        },
+        color: {
+            fill: 'white'
+        },
+
+        clickable: false,
         buttons: [],
         button_options: {
         }
@@ -64,7 +76,8 @@ ButtonGroupIndicator.prototype.attach = function(lane)
     var offset = this.arcrange[0];
     $.each(this.options.buttons, function(k, b) {
         var name = (b && b.name) ? b.name : "button"+k;
-        var options = $.extend({}, this.button_options);
+        var options = $.extend(true, {}, _this.options.button_options);
+        console.log(options);
 
         if(!options.lane)
             options.lane = $.extend({}, _this.options.lane);
@@ -74,6 +87,7 @@ ButtonGroupIndicator.prototype.attach = function(lane)
         if(typeof b ==="string") {
             button = new ButtonIndicator(options);
             button.name = name;
+            button.caption = b;
         } else if (typeof b ==="object") {
             // button was an object of options, combine with other options
             options = $.extend({}, this.button_options, b);
@@ -81,9 +95,9 @@ ButtonGroupIndicator.prototype.attach = function(lane)
         }
 
         //options.lane.arcrange = [ offset, offset + button_width ];
-        button.arcrange = [ offset, offset + button_width ];
+        button.arcrange = [ offset, offset + 0.98*button_width ];
+        offset += button_width;
 
-        console.log(button);
         lane.dial.plugin(name, button);
     });
 };

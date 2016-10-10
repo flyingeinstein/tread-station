@@ -19,7 +19,8 @@ function glyph(id, parent, radius, angle, scale, offset)
 
 function GraduatedIndicator(options)
 {
-    this.options = {
+    DialIndicator.call(this);
+    var default_options = {
         lane: {
             ordinal: 1,
             alignment: 'right'
@@ -38,7 +39,7 @@ function GraduatedIndicator(options)
         }
     };
     if(options)
-        $.extend(this.options, options);
+        $.extend(this.options ? this.options : {}, default_options, options);
 }
 GraduatedIndicator.prototype = new DialIndicator();
 
@@ -76,6 +77,8 @@ GraduatedIndicator.prototype.attach = function(lane)
         .filter(function(d) { return d!=1 && d!=9; })
         .attr("class", "dial-ordinals")
         .attr("text-anchor", "middle")
+        .attr("font-family", this.options.text.font)
+        .attr("font-size", this.options.text.size)
         .attr("x", center.x)
         .attr("y", center.y - lane.dial.radius * 0.80)
         .attr("transform", function(d,i) { return "rotate(" + (_this.scale(d+0.5) * 180 / Math.PI) + "," + center.x + "," + center.y + ")"; })
