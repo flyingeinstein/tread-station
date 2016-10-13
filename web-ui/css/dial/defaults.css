@@ -1,0 +1,5 @@
+
+svg.dial text.caption, svg.dial .glyph {
+    pointer-events: none;
+}
+

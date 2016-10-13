@@ -1,3 +1,4 @@
+@import url(defaults.css);
 
 svg.dial .button-indicator .background:hover {
     fill: red;
