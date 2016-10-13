@@ -82,7 +82,6 @@ DialIndicator.prototype.attach = function(lane)
             // glyph
             var glyphname = this.caption.substr(1);
             var glyphcode = lane.dial.glyphs[glyphname];
-            console.log("caption:"+this.caption, glyphname, glyphcode);
             if(glyphcode)
                 return this.container.append("path")
                     .attr("class","glyph")

@@ -340,7 +340,7 @@ Dial.prototype.createLane = function(ordinal, options)
 		// outer lane, including lane0
 		offset = last_lane.offset + last_lane.width + options.margin;
 	}
-	console.log("create lane "+ordinal+" offset "+offset);
+	//console.log("create lane "+ordinal+" offset "+offset);
 
 	// return existing lane if it exists
 	if (n < lanes.length)
