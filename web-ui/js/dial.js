@@ -171,7 +171,7 @@ function Dial(_container, options) {
 			background: 'none',
 			lane: {
 				ordinal: -1,
-				alignment: 'left'
+				alignment: 'none'
 			}
 		})
 	);
@@ -358,13 +358,6 @@ Dial.prototype.createLane = function(ordinal, options)
 		offset: offset,
 		width: options.width,
 		margin: options.margin,
-
-		targets: {
-			current: {
-				value: 0,
-				width: 0.015	// in percent
-			}
-		},
 
 		// draws an arc
 		// arguments:

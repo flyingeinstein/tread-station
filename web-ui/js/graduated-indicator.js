@@ -36,6 +36,11 @@ GraduatedIndicator.prototype.attach = function(lane)
     //DialIndicator.prototype.attach.call(this, lane);
     var _this = this;
 
+    if(this.options.transition==true)
+        this.options.transition = 1000;
+    if(this.value==null)
+        this.value = 0;
+
     var center = lane.dial.center;
     var buttonInnerMargin = -(lane.dial.lanes.inner.margin + lane.dial.lanes.inner.width);
 
@@ -78,34 +83,16 @@ GraduatedIndicator.prototype.attach = function(lane)
         .attr("fill-opacity", "0")
         .attr("fill", this.options.indicator.color.fill)
         .attr("transform","translate("+center.x+","+center.y+") rotate(0)");
-/*
-    // inner buttons - faster/slower
-    // TODO: We can use the range to determine our buttons in this way
-    // but when this becomes a ButtonIndicator then we need to get smarter
-    var speedRange = this.scale.range();
-    speedRange[0] -= 0.03; 	speedRange[1] += 0.03;
-    this.controls.increment = lane.dial.controls.groups.buttons.append("path")
-        .attr("id","speed-increase")
-        .attr("class","inner speed-increase")
-        .attr("d", lane.arc(speedRange[1], Math.PI-0.01, { inner: buttonInnerMargin, outer: 4 }))
-        .attr("transform","translate("+center.x+","+center.y+")");
-    this.controls.decrement = lane.dial.controls.groups.buttons.append("path")
-        .attr("id","speed-decrease")
-        .attr("class","inner speed-decrease")
-        .attr("d", lane.arc(speedRange[0], -Math.PI+0.01, { inner: buttonInnerMargin, outer: 4 }))
-        .attr("transform","translate("+center.x+","+center.y+")");
-    // button glyphs
-    glyph(0, lane.dial.controls.groups.buttons, lane.offset+lane.width/2, Math.PI-(Math.PI-speedRange[1])/2, 4.0, center);
-    glyph(1, lane.dial.controls.groups.buttons, lane.offset+lane.width/2, Math.PI+(Math.PI-speedRange[1])/2, 4.0, center);
-    */
 };
 
 GraduatedIndicator.prototype.set = function(value, transition)
 {
     // our scale is in radians, so we must convert it to degrees for the transform attribute
     var degrees = this.scale(value) * 180 / Math.PI;
-    if(transition==true) transition=1000;
-    (transition ? this.controls.indicator.transition().duration(transition) : this.controls.indicator)
+    var indicator =  (this.options.transition)
+        ? this.controls.indicator.transition().duration(this.options.transition)
+        : this.controls.indicator;
+    indicator
         .attr("fill-opacity", (value>2) ? "1" : "0")	// fade in/out when we transition between stopped and running
         .attr("transform", "translate(" + this.lane.dial.center.x + "," + this.lane.dial.center.y + ") rotate(" + degrees + ")");
 };

@@ -156,15 +156,20 @@
 
 
         dial.speed.set(4.2, true);
-        //dial.progress.set(36, 5, 0);
-        dial.progress.set(0.45, 1000);
+        setTimeout(function() { dial.speed.set(2.5); }, 2000);
+        setTimeout(function() { dial.speed.set(0); }, 4000);
+        setTimeout(function() { dial.speed.set(3.3); }, 6000);
 
-        setTimeout(function() { dial.speed.set(2.5, true); }, 2000);
-        setTimeout(function() { dial.speed.set(0, true); }, 4000);
-        setTimeout(function() { dial.speed.set(3.3, true); }, 6000);
+        // the progress indicator set() method will now take [secs, mins, hours] arguments
+        // instead of a single number
+        dial.progress.options.valueFunction = function(secs, mins, hours) {
+            return (secs + mins*60 + hours*3600) / dial.treadmill.goal.time;
+        };
 
-        setTimeout(function() { dial.progress.set(0.11, true); }, 2000);
-        setTimeout(function() { dial.progress.set(0.50, true); }, 5000);
+        dial.progress.set(36, 5, 0);
+        setTimeout(function() { dial.progress.set(30, 45, 0); }, 2000);
+        setTimeout(function() { dial.progress.set(15, 15, 0); }, 5000);
+
         dial.zoom(1.5, 1000);
 
         dial.svg.on("mousemove", function (e) {

@@ -13,9 +13,12 @@ function DialIndicator(options)
         background: {
             fill: '#2a2a2a'
         },
-        color: {
-            fill: 'white'
+        tick: {
+            fill: 'white',
+            width: 0.015
         },
+
+        transition: true,
 
         caption: "",
         text: {
@@ -26,15 +29,21 @@ function DialIndicator(options)
     };
     if(options)
         this.options = $.extend(true, this.options, options);
+
+    this.value = 0;
 }
 
 DialIndicator.prototype.attach = function(lane)
 {
     //console.log("attached to ", lane);
     //var radius = this.lane.dial.radii.outer + 20;
-    var target = this.lane.targets.current;
     var range = this.scale.range();
     var _this = this;
+
+    if(this.options.transition==true)
+        this.options.transition = 1000;
+    if(this.value==null)
+        this.value = 0;
 
     /*	WARNING  This arc function copy doesnt work because of the 'this' references in the functions which need to resolve to the above
                  lane object. For this to work, those this references would need to be converted into references on lane.
@@ -119,42 +128,63 @@ DialIndicator.prototype.attach = function(lane)
     if(this.options.type==null || this.options.type=='tick') {
         this.controls.indicator = this.container.append("path")
             .attr("class", "incline-indicator")
-            .attr("d", this.lane.tick(0, target.width))
-            .attr("transform", "rotate(" + this.scale.degrees(target.value) + ")");
+            .attr("d", this.lane.tick(0, this.options.tick.width))
+            .attr("transform", "rotate(" + this.scale.degrees(this.value) + ")");
     } else if (this.options.type=='progress') {
         this.controls.indicator = this.container.append("path")
             .attr("class","goal")   // TODO: this should be generic
-            .attr("stroke", this.options.color.stroke)
-            .attr("fill", this.options.color.fill)
-            .attr("d", lane.arc(this.scale.range()[0], this.scale(0.25)));
+            .attr("stroke", this.options.tick.stroke)
+            .attr("fill", this.options.tick.fill)
+            .attr("d", lane.arc(this.scale.range()[0], this.scale(this.value)));
     }
 };
 
-DialIndicator.prototype.set = function(value, transition)
+DialIndicator.prototype.set = function(value)
 {
     var _this = this;
-    var oldValue = this.lane.targets.current.value;
-    this.lane.targets.current.value = value;
-    if(transition==true) transition=1000;
-    var indicator = (transition ? this.controls.indicator.transition().duration(transition) : this.controls.indicator);
+    var oldValue;
+    var v;
+
+    oldValue = this.domainValue ? this.domainValue : this.value;
+
+
+    // compute the value
+    if(this.options.valueFunction) {
+        v = this.options.valueFunction.apply(this, arguments);
+        this.value = arguments;
+        this.domainValue = v;
+        //console.log("value func: ", arguments.length, arguments, " = ", v);
+    } else
+        v = this.value = value;
+
+    // clamp value to domain range
+    var domain = this.scale.domain();
+    if(v < domain[0])
+        v = domain[0];
+    else if(v > domain[1])
+        v = domain[1];
+
+    var indicator =  (this.options.transition)
+        ? this.controls.indicator.transition().duration(this.options.transition)
+        : this.controls.indicator;
 
     // update current target
     if(this.options.type==null || this.options.type=='tick') {
         indicator
-            .transition().duration(1000)
-            .attr("transform", "rotate(" + this.scale.degrees(value) + ")");
+            .attr("transform", "rotate(" + this.scale.degrees(v) + ")");
     } else if (this.options.type=='progress') {
-        // our local tween function
-        var interpolator = d3.interpolate(this.scale(oldValue), this.scale(value));
-        function arcTween() {
-            return function(t) {
-                return _this.lane.arc(_this.scale.range()[0], interpolator(t));
-            };
-        }
+        if(this.options.transition) {
+            // our local tween function
+            var interpolator = d3.interpolate(this.scale(oldValue), this.scale(v));
 
-        if(transition)
+            function arcTween() {
+                return function (t) {
+                    return _this.lane.arc(_this.scale.range()[0], interpolator(t));
+                };
+            }
+
             indicator.attrTween("d", arcTween);
-        else
-            indicator.attr("d", this.lane.arc(_this.scale.range()[0], this.scale(value)));
+        } else
+            indicator.attr("d", this.lane.arc(_this.scale.range()[0], this.scale(v)));
     }
 };

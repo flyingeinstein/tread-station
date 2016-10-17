@@ -66,10 +66,19 @@ ButtonGroupIndicator.prototype.attach = function(lane)
     if(this.options.buttons.length==0)
         return false;
 
+    var items = [];
+    $.each(this.options.buttons, function(k,b) {
+        if(typeof b ==="string") {
+            items.push(b);
+        }
+        else if(typeof b ==="object") {
+           items.push(b.id);
+        }
+    });
 
     // this band scale computes the radial range of each button in the group
     var band = d3.scaleBand()
-        .domain(this.options.buttons)
+        .domain(items)
         .range(this.scale.range())
         .paddingInner(0.05);
     var bandwidth = band.bandwidth();
@@ -77,12 +86,13 @@ ButtonGroupIndicator.prototype.attach = function(lane)
     // create each button
     $.each(this.options.buttons, function(k, b) {
         var name = (b && b.name) ? b.name : "button"+k;
+        var arcrange = null;
 
         // merge the options for the button
-        var options = $.extend(true, {
+        var options = $.extend(true, _this.options.button_options, {
             lane: _this.options.lane,
             arcrange: [ band(b), band(b)+bandwidth ]
-        }, _this.options.button_options);
+        });
 
         // the user can specify buttons as a simple label list, object list or actual button references
         var button;
@@ -90,14 +100,17 @@ ButtonGroupIndicator.prototype.attach = function(lane)
             button = new ButtonIndicator(options);
             button.name = name;
             button.caption = b;
+            arcrange = [ band(b), band(b)+bandwidth ];
         } else if (typeof b ==="object") {
             // button was an object of options, combine with other options
             options = $.extend(true, {}, options, b);
             button = new ButtonIndicator(options);
             if(b.id) name = b.id;
             button.caption = b.caption;
+            arcrange = [ band(b.id), band(b.id)+bandwidth ]
         }
 
+        button.options.arcrange = arcrange;
         lane.dial.plugin(name, button);
     });
 };

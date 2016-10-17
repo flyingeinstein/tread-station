@@ -8,7 +8,7 @@ function AutoPaceIndicator(options)
     DialIndicator.call(this);
 
     // control measurements
-    this.options = {
+    var default_options = {
         // width and height of outer control
         width: 80,
         height: 450,
@@ -39,7 +39,7 @@ function AutoPaceIndicator(options)
             }*/
         }
     };
-    $.extend(this.options, options);
+    this.options = $.extend(true, this.options, default_options, options);
 
     /*// merge any user supplied options if found
     var user_options_object = this.container.data("options");
