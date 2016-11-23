@@ -23,9 +23,14 @@
 	<script src="js/bootstrap.touchspin.js"></script>
 	<script src="js/treadmill.js"></script>
 	<script src="js/qotd.js"></script>
-	<script src="js/main.js"></script>
 	<script src="js/dial.js"></script>
-	<script src="js/sonar-slider.js"></script>
+	<script src="js/dial-indicator.js"></script>
+	<script src="js/button-indicator.js"></script>
+	<script src="js/graduated-indicator.js"></script>
+	<script src="js/incline-indicator.js"></script>
+	<script src="js/jizz.js"></script>
+	<script src="js/autopace-indicator.js"></script>
+	<script src="js/main.js"></script>
 	<link rel="stylesheet" href="css/style.css">
 	<link rel="stylesheet" href="css/brown.css">
 </head>
@@ -88,24 +93,12 @@
 </div>
 </div-->
 
-<div class="container">
-<div id="page1" class="page">
-<ul class="left-buttons">
-	<li class="stop">STOP</li>
-	<li class="reset"  data-toggle="modal" data-target="#user-select">RESET</li>
-</ul>
-<div id="slider1" class="slider" data-options="slider_options" style="float: right;position:relative;top:60px;left:-60px"></div>
-<ul class="quick-dial">
-	<li>3.2</li>
-	<li>3.6</li>
-	<li>4.2</li>
-	<li>4.8</li>
-	<li>5.5</li>
-</ul>
-<div id="speed-dial">
-	<!-- svg dial indicator goes here !-->
-</div>
-</div>
+<div class="main-content">
+	<div id="page1" class="page">
+		<button id="stop" class="stop shape-tag right">STOP</button>
+		<button id="reset" class="reset shape-tag left">RESET</button>
+		<div id="speed-dial"></div>
+	</div>
 </div>
 
 
@@ -185,7 +178,7 @@
 	};
 
 	$(function() {
-		var slider = treadmill.sonarSlider = $(".slider").sonarSlider();
+		/*var slider = treadmill.sonarSlider = $(".slider").sonarSlider();
 
 		slider.on("change", function (e) {
 			console.log("autopace");
@@ -204,6 +197,7 @@
 				}
 			}
 		});
+		*/
 	});
 
 </script>

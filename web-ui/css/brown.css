@@ -153,15 +153,30 @@ body.running #speed-dial .background circle.background-circle {
 }
 
 #speed-dial {
-    height: 450px;
-    width: 550px;
-    position: relative;
-	left: 70px;
-/*	background: #690000;
-    border-radius: 50%;
-	box-shadow: 0 0.8rem 1.6rem #460000;*/
+	width: 100vh;
+	max-width: 80vw;
+	margin-left: auto;
+	margin-right: auto;
+}
+#speed-dial svg.dial {
+	height: 100vh;
+	width: 100vh;
+	max-width: 80vw;
+
 }
 
+#speed-dial svg.dial .button-indicator text  {
+	pointer-events: none;
+}
+#speed-dial svg.dial .button-indicator .background {
+	fill: rgba(255,0,0,0.4);
+}
+#speed-dial svg.dial .button-indicator .background:hover {
+	fill: rgba(255,0,0,0.8);
+}
+#speed-dial svg.dial .button-indicator:hover text {
+	fill: white;
+}
 #speed-dial .ticks .buttons path.glyph {
 	fill: none;
 	stroke: white;
@@ -216,4 +231,3 @@ body .modal-admin {
 	margin: 12px;
 	height: 80px;
 }
-

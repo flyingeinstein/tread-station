@@ -455,3 +455,97 @@ ul.left-buttons li:hover {
     text-align: left;
     padding: 10px 0 0px 10px;
 }
+
+/**** shapes ***/
+
+
+.shape-base {
+	background: red;
+	display: inline-block;
+	height: 55px;
+	margin-left: 20px;
+	margin-top: 55px;
+	position: relative;
+	width: 100px;
+}
+.shape-base:before {
+	border-bottom: 35px solid red;
+	border-left: 50px solid transparent;
+	border-right: 50px solid transparent;
+	content: "";
+	height: 0;
+	left: 0;
+	position: absolute;
+	top: -35px;
+	width: 0;
+}
+
+#reset.shape-tag {
+	right: 20px;
+}
+
+.main-content {
+	margin: 20px;
+}
+
+button.shape-tag {
+	border: 0px;
+}
+button.shape-tag:focus {
+	outline:0;
+}
+button.shape-tag:hover {
+    background-color: rgba(255,0,0,0.9);
+    color: white;
+
+}
+.shape-tag.right:hover:after {
+    border-left: 35px solid rgba(255,0,0,0.9);
+    color: white;
+}
+.shape-tag.left:hover:after {
+    border-right: 35px solid rgba(255,0,0,0.9);
+    color: white;
+}
+
+.shape-tag {
+	background: rgba(255,0,0,0.6);
+	display: inline-block;
+	height: 50vh;
+	position: absolute;
+	width: 10vw;
+	top: 50%;
+	margin-top: -25vh;
+	text-align: center;
+	line-height: 50vh;
+	color: #ff5b5b;
+	font-size: 115%;
+}
+.shape-tag.right:after {
+	border-left: 35px solid rgba(255,0,0,0.6);
+	border-top: 25vh solid transparent;
+	border-bottom: 25vh solid transparent;
+	content: "";
+	height: 0;
+	right: 0;
+	position: absolute;
+	right: -35px;
+	width: 0;
+}
+.shape-tag.left:after {
+	border-right: 35px solid rgba(255,0,0,0.6);
+	border-top: 25vh solid transparent;
+	border-bottom: 25vh solid transparent;
+	content: "";
+	height: 0;
+	right: 0;
+	position: absolute;
+	left: -35px;
+	width: 0;
+}
+
+#page1 {
+	margin-top: auto;
+	margin-bottom: auto;
+	height: 100vh;
+}

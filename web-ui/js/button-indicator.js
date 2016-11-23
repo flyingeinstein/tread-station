@@ -19,8 +19,11 @@ ButtonIndicator.prototype = new DialIndicator();
 
 ButtonIndicator.prototype.attach = function(lane)
 {
+    var _this = this;
     DialIndicator.prototype.attach.call(this, lane);
-    this.container.attr("style","cursor:hand");
+    this.container
+        .attr("style","cursor:hand")
+        .on("click", function() { if(_this.options.click) _this.options.click(_this); });
 };
 
 
@@ -91,6 +94,7 @@ ButtonGroupIndicator.prototype.attach = function(lane)
         // merge the options for the button
         var options = $.extend(true, _this.options.button_options, {
             lane: _this.options.lane,
+            parent: _this.container,
             arcrange: [ band(b), band(b)+bandwidth ]
         });
 

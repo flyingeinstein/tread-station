@@ -80,8 +80,8 @@ function Dial(_container, options) {
 		.attr("id", this.options.id)
 		.attr("class","dial"
 			+(this.options.class ? " "+this.options.class : ""))
-		.attr("width", this.width)
-		.attr("height", this.height)
+		//.attr("width", this.width)
+		//.attr("height", this.height)
 		.attr("viewBox", "-1000 -1000 2000 2000");
 
 	// add a border
@@ -127,10 +127,6 @@ function Dial(_container, options) {
 		.attr("class", "ticks");
 	var bgticks = this.controls.groups.bgticks = ticks.append("g")
 		.attr("class", "background-ticks");
-	var indicators = this.controls.groups.indicators = ticks.append("g")
-		.attr("class", "indicators");
-	var buttons = this.controls.groups.buttons = ticks.append("g")
-		.attr("class", "buttons");
 
 	// lane control groups
 	this.controls.lanes = svg.append("g")
@@ -144,7 +140,7 @@ function Dial(_container, options) {
 	this.arcs = {};
 
 	this.scales.speed = d3.scaleLinear()
-		.domain([1, 10])
+		.domain([1, 9])
 		.range([dial_begin, dial_end]
 		);
 	this.scales.progress = d3.scaleLinear()
@@ -157,24 +153,28 @@ function Dial(_container, options) {
 		width: radius*0.26
 	});
 
-	this.plugin("speed",  new GraduatedIndicator({
-			scale: this.scales.speed,
-			lane: {
-				ordinal: 0
-			}
-		})
-	);
+	if(typeof GraduatedIndicator !=='undefined') {
+		this.plugin("speed", new GraduatedIndicator({
+				scale: this.scales.speed,
+				lane: {
+					ordinal: 0
+				}
+			})
+		);
+	}
 
-	this.plugin("progress",  new DialIndicator({
-			scale: this.scales.progress,
-			type: 'progress',
-			background: 'none',
-			lane: {
-				ordinal: -1,
-				alignment: 'none'
-			}
-		})
-	);
+	if(typeof DialIndicator !=='undefined') {
+		this.plugin("progress", new DialIndicator({
+				scale: this.scales.progress,
+				type: 'progress',
+				background: 'none',
+				lane: {
+					ordinal: -1,
+					alignment: 'none'
+				}
+			})
+		);
+	}
 
 	// center text indicators
 	var status = svg.append("g")
@@ -203,7 +203,7 @@ function Dial(_container, options) {
 
 	// resolve clicks to one of the lanes by comparing radius,
 	// then to one of the controls by comparing the plugin/control scale ranges
-	this.svg.on("click",function(){
+	/*this.svg.on("click",function(){
 		var lane, control;
 		var m = _this.mouse();	// returns mouse coords as x,y and polar
 		//console.log(m);
@@ -235,6 +235,7 @@ function Dial(_container, options) {
 		else if(lane!=null)
 			console.log("click: lane ",lane)
 	});
+	*/
 }
 
 Dial.prototype.glyphs = {
@@ -242,13 +243,13 @@ Dial.prototype.glyphs = {
 	down: "M -20 -10 L 0 10 L 20 -10"
 };
 
-Dial.prototype.setRunningTime = function(seconds,minutes,hours)
+/*Dial.prototype.setRunningTime = function(seconds,minutes,hours)
 {
 	var percent = Math.min(1.0, (seconds+minutes*60+hours*3600) / this.treadmill.goal.time);
 	console.log("goal "+(seconds+minutes*60+hours*3600)+" of "+this.treadmill.goal.time+"  ("+(percent*100).toFixed(1)+"%)");
 	this.controls.goal.indicator
 		.attr("d", this.arcs.goal(0, percent));
-};
+};*/
 
 Dial.prototype.mouse = function()
 {
@@ -547,8 +548,11 @@ Dial.prototype.plugin = function(name, klass)
 		// this is a special control that attaches to lanes inside or outside the dial
 		lane = this.attachToLane(klass, klass.options.lane);
 
+		// determine the parent container
+		var parent = klass.options.parent ? klass.options.parent : lane.container;
+
 		// add a new container for the plugin
-		klass.container = lane.container
+		klass.container = parent
 			.append("g")
 			.attr("id", klass.id ? klass.id : name)
 			.attr("class","plugin plugin-"+klass.constructor.name.toLowerCase()
