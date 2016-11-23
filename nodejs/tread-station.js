@@ -6,6 +6,14 @@ var Aggregate = require('./aggregate');
 var glob = require("glob");
 var exec = require('child_process').exec;
 
+
+var simulate = false;
+try {
+var simfile = fs.lstatSync('/etc/treadmill/simulate');
+if(simfile.isFile())
+    simulate = true;
+} catch(error) {}
+
 // find the OCP PWM module as it's very nomadic
 var ocp_root = null, pwm_endpoint = null;
 var files = glob.sync("/sys/devices/ocp.?");
@@ -34,7 +42,7 @@ if(files.length>1) {
 	}
 }
 
-if(!pwm_endpoint) console.log("failed to find the PWM P8:13 endpoint in /sys/devices/ocp.?/pwm_test_P8_13.??");
+if(!pwm_endpoint && !simulate) console.log("failed to find the PWM P8:13 endpoint in /sys/devices/ocp.?/pwm_test_P8_13.??");
 
 // instantiate the Web Service
 var WebSocketServer = require('websocket').server;
@@ -96,7 +104,16 @@ function Treadmill()
 
     // Instantiate bbbPWM object to control PWM device.  Pass in device path
     // and the period to the constructor.
-    this.pwm = new bbbPWM(pwm_endpoint, 50000000);
+    if(simulate) {
+        console.log("beginning simulation");
+      this.pwm = {
+        turnOff: function() {},
+        turnOn: function() {},
+        polarity: function() {},
+        setDuty: function() {}
+      };
+    } else
+      this.pwm = new bbbPWM(pwm_endpoint, 50000000);
 
     this.currentIncline = 0;
     this.desiredIncline = 0;
@@ -313,7 +330,7 @@ Treadmill.prototype.init_screensaver = function(action)
 {
     this.screensaver = {
         // config/settings
-        enabled: true,
+        enabled: !simulate,
         display: ":0.0",
         error: 0,
 
@@ -345,6 +362,8 @@ Treadmill.prototype.init_screensaver = function(action)
             });
         }
     };
+
+    if(simulate) return false;
 
     // initialize the screensaver
     var ss = this.screensaver;
