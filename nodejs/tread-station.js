@@ -582,9 +582,10 @@ Treadmill.prototype.updateMysqlStatus = function()
             var _lastUpdate = new Date().unix_timestamp();
             var _runningSince = this.runningSince.unix_timestamp();
             var _runningTime = (new Date().valueOf() - this.runningSince.valueOf())/1000;
-            this.db.query("insert into runs(session,user,ts,track,laps,lastupdate,runningTime) values (?,?,?,?,?,?,?) on duplicate key update lastupdate=?, runningTime=?, laps=?;", [
-                    this.session.id, this.session.user.userid, _runningSince, this.track.id, this.track.laps, _lastUpdate, _runningTime,  // insert values
-                    _lastUpdate, _runningTime, this.track.laps])    // update values
+            console.log(this.session.user);
+            this.db.query("insert into runs(session,user,ts,track,laps,lastupdate,runningTime,distance) values (?,?,?,?,?,?,?,?) on duplicate key update lastupdate=?, runningTime=?, laps=?, distance=?;", [
+                    this.session.id, this.session.user.userid, _runningSince, this.track.id, this.track.laps, _lastUpdate, _runningTime, this.distance, // insert values
+                    _lastUpdate, _runningTime, this.track.laps, this.distance])    // update values
                 .on('error', function(err) {
                         treadmill.session.recording = false;
                         console.log(err);
