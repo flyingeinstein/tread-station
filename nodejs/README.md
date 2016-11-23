@@ -11,6 +11,13 @@ $ which nodejs					-- tell me where nodejs is (probably /usr/bin)
 $ ln -s /usr/bin/nodejs /usr/bin/node		-- link from nodejs in found directory to node
 
 
+SETTING UP MySQL
+
+See the /schema directory for necessary schema files. To create a fresh treadstation database and standard login user execute the following command:
+
+mysql -uroot -p<password> < schema/treadstation.sql
+
+
 RUNNING
 
 To run simply call nodejs for the executable. You may need to edit the tread-station.js file to specify the listen-on ip:port. After tread-station is 
