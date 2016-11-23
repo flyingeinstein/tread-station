@@ -258,8 +258,8 @@ Treadmill.prototype.setUser = function(user, weight)
         {
             for(var u in this.users)
             {
-                if(users[u].name == user) {
-                    user = users[u];
+                if(this.users[u].name == user) {
+                    user = this.users[u];
                     break;
                 }
             }
@@ -868,8 +868,8 @@ Date.prototype.unix_timestamp = function()
 
 // ensure we have all config
 var treadmill;
-if(!pwm_endpoint) {
-	setTimeout(function () { process.exit(5); }, 100);
+if(!pwm_endpoint && !simulate) {
+	setTimeout(function () { console.log("unable to start treadmill"); process.exit(5); }, 100);
 } else {
   treadmill = new Treadmill();
 }
