@@ -106,27 +106,27 @@ function Dial(_container)
 	var N=160;
 	var dxAngle = 2*Math.PI/N;
 	this.arcs = {};
-	var tickArc = this.arcs.ticks = d3.svg.arc()
+	var tickArc = this.arcs.ticks = d3.arc()
 		.startAngle(function(d,h) { return d-h; })
 		.endAngle(function(d,h) { return d+h; })
 		.innerRadius(this.radii.ticks.inner)
 		.outerRadius(this.radii.ticks.outer);
-	var bigTickArc = d3.svg.arc()
+	var bigTickArc = d3.arc()
 		.startAngle(function(d,h) { return d-h*3; })
 		.endAngle(function(d,h) { return d+h*3; })
 		.innerRadius(radius-radius*0.24)
 		.outerRadius(radius-5);
-	var currentSpeedArc = d3.svg.arc()
+	var currentSpeedArc = d3.arc()
 		.startAngle(function(d,h) { return d-h*6; })
 		.endAngle(function(d,h) { return d+h*6; })
 		.innerRadius(radius-radius*0.25)
 		.outerRadius(radius);
-	var innerButtonArc = d3.svg.arc()
+	var innerButtonArc = d3.arc()
 		.startAngle(function(a,h) { return a; })
 		.endAngle(function(a,h) { return h; })
 		.innerRadius(radius-radius*0.28)
 		.outerRadius(radius);
-	var outerButtonArc = d3.svg.arc()
+	var outerButtonArc = d3.arc()
 		.startAngle(function(a,h) { return a; })
 		.endAngle(function(a,h) { return h; })
 		.innerRadius(radius+20)
@@ -214,7 +214,7 @@ function Dial(_container)
 	
 	// goal indicator
 	var goalAngle = { begin: 2*Math.PI-ang-dxAngle, end: 2*Math.PI+ang+dxAngle };
-	this.arcs.goal = d3.svg.arc()
+	this.arcs.goal = d3.arc()
 		.startAngle(function(a,h) { return goalAngle.begin; })
 		.endAngle(function(a,h) { return goalAngle.begin + (goalAngle.end-goalAngle.begin)*h; })
 		.innerRadius(radius-radius*0.245-10)
