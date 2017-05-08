@@ -41,6 +41,9 @@ function SonarSlider(_container) {
 
         decimals: 2,
 
+        sonar: {
+            range: [0,1]
+        },
         outline: {
             border: 5, width: 24,
             color: "#444",
@@ -101,7 +104,7 @@ function SonarSlider(_container) {
 
     // build the scale of units between sonar range and visual pixels
     this.unitScale = d3.scaleLinear()
-        .domain([0,1])
+        .domain(this.options.sonar.range)
         .range([0,this.options.height - this.options.outline.border*2 ]);
 
     // create our SVG container
@@ -174,6 +177,17 @@ function SonarSlider(_container) {
         .selectAll("g.historical-line")
         .data(this.history, function(d) { return d.time; });
 
+    // out of range indicator
+    var metrics = this.getMetrics();
+    var radius = 4;
+    this.controls.outOfRangeIndicator = this.controls.outline
+        .append("circle")
+        .attr("fill", "yellow")
+        .attr("r", radius)
+        .attr("cx", metrics.outline.cx )
+        .attr("cy", metrics.outline.bottom - radius - 6)
+        .style("opacity", 0.0);
+
     // update the view
     this.updateTargets();
     this.updateHistory();
@@ -193,7 +207,9 @@ SonarSlider.prototype.getMetrics = function() {
             left: this.options.outline.border,
             right: this.options.outline.border + this.options.outline.width,
             top: this.options.outline.border,
-            bottom: this.options.outline.border + this.options.outline.height
+            bottom: this.options.height - this.options.outline.border,
+            cx: this.options.outline.border + this.options.outline.width/2,
+            cy: this.options.outline.border + this.options.outline.width/2
         }
     };
 };
@@ -292,6 +308,9 @@ SonarSlider.prototype.setCurrent = function(val) {
 
     // update visualization
     this.updateHistory();
+
+    // update out-of-range indicator
+    this.outOfRange(this.current > this.options.sonar.range[1]);
 };
 
 SonarSlider.prototype.getCurrent = function() {
@@ -337,9 +356,29 @@ SonarSlider.prototype.mouse = function()
 SonarSlider.prototype.click = function(mouse)
 {
     var val = this.pixelToUnit(mouse[1]);
-    this.setTarget(val);
+    //this.setTarget(val);
     this.dispatch.call("change", this, mouse, val);
     //this.updateTargets();
+};
+
+SonarSlider.prototype.error = function(code) {
+    var metrics = this.getMetrics();
+    var radius = 6;
+    this.controls.outline
+        .append("circle")
+        .attr("fill", "red")
+        .attr("r", radius)
+        .attr("cx", metrics.outline.cx )
+        .attr("cy", metrics.outline.bottom - radius - 6)
+        .style("opacity", 1.0)
+        .transition().delay(400).duration(400)
+        .style("opacity", 0.0)
+        .remove();
+};
+
+SonarSlider.prototype.outOfRange = function(isOutOfRange) {
+    this.controls.outOfRangeIndicator
+        .style("opacity", isOutOfRange ? 1.0 : 0.0)
 };
 
 // extend the jQuery class so we can easily create a dial in a control just by calling dial()

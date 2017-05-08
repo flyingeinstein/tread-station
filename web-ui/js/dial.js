@@ -80,7 +80,7 @@ function Dial(_container)
 
 	
 	var bg = svg.append("g")
-		.attr("class","background")
+		.attr("class","background");
 	bg.append("circle")
 		.attr("class","background-circle")
 		.attr("cx",center.x)
@@ -242,15 +242,14 @@ Dial.prototype.setSpeed = function(speed)
 	} else {
 		ctrl.attr("style","display:none");
 	}
-}
+};
 
 Dial.prototype.setRunningTime = function(seconds,minutes,hours)
 {
 	var percent = Math.min(1.0, (seconds+minutes*60+hours*3600) / this.treadmill.goaltime);
 	this.container.find(".indicators .goal")
-		.attr("d", this.arcs.goal(0, percent))	
-	
-}
+		.attr("d", this.arcs.goal(0, percent));
+};
 
 Dial.prototype.click = function(x,y)
 {
@@ -266,7 +265,7 @@ Dial.prototype.click = function(x,y)
 	if(radius > this.radii.ticks.inner && radius < this.radii.ticks.outer) {
 		console.log("speed "+angle+"  "+this.radii.ticks.inner+" < "+radius+" < "+this.radii.ticks.outer);
 	}
-}
+};
 
 // extend the jQuery class so we can easily create a dial in a control just by calling dial()
 jQuery.fn.extend({

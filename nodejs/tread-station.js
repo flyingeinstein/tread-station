@@ -1,5 +1,5 @@
-#!/usr/bin/nodejs
 
+var fs = require('fs');
 var bbbPWM = require('./bbb-pwm');
 var DateJS = require('./node_modules/datejs');
 var Aggregate = require('./aggregate');
@@ -25,7 +25,15 @@ if(files.length>1) {
 		pwm_endpoint = files[0]+'/';
 		console.log("found PWM P8:13 endpoint at "+pwm_endpoint);
 	}
+} else {
+	// look in pwm location in >4.1 kernels
+	files = glob.sync("/sys/class/pwm/pwmchip0/pwm1");
+	if(files.length==1) {
+		pwm_endpoint = files[0]+'/';
+		console.log("found PWM P8:13 endpoint at "+pwm_endpoint);
+	}
 }
+
 if(!pwm_endpoint) console.log("failed to find the PWM P8:13 endpoint in /sys/devices/ocp.?/pwm_test_P8_13.??");
 
 // instantiate the Web Service
@@ -94,7 +102,19 @@ function Treadmill()
     this.desiredIncline = 0;
 
     // sensors
-    this.heartrate = 0;
+    this.sensors = {
+        heartrate: {
+            // no device member, so for now this is ignored
+            value: null
+        },
+        sonar: {
+            device: {
+                mode: "raw",
+                file: "/sys/bus/iio/devices/iio\:device0/in_distance_raw"
+            },
+            value: null 
+        }
+    };
 
     // limits - in native format
     this.speedIncrement = this.MPHtoNative(0.1);
@@ -104,6 +124,16 @@ function Treadmill()
     this.inclineIncrement = this.inclineGradeToNative(1);
     this.minIncline = this.inclineGradeToNative(0);
     this.maxIncline = this.inclineGradeToNative(50);
+
+    // check if we are running in simulation mode
+    var simfile = fs.lstatSync('/etc/treadmill/simulate');
+    if(simfile.isFile()) {
+        this.simulation = {
+            active: true,
+            autopace: false
+        };
+        console.log('configured for simulation');
+    }
 
     // variables
     this.runningTime = 0;       // total running millis (accumulates start/stops until a reset)
@@ -146,6 +176,21 @@ function Treadmill()
         recording: false
     };
 
+    this.autopace = {
+        enabled: true,
+        active: false,
+        updatesPerSecond: 10,
+
+        // initial parameters are recorded before activation
+        // so we can restore these when we deactivate
+        initial: {
+        },
+
+        // mode can be sonar or heartbeat
+        //mode: 'sonar.kalman'
+        mode: 'sonar'
+    };
+
     this.pwm.turnOff();
     this.pwm.polarity(0);
 
@@ -154,7 +199,27 @@ function Treadmill()
     console.log("Treadmill ready");
 
     var _treadmill = this;
+
+    // set a timer to read sensors
+    this.__sensorInterval = setInterval(
+        function(){ _treadmill.readSensors(); },        // update sensors then call the algorithm
+        1000/this.autopace.updatesPerSecond,            // number of updates per second
+        this);
+
+    if(this.simulation && this.simulation.autopace) {
+        setTimeout(function() {
+            console.log("simulating autopace");
+            _treadmill.speed(4.2);
+            _treadmill.activateAutopace(true);
+        }, 2000 );
+    }
 }
+
+// collection of algorithms
+// allows us to more dynamically support various algorithms based on detected sensors or particular implementations
+Treadmill.prototype.algorithms = [];
+
+
 
 Treadmill.prototype.takeOwnershipOfDevice = function(device_path)
 {
@@ -404,6 +469,9 @@ Treadmill.prototype.deccellerate = function()
 
 Treadmill.prototype.stop = function()
 {
+    if(this.autopace.active)
+        this.activateAutopace(false);
+
     if(this.desiredSpeed!=0) {
         this.desiredSpeed=0;
         this.sendEvent("stopping");
@@ -416,6 +484,9 @@ Treadmill.prototype.stop = function()
 
 Treadmill.prototype.fullstop = function()
 {
+    if(this.autopace.active)
+        this.activateAutopace(false);
+
     this.active = false;
     this.pwm.turnOff();
     this.desiredSpeed=0;
@@ -481,9 +552,8 @@ Treadmill.prototype.sendStatus = function()
     this.updateStatus();
     try {
         // update clients
-        if(this.connection) {
-            this.connection.sendUTF(JSON.stringify({
-                type: 'status', 
+        var status = {
+                type: 'status',
                 timestamp: new Date(),
                 active: this.active,
                 runningTime: this.getTotalRunningMillis(),
@@ -491,7 +561,11 @@ Treadmill.prototype.sendStatus = function()
                 desiredSpeed: this.nativeToMPH(this.desiredSpeed),
                 currentIncline: this.nativeToInclineGrade(this.currentIncline),
                 desiredIncline: this.nativeToInclineGrade(this.desiredIncline)
-            }));
+            };
+        if(this.connection) {
+            this.connection.sendUTF(JSON.stringify(status));
+        } else if (this.simulate) {
+            console.log(status);
         }
         this.updateMysqlStatus();
     } catch(ex) {
@@ -541,6 +615,170 @@ Treadmill.prototype.sendEvent = function(_name, _data)
 	}
 }
 
+Treadmill.prototype.readSensors = function()
+{
+    this.readSensor(this.sensors.sonar);
+}
+
+Treadmill.prototype.readSensor = function(sensor_info)
+{
+    var _treadmill = this;
+    if(sensor_info.device.mode =='raw') {
+        // read the value straight from the file
+        fs.readFile(sensor_info.device.file, function(err, contents) {
+            if(err==null) {
+                sensor_info.value = parseInt(contents);
+                //console.log("sensor: "+sensor_info.value);
+                _treadmill.sendEvent("sonar.value",sensor_info.value);
+                _treadmill.computeAutoPace();
+            } else
+                _treadmill.sendEvent("sonar.error", err.code);
+            //else console.log("sonar read error: ", sensor_info.device.file, err);
+        });
+    }  
+}
+
+Treadmill.prototype.Autopace = function(command)
+{
+    // convert to a command object if command is a simple string
+    if(typeof command === 'string')
+        command = { verb: command };
+ 
+    switch(command.verb) {
+        case 'activate': this.activateAutopace(true); break;
+        case 'deactivate': this.activateAutopace(false); break;
+        case 'toggle': this.activateAutopace(!this.autopace.active); break;
+        case 'set-center': if(this.autopace.sonar) this.autopace.sonar.setCenter(); break;
+    }
+}
+
+Treadmill.prototype.activateAutopace = function(activate)
+{
+    if(!this.autopace.enabled)
+        return false;
+    if(this.autopace.active == activate)
+        return true;    // no change, redundant call
+    if(activate && (!this.active || this.desiredSpeed==0)) {
+        console.log("cannot active autopace when the treadmill is not in motion");
+        return false;   // cannot activate when the treadmill is inactive or stopped
+    }
+
+    if(activate) {
+        // record our current settings so we can restore them later
+        this.autopace.initial = {
+            speed: this.nativeToMPH(this.desiredSpeed)
+        };
+        this.autopace.active = true;
+        console.log("autopace activated");
+    } else {
+        // restore our settings
+        this.autopace.active = false;
+        this.computeAutoPace();
+        this.speed( this.autopace.initial.speed );
+        console.log("autopace deactivated");
+    }
+}
+
+Treadmill.prototype.computeAutoPace = function()
+{
+    if(this.autopace && this.autopace.enabled && this.autopace.active && this.autopace.mode) {
+        var algorithm = Treadmill.prototype.algorithms['autopace.'+this.autopace.mode];
+        if(algorithm)
+            algorithm.call(this, this.autopace);
+        else
+            // no algorithm, disable the autopace feature
+            this.autopace.active = false;
+    }
+}
+
+Treadmill.prototype.algorithms['autopace.sonar.simple'] = function(pace)
+{
+    var _this = this;
+
+    if(!pace.active) {
+        // deactivating, clear our settings
+        pace.sonar = null;
+        return true;
+    }
+    else if(!pace.sonar) {
+        pace.sonar = {
+            // parameters
+            center: 100,
+            deadzone: 30,
+            limit: 175,
+            rollup: 10,
+
+            readings: [],
+
+            setCenter: function() {
+                var oldcenter = this.center;
+                this.center = _this.sensors.sonar.value;
+                console.log("autopace center set to "+this.center+" from "+oldcenter);
+            }
+        };
+    }
+
+    if(!this.sensors || !this.sensors.sonar || this.sensors.sonar.value==null) {
+        console.log(this.sensors);
+        return false;
+    }
+
+    // update pace
+    var sonar = this.sensors.sonar.value;
+    if(pace.sonar.readings.length < pace.sonar.rollup) {
+        // store the reading, dont update
+        pace.sonar.readings.push(sonar);
+        return false;
+    } else {
+        // average the readings
+        sonar = 0;
+        for(i=0; i<pace.sonar.readings.length; i++)
+            sonar += pace.sonar.readings[i];
+        sonar = sonar/pace.sonar.readings.length;
+        pace.sonar.readings = [];
+    }
+
+    // compute a new adjustment
+    var current_speed = this.nativeToMPH(this.desiredSpeed);
+    var speed = current_speed;
+
+    if(sonar > pace.sonar.limit)
+        //speed = pace.initial.speed;
+        return false;
+    else if(sonar < pace.sonar.center - pace.sonar.deadzone/2)
+        speed -= 0.1;
+    else if(sonar > pace.sonar.center + pace.sonar.deadzone/2)
+        speed += 0.1;
+
+    var adjustment = speed - current_speed;
+    if(speed != current_speed)
+        this.speed( speed );
+
+    console.log("sonar:"+sonar.toFixed(1)+"   adj:"+adjustment.toFixed(1)+"  speed:"+speed.toFixed(1)+"/"+this.desiredSpeed.toFixed(1));
+    return true;
+}
+
+Treadmill.prototype.algorithms['autopace.sonar.kalman'] = function(pace)
+{
+    if(!pace.kalman) {
+        // Initialize the auto speed algorithm
+        // auto-speed controls treadmill speed by sensing where the user is and/or what the user's heartbeat target is
+        pace.kalman = {
+            // this kalman filter predicts where the runner actually is based on the measurements
+            estimated: 0,
+            history: []
+        };
+    }
+
+    if(!this.sensors || !this.sensors.sonar || this.sensors.sonar.value==null)
+        return false;
+
+    // update the algorithm
+
+    return true;
+}
+
+Treadmill.prototype.algorithms['autopace.sonar'] = Treadmill.prototype.algorithms['autopace.sonar.simple'];
 
 Treadmill.prototype.abortConnection = function()
 {
@@ -581,6 +819,8 @@ Treadmill.prototype.acceptConnection = function(request)
                 _treadmill.incline(msg.Incline);
             else if(msg.Reset)
                 _treadmill.reset();
+            else if(msg.Autopace)
+                _treadmill.Autopace(msg.Autopace);
             else if(msg.User)
                 _treadmill.setUser(msg.User, msg.Weight);
             else if(msg.Get) {
@@ -627,7 +867,7 @@ Date.prototype.unix_timestamp = function()
 
 // ensure we have all config
 var treadmill;
-if(!ocp_root || !pwm_endpoint) {
+if(!pwm_endpoint) {
 	setTimeout(function () { process.exit(5); }, 100);
 } else {
   treadmill = new Treadmill();

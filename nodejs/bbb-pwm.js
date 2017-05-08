@@ -3,8 +3,10 @@ var Q = require('q');
 
 function bbbPWM(pwmPath, period) {
     bbbPWM.PERIOD = period;
-    bbbPWM.RUN_PATH = pwmPath + 'run';
-    bbbPWM.DUTY_PATH = pwmPath + 'duty';
+
+    this.sysClassMode = fs.lstatSync(pwmPath + 'enable').isFile();
+    bbbPWM.RUN_PATH = pwmPath + (this.sysClassMode ? 'enable' : 'run');
+    bbbPWM.DUTY_PATH = pwmPath + (this.sysClassMode ? 'duty_cycle' : 'duty');
     bbbPWM.PERIOD_PATH = pwmPath + 'period';
     bbbPWM.POLARITY_PATH = pwmPath + 'polarity';
     this.configureDevice();

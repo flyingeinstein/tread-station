@@ -1,3 +1,9 @@
+create database treadstation;
+
+# create the user
+#CREATE USER 'tread'@'localhost' IDENTIFIED BY 'peps1c0la';
+GRANT SELECT,INSERT,UPDATE,DELETE ON treadstation.* TO 'tread'@'localhost' IDENTIFIED BY 'peps1c0la';
+
 DROP TABLE IF EXISTS `runs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;

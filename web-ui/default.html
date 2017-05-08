@@ -25,6 +25,7 @@
 	<script src="js/qotd.js"></script>
 	<script src="js/main.js"></script>
 	<script src="js/dial.js"></script>
+	<script src="js/sonar-slider.js"></script>
 	<link rel="stylesheet" href="css/style.css">
 	<link rel="stylesheet" href="css/brown.css">
 </head>
@@ -93,6 +94,7 @@
 	<li class="stop">STOP</li>
 	<li class="reset"  data-toggle="modal" data-target="#user-select">RESET</li>
 </ul>
+<div id="slider1" class="slider" data-options="slider_options" style="float: right;position:relative;top:60px;left:-60px"></div>
 <ul class="quick-dial">
 	<li>3.2</li>
 	<li>3.6</li>
@@ -158,7 +160,53 @@
 </div>
 </form>
 
+<script language="JavaScript">
+	var nextUpdate = null;
 
+	var slider_options = {
+		height: 360,
+		sonar: {
+			range: [10,150]
+		},
+		outline: {
+			color: "none",
+			fill: "orange",
+			opacity: 0.15
+		},
+		targets: {
+			set: {
+				color: "orange"
+			}
+		},
+		history: {
+			color: "orange",
+			gooey: 7
+		}
+	};
+
+	$(function() {
+		var slider = treadmill.sonarSlider = $(".slider").sonarSlider();
+
+		slider.on("change", function (e) {
+			console.log("autopace");
+			treadmill.autopace("toggle");
+		});
+
+		// when the user clicks, they simulate new sonar measurements
+		slider.svg.on("mousemove", function (e) {
+			var mouse = slider.mouse();
+			if (mouse[0] > slider.options.outline.border && mouse[0] < slider.options.outline.width + slider.options.outline.border) {
+				var now = Number(new Date());
+				if (now > nextUpdate) {
+					var unit = slider.pixelToUnit(mouse[1]);
+					slider.setCurrent(unit);
+					nextUpdate = now + 50;
+				}
+			}
+		});
+	});
+
+</script>
 
 </body>
 </html>
