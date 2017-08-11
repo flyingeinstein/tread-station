@@ -1,0 +1,92 @@
+/*** Default Panel Style ***/
+
+
+.panel {
+    /*  box-shadow: 2px 2px 2px rgba(0,0,0,0.4); */
+    padding:0px;	/* padding here will throw off the docking dimensions */
+}
+
+.panel h1 {
+    margin-top: 10px;
+    margin-left: 5px;
+    margin-bottom: 10px;
+    cursor: default;
+}
+
+.panel h2 {
+    font-family: tahoma;
+    margin-left: 5px;
+    margin-top: -9px;
+    margin-bottom: 10px;
+    cursor: default;
+}
+
+.panel .content .docked {
+    position: absolute;
+}
+
+.panel .content {
+    overflow: hidden;
+    left: 10px; top: 50px;
+    bottom: 10px; right: 10px;
+    /*overflow-style: marquee,panner,move,auto;*/
+    padding: 1em;
+}
+
+.panel .content table {
+    color: #d0d0d0;
+    font-size: 95%;
+}
+.panel .content table thead td {
+    font-weight: 1000;
+    color: white;
+}
+.panel .content table tbody td {
+    border-top: 1px dotted #666;
+    padding: 2px;
+}
+
+
+/** Command panel ***/
+
+.command-panel {
+    position: absolute;
+    z-index: 100;
+    top: 0px; bottom: 0px; left: 0px; width: 100px;
+    background-color: rgba(0,0,0,0.2);
+    padding-top: 120px;
+    padding-left: 16px;
+    background: -moz-linear-gradient(left,  rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(0,0,0,0.65)), color-stop(100%,rgba(0,0,0,0))); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(left,  rgba(0,0,0,0.65) 0%,rgba(0,0,0,0) 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(left,  rgba(0,0,0,0.65) 0%,rgba(0,0,0,0) 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(left,  rgba(0,0,0,0.65) 0%,rgba(0,0,0,0) 100%); /* IE10+ */
+    background: linear-gradient(to right,  rgba(0,0,0,0.65) 0%,rgba(0,0,0,0) 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a6000000', endColorstr='#00000000',GradientType=1 ); /* IE6-9 */
+}
+.command-panel h6 {
+    margin-top: 40px;
+    font-size: 9px;
+    letter-spacing: 2px;
+}
+.command-panel li {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    width: 150px;
+}
+.command-panel li label {
+    font-family: Montserrat,"Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 9px;
+}
+.command-panel ul.nav i.glyphicon {
+    color: rgba(255,255,255,0.4);
+    font-size: 32px;
+    width: 48px;
+    height: 42px;
+    position: relative;
+    top: 12px;
+}
+
+.command-panel ul.nav li:hover, .command-panel ul.nav li:hover i.glyphicon {
+    color: #4F9BD8;
+}

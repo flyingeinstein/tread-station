@@ -1,0 +1,53 @@
+
+.modal {
+    z-index: 2000;
+}
+
+.modal.dark div.modal-content {
+    background-color: #3E3E3E;
+}
+.modal.dark .modal-header {
+    border-bottom: 0px; /*1px solid #565656;*/
+}
+.modal.dark .modal-header button.close {
+    color: #FCFDFD;
+    text-shadow: none;
+}
+.modal.dark .modal-body {
+    padding-top: 0px;
+}
+.modal.dark .modal-body p {
+    font-size: 14px;
+}
+.modal.dark .modal-footer {
+    border-top: 1px solid #565656;
+    padding: 0px 0px 0px;
+}
+.modal.dark .btn-default {
+    color: #CCCCCC;
+    background-color: #2F2F2F;
+    border: 0px;
+    background-image: none;
+    text-shadow: none;
+    padding: 20px 40px 20px 40px;
+    border-radius: 0px;
+    font-size: 18px;
+}
+.modal.dark .btn-default.active {
+    color: #CCCCCC;
+    background-color: #2E6DA3;
+}
+.modal.dark .btn-default:hover {
+    background-position: 0 0;
+}
+.modal.dark .btn-group .btn:first-child {
+    border-top-left-radius: 7px;
+    border-bottom-left-radius: 7px;
+}
+.modal.dark .btn-group .btn:last-child {
+    border-top-right-radius: 7px;
+    border-bottom-right-radius: 7px;
+}
+.modal.dark input.disabled {
+    background-color:gray;
+}

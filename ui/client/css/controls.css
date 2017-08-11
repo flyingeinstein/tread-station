@@ -1,0 +1,56 @@
+.controls #speed-controls #speed-decrease {
+    display: inline-block;
+    float: left;
+    height: 54px;
+    width: 120px;
+    text-align: center;
+    vertical-align: middle;
+    line-height: 300%;
+    background-color: #C10B0B;
+    color: #FFFFFF;
+    padding: 5px;
+}
+.controls #speed-controls #speed-decrease img, .controls #speed-controls #speed-increase img {
+    width: 100px;
+}
+.controls #speed-controls #speed-startstop {
+    display: block;
+    float: none;
+    height: 54px;
+    background-color: #A00;
+    color: white;
+    font-size: 18pt;
+    padding: 9px;
+}
+.controls #speed-controls #speed-increase {
+    display: inline-block;
+    float: right;
+    height: 54px;
+    text-align: center;
+    line-height: 300%;
+    background-color: #C10B0B;
+    color: #FFFFFF;
+    padding: 5px;
+}
+.controls #speed-controls #speed-startstop {
+    position: initial;
+    float: none;
+}
+.controls #speed-controls #speed-ramping {
+    width: 480px;
+}
+
+.controls #speed-controls {
+    padding-top: 0px;
+}
+.controls #speed-controls #speed-ramping {
+    margin-left: auto;
+    margin-right: auto;
+    width: 475px;
+    float: none;
+}
+
+div#speed-dial.warped {
+    perspective: 200px;
+    transform: rotateY(-30deg) rotateX(-40deg);
+}

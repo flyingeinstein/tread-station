@@ -1,0 +1,79 @@
+
+svg.dial .button-indicator .background:hover {
+    fill: red;
+}
+body #speed-dial .ticks path.tick.major {
+    fill: #632529;
+}
+#speed-dial .ticks .background-ticks line {
+    stroke: #788088;
+}
+#speed-dial .ticks .background-ticks path {
+    fill: #7D5F5F;
+}
+#speed-dial .ticks .buttons path.inner {
+    fill: #7D5F5F;
+}
+#speed-dial .ticks .buttons path.outer {
+    fill: #805252;
+}
+#speed-dial .ticks .buttons path:hover {
+    fill: #C18E8E;
+}
+#speed-dial .lanes path.incline-background {
+    fill: #2f363e;
+}
+#speed-dial .lanes path.incline-indicator {
+    fill: #C5B5B5;
+}
+#speed-dial .lanes path.incline-background:hover {
+    fill: #1f2429;
+}
+#speed-dial .indicators path.goal {
+    fill: #E2E2E2;
+}
+#speed-dial .indicators .current-speed-indicator {
+    fill: white;
+}
+
+#speed-dial .ticks .target-ticks path {
+    fill: #788088;
+}
+#speed-dial .ticks .away-ticks path {
+    fill: #788088;
+    display:none;
+}
+#speed-dial .ticks path.current-temperature-tick {
+    fill: white;
+}
+#speed-dial svg.dial .button-indicator .background {
+    fill: rgba(255,0,0,0.4);
+}
+#speed-dial svg.dial .button-indicator .background:hover {
+    fill: rgba(255,0,0,0.8);
+}
+#speed-dial svg.dial .button-indicator:hover text {
+    fill: white;
+}
+#speed-dial .ticks .buttons path.glyph {
+    fill: none;
+    stroke: white;
+}
+
+#speed-dial svg g.status text.speed-indicator {
+    font-size: 200px;
+    fill: white;
+    font-family: "Akkurat Medium"; /*,Helvetica,sans-serif;*/
+}
+#speed-dial svg g.status text.status-indicator {
+    fill: #ccc;
+    font-family: Akkurat; /*,Helvetica,sans-serif;*/
+}
+#speed-dial svg g.status text.running-time {
+    fill: #ccc;
+    font-family: Akkurat; /*,Helvetica,sans-serif;*/
+}
+#speed-dial svg g.background-ticks text.dial-ordinals {
+    fill: #FDFDFD;
+    font-family: Akkurat; /*,Helvetica,sans-serif;*/
+}

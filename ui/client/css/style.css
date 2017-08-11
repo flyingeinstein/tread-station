@@ -1,0 +1,177 @@
+body {
+	font-family: "Trebuchet MS", "Helvetica", "Arial",  "Verdana", "sans-serif";
+	font-size: 10pt;
+	color: #ccc;
+	overflow: hidden;
+	margin:0px; padding:0px;
+}
+
+body.map {
+/*	background-image: url(map-7.jpg); */
+	background-size: cover;
+}
+
+@font-face {
+font-family: Akkurat;
+src:url('fonts/akkurat/lineto-akkurat-pro-light.eot');
+src:url('fonts/akkurat/lineto-akkurat-pro-light.eot?#iefix') format('embedded-opentype'),url(fonts/akkurat/lineto-akkurat-pro-light.woff) format('woff'), url(fonts/akkurat/lineto-akkurat-pro-light.ttf) format('truetype'), url(fonts/akkurat/lineto-akkurat-pro-light.svg) format('svg');
+font-weight:normal;
+font-style:normal;
+}
+
+@font-face{font-family:"Akkurat Medium";src:url('fonts/akkurat/lineto-akkurat-figures-pi-medium.eot');src:url('fonts/akkurat/lineto-akkurat-figures-pi-medium.eot?#iefix') format('embedded-opentype'),url(fonts/akkurat/lineto-akkurat-figures-pi-medium.woff) format('woff'), url(fonts/akkurat/lineto-akkurat-figures-pi-medium.ttf) format('truetype'), url(fonts/akkurat/lineto-akkurat-figures-pi-medium.svg) format('svg');font-weight:normal;font-style:normal;
+}
+
+/* annabel polizi and Dr. Pepper */
+
+table td {
+  font-size: 90%;
+}
+
+.layout table {
+	width: 100%; height: 100%;
+}
+
+/*** Dockable Panels Styles ***/
+
+.layout {
+	width: 100%; height: 100%;
+	z-index:-1;
+}
+
+.noselect, .noselect a {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/*** panel droppable styles ***/
+
+.dockable {
+	position: absolute;
+	z-index: 10;
+}
+.dockable.docked {
+}
+
+.droppable {
+	margin: 0px;
+}
+.droppable.empty {
+}
+
+.droppable.populated {
+}
+
+/*** the layout container styles ***/
+.droppable {
+	border: 5px solid rgba(127,127,127,0.0);
+	border-radius: 15px;
+	margin:0px; padding: 0px;
+}
+.droppable.dropzone-present {
+	border: 5px dashed rgba(127,127,127,0.5);
+	background-color: rgba(0,0,0,0.6);
+}
+.droppable.dropzone-hover {
+	border: 5px solid rgba(127,127,0,0.9);
+}
+
+.panel.floating {
+	top: 50px; left: 50px;
+}
+
+
+.callouts {
+	position:absolute;
+	top: 0px; left:-300px; width: 300px; bottom:0px;
+	padding-top: 80px;
+	padding-left: 10px;
+	padding-right: 20px;
+	padding-bottom: 20px;
+	/*border-right: 3px solid #1F8DD6;*/
+
+background: -moz-linear-gradient(left,  rgba(0,0,0,0) 0%, rgba(0,0,0,0) 96%, rgba(0,0,0,0.4) 100%); /* FF3.6+ */
+background: -webkit-gradient(linear, left top, right top, color-stop(0%,rgba(0,0,0,0)), color-stop(96%,rgba(0,0,0,0)), color-stop(100%,rgba(0,0,0,0.4))); /* Chrome,Safari4+ */
+background: -webkit-linear-gradient(left,  rgba(0,0,0,0) 0%,rgba(0,0,0,0) 97%,rgba(0,0,0,0.4) 100%); /* Chrome10+,Safari5.1+ */
+background: -o-linear-gradient(left,  rgba(0,0,0,0) 0%,rgba(0,0,0,0) 97%,rgba(0,0,0,0.4) 100%); /* Opera 11.10+ */
+background: -ms-linear-gradient(left,  rgba(0,0,0,0) 0%,rgba(0,0,0,0) 97%,rgba(0,0,0,0.4) 100%); /* IE10+ */
+background: linear-gradient(to right,  rgba(0,0,0,0) 0%,rgba(0,0,0,0) 97%,rgba(0,0,0,0.4) 100%); /* W3C */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', endColorstr='#a6000000',GradientType=1 ); /* IE6-9 */
+	background-color: #004A8A;
+	overflow-y: auto;
+}
+
+
+.callout p {
+	font-size: 15px;
+}
+
+
+.command-panel .nav li a {
+	margin:0px;
+	padding:0px;
+}
+
+command-panel li {
+	cursor: pointer;
+}
+
+#callout-indicator {
+	position: absolute;
+	z-index: 100;
+	left: -3px;
+	font-size: 20px;
+	color: rgba(0, 137, 255, 0.5);
+}
+
+
+#footer {
+	position: absolute;
+	bottom: 15px;
+	left: 15px;
+}
+#footer hr {
+	border-top:1px solid #555;
+	height:5px;
+	margin:5px 0px 0px 2px;
+}
+
+.page {
+}
+
+#page1 .page-left {
+
+}
+
+
+
+#user-select.modal #enter-weight {
+	text-align: center;
+	height: 65px;
+    font-size: 30px;
+}
+
+#user-select.modal .modal-footer button {
+	height: 80px;
+}
+#user-select.modal .btn-group label.active {
+	background-image: -webkit-linear-gradient(top, #428bca 0%, #2d6ca2 100%);
+    background-image: linear-gradient(to bottom, #428bca 0%, #2d6ca2 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff428bca', endColorstr='#ff2d6ca2', GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+    background-repeat: repeat-x;
+    border-color: #2b669a;
+}
+
+#user-select.modal .modal-footer .qotd {
+	float: left;
+    font-size: 12px;
+    width: 350px;
+    text-align: left;
+    padding: 10px 0 0px 10px;
+}
+

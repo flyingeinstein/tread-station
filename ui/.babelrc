@@ -1,0 +1,8 @@
+/* 
+    ./.babelrc
+*/  
+{
+    "presets":[
+        "es2017", "react"
+    ]
+}
