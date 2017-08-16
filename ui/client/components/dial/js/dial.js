@@ -77,19 +77,23 @@ export function Dial(_container, options) {
 	this.lanes.inner.margin = 15;
 	this.lanes.inner.width = 20;
 
-	this.container.html("");
-	var svg = this.svg = select(this.container[0]).append("svg")
-		.attr("id", this.options.id)
-		.attr("class","dial"
-			+(this.options.class ? " "+this.options.class : ""))
-		//.attr("width", this.width)
-		//.attr("height", this.height)
-		.attr("viewBox", "-1000 -1000 2000 2000");
+	//this.container.html("");
+
+	//var svg = this.svg = select(this.container[0]).append("svg")
+	//	.attr("id", this.options.id)
+	//	.attr("class","dial"
+	//		+(this.options.class ? " "+this.options.class : ""))
+		///.attr("width", this.width)
+		///.attr("height", this.height)
+	//	.attr("viewBox", "-1000 -1000 2000 2000");
+	var svg = select($(this.container, "svg")[0]);
+	console.log(svg);
 
 	// add a border
 	radius -= 32;
 
-	var defs = svg.append("defs");
+	var defs = svg.select("defs");
+	console.log(defs);
 	var filter = defs.append("filter")
 		.attr("id", "fe3")
 		.attr("x", "0")
@@ -115,8 +119,7 @@ export function Dial(_container, options) {
 		.attr("slope", "0.7");
 
 
-	var bg = svg.append("g")
-		.attr("class", "background");
+	var bg = svg.select("g.background");
 	bg.append("circle")
 		.attr("class", "background-circle")
 		.attr("cx", center.x)
@@ -125,18 +128,13 @@ export function Dial(_container, options) {
 		.attr("filter", "url(#fe3)")
 	;
 
-	var ticks = this.controls.groups.ticks = svg.append("g")
-		.attr("class", "ticks");
-	var bgticks = this.controls.groups.bgticks = ticks.append("g")
-		.attr("class", "background-ticks");
+	var ticks = this.controls.groups.ticks = svg.select("g.ticks");
+	var bgticks = this.controls.groups.bgticks = ticks.select("g.background-ticks");
 
 	// lane control groups
-	this.controls.lanes = svg.append("g")
-		.attr("class", "lanes");
-	this.lanes.inner.container = this.controls.lanes.inner = this.controls.lanes.append("g")
-		.attr("class", "inner-lanes");
-	this.lanes.outer.container = this.controls.lanes.outer = this.controls.lanes.append("g")
-		.attr("class", "outer-lanes");
+	this.controls.lanes = svg.select("g.lanes");
+	this.lanes.inner.container = this.controls.lanes.inner = this.controls.lanes.select("g.inner-lanes");
+	this.lanes.outer.container = this.controls.lanes.outer = this.controls.lanes.select("g.outer-lanes");
 
 	// TODO: remove when goal is in it's own lane
 	this.arcs = {};
@@ -179,8 +177,7 @@ export function Dial(_container, options) {
 	}
 
 	// center text indicators
-	var status = svg.append("g")
-		.attr("class","status");
+	var status = svg.select("g.status");
 	this.controls.status = status.append("text")
 		.attr("class","status-indicator")
 		.attr("text-anchor","middle")

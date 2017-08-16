@@ -7,6 +7,7 @@ import * as dialjs from './js/dial.js';
 import {ButtonGroupIndicator} from './js/button-indicator.js';
 import {AutoPaceIndicator} from './js/autopace-indicator.js';
 import {InclineIndicator} from './js/incline-indicator.js';
+import Lane from "./Lane.jsx";
 import "./css/defaults.css";
 import "./css/red.css";
 
@@ -19,11 +20,9 @@ var dialDefaults = {
 export default class Dial extends React.Component {
     componentDidMount() {
         var el = ReactDOM.findDOMNode(this.refs.dialComp);
-        console.log(el);
         this.options = dialDefaults;
         //this.dialControl = document.createElement("div");
         var dial = this.dial = new dialjs.Dial(el, this.options);
-        console.log(this.dial);
 
         // speed increment/decrement buttons
         dial.plugin("increment",  new ButtonGroupIndicator({
@@ -56,7 +55,7 @@ export default class Dial extends React.Component {
             ]
         }));
 
-        dial.plugin("autopace",  new AutoPaceIndicator({
+        /*dial.plugin("autopace",  new AutoPaceIndicator({
             lane: {
                 ordinal: 1,
                 alignment: 'left'
@@ -69,10 +68,10 @@ export default class Dial extends React.Component {
                 alignment: 'left'
             },
             arcrange: 0.6*Math.PI
-        }));
+        }));*/
 
         // speed macro buttons
-        dial.plugin("quickdial",  new ButtonGroupIndicator({
+        /*dial.plugin("quickdial",  new ButtonGroupIndicator({
             lane: {
                 ordinal: 3,
                 offset: dial.getLane(1).offset,     // make this lane start at the same offset as lane 1
@@ -97,13 +96,21 @@ export default class Dial extends React.Component {
         }));
 
         dial.zoom(1.5, 1000);
-
+*/
     }
 
     render() {
         return (
-            <div style={{textAlign: 'center' }}>
-                <div id="speed-dial" ref="dialComp" className="chartComp" />
+            <div id="speed-dial" ref="dialComp" className="chartComp" style={{textAlign: 'center' }}>
+                <svg className="dial" viewBox="-1500 -1500 3000 3000">
+                    <defs></defs>
+                    <g className="background"></g>
+                    <g className="ticks">
+                        <g className="background-ticks"></g>
+                    </g>
+                    <g className="lanes">{this.props.children.map( (c) => { if(c.type === Lane) return c; } )}</g>
+                    <g className="status"></g>
+                </svg>
             </div>);
     }
 }

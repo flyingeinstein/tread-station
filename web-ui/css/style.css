@@ -480,8 +480,11 @@ ul.left-buttons li:hover {
 	width: 0;
 }
 
+#stop.shape-tag {
+    left: 0px;
+}
 #reset.shape-tag {
-	right: 20px;
+	right: 0px;
 }
 
 .main-content {

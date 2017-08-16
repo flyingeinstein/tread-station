@@ -13,13 +13,13 @@ body.map {
 
 @font-face {
 font-family: Akkurat;
-src:url('fonts/akkurat/lineto-akkurat-pro-light.eot');
-src:url('fonts/akkurat/lineto-akkurat-pro-light.eot?#iefix') format('embedded-opentype'),url(fonts/akkurat/lineto-akkurat-pro-light.woff) format('woff'), url(fonts/akkurat/lineto-akkurat-pro-light.ttf) format('truetype'), url(fonts/akkurat/lineto-akkurat-pro-light.svg) format('svg');
+src:url('/client/css/fonts/akkurat/lineto-akkurat-pro-light.eot');
+src:url('/client/css/fonts/akkurat/lineto-akkurat-pro-light.eot?#iefix') format('embedded-opentype'),url(/client/css/fonts/akkurat/lineto-akkurat-pro-light.woff) format('woff'), url(/client/css/fonts/akkurat/lineto-akkurat-pro-light.ttf) format('truetype'), url(/client/css/fonts/akkurat/lineto-akkurat-pro-light.svg) format('svg');
 font-weight:normal;
 font-style:normal;
 }
 
-@font-face{font-family:"Akkurat Medium";src:url('fonts/akkurat/lineto-akkurat-figures-pi-medium.eot');src:url('fonts/akkurat/lineto-akkurat-figures-pi-medium.eot?#iefix') format('embedded-opentype'),url(fonts/akkurat/lineto-akkurat-figures-pi-medium.woff) format('woff'), url(fonts/akkurat/lineto-akkurat-figures-pi-medium.ttf) format('truetype'), url(fonts/akkurat/lineto-akkurat-figures-pi-medium.svg) format('svg');font-weight:normal;font-style:normal;
+@font-face{font-family:"Akkurat Medium";src:url('/client/css/fonts/akkurat/lineto-akkurat-figures-pi-medium.eot');src:url('/client/css/fonts/akkurat/lineto-akkurat-figures-pi-medium.eot?#iefix') format('embedded-opentype'),url(/client/css/fonts/akkurat/lineto-akkurat-figures-pi-medium.woff) format('woff'), url(/client/css/fonts/akkurat/lineto-akkurat-figures-pi-medium.ttf) format('truetype'), url(/client/css/fonts/akkurat/lineto-akkurat-figures-pi-medium.svg) format('svg');font-weight:normal;font-style:normal;
 }
 
 /* annabel polizi and Dr. Pepper */
