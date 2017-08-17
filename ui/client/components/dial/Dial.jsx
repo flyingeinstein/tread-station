@@ -25,7 +25,7 @@ export default class Dial extends React.Component {
         var dial = this.dial = new dialjs.Dial(el, this.options);
 
         // speed increment/decrement buttons
-        dial.plugin("increment",  new ButtonGroupIndicator({
+        /*dial.plugin("increment",  new ButtonGroupIndicator({
             lane: {
                 ordinal: 0,
                 //offset: dial.getLane(-1).offset,     // make this lane start at the same offset as lane 1
@@ -55,7 +55,7 @@ export default class Dial extends React.Component {
             ]
         }));
 
-        /*dial.plugin("autopace",  new AutoPaceIndicator({
+        dial.plugin("autopace",  new AutoPaceIndicator({
             lane: {
                 ordinal: 1,
                 alignment: 'left'

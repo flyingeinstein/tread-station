@@ -2,6 +2,9 @@
     ./webpack.config.js
 */
 const path = require('path');
+//const merge = require('merge');
+
+var TARGET = process.env.npm_lifecycle_event;
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackPluginConfig = new HtmlWebpackPlugin({
@@ -12,6 +15,7 @@ const HtmlWebpackPluginConfig = new HtmlWebpackPlugin({
 
 module.exports = {
   entry: './client/index.js',
+  devtool: "#cheap-module-eval-source-map",
   output: {
     path: path.resolve('dist'),
     filename: 'index_bundle.js'
@@ -26,6 +30,7 @@ module.exports = {
 
   module: {
     loaders: [
+      { test: /\.jsx?$/, loader: 'babel-loader', exclude: /node_modules/, query: { presets: ['env','react'], retainLines: true } },
       { test: /\.css$/, use: [ { loader: 'style-loader', options: {
           fixUrls: true,
           sourceMap: true,
@@ -33,12 +38,25 @@ module.exports = {
       }}, { loader: 'css-loader', options: {
           sourceMap: true,
           url: false
-      }} ]},
-      { test: /\.(eot|svg|ttf|woff|woff2)$/, loader: 'file-loader?name=public/fonts/[name].[ext]' },
-      { test: /\.js$/,  loader: 'babel-loader', exclude: /node_modules/ },
-      { test: /\.jsx$/, loader: 'babel-loader', exclude: /node_modules/ }
+      }}, //{ loader: 'source-map-loader' }
+      ]},
+      { test: /\.(eot|svg|ttf|woff|woff2)$/, loader: 'file-loader?name=public/fonts/[name].[ext]' }
     ]
   },
   plugins: [HtmlWebpackPluginConfig]
-}
+};
+
+/*const productionConfig = merge([
+
+    parts.generateSourceMaps({ type: 'source-map' })
+]);
+
+const debugConfig = merge([
+    {
+        output: {
+            devtoolModuleFilenameTemplate: 'webpack:///[absolute-resource-path]',
+        },
+    },
+    parts.generateSourceMaps({ type: 'cheap-module-eval-source-map' })
+]);*/
 

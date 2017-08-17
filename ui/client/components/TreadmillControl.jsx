@@ -34,9 +34,9 @@ export default class TreadmillControl extends React.Component {
                 <button id="reset" className="reset shape-tag left" onClick={this.reset}>RESET</button>
                 <Dial id="speed-control">
                     <Lane id="root" lane="0" >
-                        <ButtonGroup>
-                            <Button id="increase" onClick={this.incrementSpeed} />
-                            <Button id="decrease" onClick={this.decrementSpeed} />
+                        <ButtonGroup style={{ alignment: 'bottom', arcrange: [ 0.83*Math.PI, 1.17*Math.PI ] }}>
+                            <Button id="speed-increase" caption="$up"   onClick={this.incrementSpeed} />
+                            <Button id="speed-decrease" caption="$down" onClick={this.decrementSpeed} />
                         </ButtonGroup>
                     </Lane>
                     <Lane id="presets" lane="3" />
