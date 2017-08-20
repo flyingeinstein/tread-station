@@ -1,5 +1,4 @@
 import $ from "jquery";
-//import d3 from "d3";
 import d3 from "d3";
 import {scaleLinear} from "d3-scale";
 import {select} from "d3-selection";
@@ -87,13 +86,11 @@ export function Dial(_container, options) {
 		///.attr("height", this.height)
 	//	.attr("viewBox", "-1000 -1000 2000 2000");
 	var svg = select($(this.container, "svg")[0]);
-	console.log(svg);
 
 	// add a border
 	radius -= 32;
 
-	var defs = svg.select("defs");
-	console.log(defs);
+	/*var defs = svg.select("defs");
 	var filter = defs.append("filter")
 		.attr("id", "fe3")
 		.attr("x", "0")
@@ -116,17 +113,17 @@ export function Dial(_container, options) {
 	filter.append("feComponentTransfer")
 		.append("feFuncA")
 		.attr("type", "linear")
-		.attr("slope", "0.7");
+		.attr("slope", "0.7");*/
 
 
-	var bg = svg.select("g.background");
+	/*var bg = svg.select("g.background");
 	bg.append("circle")
 		.attr("class", "background-circle")
 		.attr("cx", center.x)
 		.attr("cy", center.y)
 		.attr("r", radius)
 		.attr("filter", "url(#fe3)")
-	;
+	;*/
 
 	var ticks = this.controls.groups.ticks = svg.select("g.ticks");
 	var bgticks = this.controls.groups.bgticks = ticks.select("g.background-ticks");
@@ -153,7 +150,7 @@ export function Dial(_container, options) {
 		width: radius*0.26
 	});
 
-	if(typeof GraduatedIndicator !=='undefined') {
+	/*if(typeof GraduatedIndicator !=='undefined') {
 		this.plugin("speed", new GraduatedIndicator({
 				scale: this.scales.speed,
 				lane: {
@@ -161,7 +158,7 @@ export function Dial(_container, options) {
 				}
 			})
 		);
-	}
+	}*/
 
 	if(typeof DialIndicator !=='undefined') {
 		this.plugin("progress", new DialIndicator({
@@ -249,6 +246,10 @@ Dial.prototype.glyphs = {
 	this.controls.goal.indicator
 		.attr("d", this.arcs.goal(0, percent));
 };*/
+
+export var Units = {
+	pixel: function(u) { return Number(u.replace("px","")); }
+};
 
 Dial.prototype.mouse = function()
 {

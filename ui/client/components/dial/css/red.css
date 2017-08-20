@@ -1,79 +1,122 @@
 
-svg.dial .button-indicator .background:hover {
+svg.dial.red .button-indicator .background:hover {
     fill: red;
 }
-body #speed-dial .ticks path.tick.major {
+svg.dial.red g.meter-indicator path.tick {
+    fill: #666;
+}
+svg.dial.red g.meter-indicator path.tick.major {
     fill: #632529;
 }
-#speed-dial .ticks .background-ticks line {
-    stroke: #788088;
-}
-#speed-dial .ticks .background-ticks path {
-    fill: #7D5F5F;
-}
-#speed-dial .ticks .buttons path.inner {
-    fill: #7D5F5F;
-}
-#speed-dial .ticks .buttons path.outer {
-    fill: #805252;
-}
-#speed-dial .ticks .buttons path:hover {
-    fill: #C18E8E;
-}
-#speed-dial .lanes path.incline-background {
-    fill: #2f363e;
-}
-#speed-dial .lanes path.incline-indicator {
-    fill: #C5B5B5;
-}
-#speed-dial .lanes path.incline-background:hover {
-    fill: #1f2429;
-}
-#speed-dial .indicators path.goal {
-    fill: #E2E2E2;
-}
-#speed-dial .indicators .current-speed-indicator {
-    fill: white;
-}
-
-#speed-dial .ticks .target-ticks path {
+svg.dial.red .target-ticks path {
     fill: #788088;
 }
-#speed-dial .ticks .away-ticks path {
+svg.dial.red .away-ticks path {
     fill: #788088;
     display:none;
 }
-#speed-dial .ticks path.current-temperature-tick {
+svg.dial.red .ticks path.current-temperature-tick {
     fill: white;
 }
-#speed-dial svg.dial .button-indicator .background {
+svg.dial.red .indicators path.current-indicator {
+    fill: white;
+}
+svg.dial.red g.labels text.dial-ordinals {
+    fill: #ccc;
+    color: white;
+    font-family: Akkurat; /*,Helvetica,sans-serif;*/
+    font-size: 80px;
+}
+
+svg.dial.red .ticks .background-ticks line {
+    stroke: #788088;
+}
+svg.dial.red .ticks .background-ticks path {
+    fill: #7D5F5F;
+}
+svg.dial.red .ticks .buttons path.inner {
+    fill: #7D5F5F;
+}
+svg.dial.red .ticks .buttons path.outer {
+    fill: #805252;
+}
+svg.dial.red .ticks .buttons path:hover {
+    fill: #C18E8E;
+}
+svg.dial.red .lanes path.incline-background {
+    fill: #2f363e;
+}
+svg.dial.red .lanes path.incline-indicator {
+    fill: #C5B5B5;
+}
+svg.dial.red .lanes path.incline-background:hover {
+    fill: #1f2429;
+}
+svg.dial.red .indicators path.goal {
+    fill: #E2E2E2;
+}
+svg.dial.red .indicators .current-speed-indicator {
+    fill: white;
+}
+
+
+
+svg.dial.red svg.dial .button-indicator .background {
     fill: rgba(255,0,0,0.4);
 }
-#speed-dial svg.dial .button-indicator .background:hover {
+svg.dial.red svg.dial .button-indicator .background:hover {
     fill: rgba(255,0,0,0.8);
 }
-#speed-dial svg.dial .button-indicator:hover text {
+svg.dial.red svg.dial .button-indicator:hover text {
     fill: white;
 }
-#speed-dial .ticks .buttons path.glyph {
+svg.dial.red .ticks .buttons path.glyph {
     fill: none;
     stroke: white;
 }
 
-#speed-dial svg g.status text.speed-indicator {
+svg.dial.red g.status text.speed-indicator {
     font-size: 200px;
     fill: white;
     font-family: "Akkurat Medium"; /*,Helvetica,sans-serif;*/
 }
-#speed-dial svg g.status text.status-indicator {
+svg.dial.red g.status text.status-indicator {
     fill: #ccc;
     font-family: Akkurat; /*,Helvetica,sans-serif;*/
 }
-#speed-dial svg g.status text.running-time {
+svg.dial.red g.status text.running-time {
     fill: #ccc;
     font-family: Akkurat; /*,Helvetica,sans-serif;*/
 }
-#speed-dial svg g.background-ticks text.dial-ordinals {
+svg.dial.red g.background-ticks text.dial-ordinals {
     fill: #FDFDFD;
     font-family: Akkurat; /*,Helvetica,sans-serif;*/
+}
+
+svg.dial.red g.range-indicator g.regions path {
+    fill-opacity: 0.2;
+}
+
+svg.dial.red g.range-indicator.incline-indicator path.band-region0 {
+    fill: #aaa;
+}
+
+svg.dial.red g.range-indicator.autopace-indicator path.band-region0 {
+    fill: yellow;
+}
+svg.dial.red g.range-indicator.autopace-indicator path.band-region1 {
+    fill: #ccc;
+}
+svg.dial.red g.range-indicator.autopace-indicator path.band-region2 {
+    fill: yellow;
+}
+svg.dial.red g.range-indicator.autopace-indicator path.band-region3 {
+    fill: red;
+}
+
+svg.dial.red g.button-indicator path {
+    fill: rgba(255,0,0,0.6);
+}
+
+svg.dial.red g.quickspeed g.button-indicator path {
 }

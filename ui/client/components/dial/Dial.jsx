@@ -101,15 +101,34 @@ export default class Dial extends React.Component {
 
     render() {
         return (
-            <div id="speed-dial" ref="dialComp" className="chartComp" style={{textAlign: 'center' }}>
-                <svg className="dial" viewBox="-1500 -1500 3000 3000">
-                    <defs></defs>
-                    <g className="background"></g>
-                    <g className="ticks">
-                        <g className="background-ticks"></g>
+            <div id="speed-dial" ref="dialComp" style={{textAlign: 'center' }}>
+                <svg className={`dial ${this.props.theme}`}  viewBox="-1500 -1500 3000 3000">
+                    <defs>
+                        <filter id="fe3" x="0" y="0" width="200%" height="200%">
+                            <feOffset result="offOut" in="sourceAlpha" dx="2" dy="2" />
+                            <feGaussianBlur result="blurOut" in="offOut" stdDeviation={15} />
+                            <feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
+                            <feFuncA type="linear" slope="0.7" />
+                        </filter>
+                    </defs>
+                    <g className="background">
                     </g>
-                    <g className="lanes">{this.props.children.map( (c) => { if(c.type === Lane) return c; } )}</g>
-                    <g className="status"></g>
+                    <g className="ticks">
+                        <g className="background-ticks" />
+                    </g>
+                    <g className="inner-lanes">{
+                        this.props.children.map( (c) => {
+                            if(c.type === Lane && c.props.lane<=0)
+                                return c;
+                        })}
+                    </g>
+                    <g className="outer-lanes">{
+                        this.props.children.map( (c) => {
+                            if(c.type === Lane && c.props.lane>0)
+                                return c;
+                        })}
+                    </g>
+                    <g className="status" />
                 </svg>
             </div>);
     }
