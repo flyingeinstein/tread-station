@@ -79,9 +79,11 @@ svg.dial.red svg.dial .button-indicator .background:hover {
 svg.dial.red svg.dial .button-indicator:hover text {
     fill: white;
 }
-svg.dial.red .ticks .buttons path.glyph {
-    fill: none;
+svg.dial.red path.glyph {
+    fill: transparent;
     stroke: white;
+    stroke-width: 4;
+
 }
 
 svg.dial.red g.status text.speed-indicator {
@@ -123,7 +125,7 @@ svg.dial.red g.range-indicator.autopace-indicator path.band-region3 {
     fill: red;
 }
 
-svg.dial.red g.button-indicator path {
+svg.dial.red g.button-indicator path.band {
     fill: rgba(255,0,0,0.6);
 }
 

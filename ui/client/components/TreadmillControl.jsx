@@ -14,6 +14,8 @@ import "shapes.css";
 export default class TreadmillControl extends React.Component {
     constructor(props) {
         super(props);
+        this.stop = this.stop.bind(this);
+        this.reset = this.reset.bind(this);
         this.incrementSpeed = this.incrementSpeed.bind(this);
         this.decrementSpeed = this.decrementSpeed.bind(this);
         this.quickSpeed = this.quickSpeed.bind(this);
@@ -21,10 +23,12 @@ export default class TreadmillControl extends React.Component {
 
     stop() {
         console.log("stop");
+        this.speed.setValue(0);
     }
 
     reset() {
         console.log("reset");
+        this.speed.setValue(0);
     }
 
     incrementSpeed() {
