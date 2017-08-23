@@ -18,6 +18,7 @@ export default class Lane extends React.Component {
                 outer: 5
             }
         };
+        metrics.middle = metrics.offset + metrics.width/2;
         this.lane = {
             ordinal: this.props.lane,
             width: metrics.width,
@@ -34,7 +35,6 @@ export default class Lane extends React.Component {
                 .innerRadius(function(angle, width, margin) { return metrics.offset + ((margin && margin.inner) ? margin.inner : 0); })
                 .outerRadius(function(angle, width, margin) { return metrics.offset + metrics.width + ((margin && margin.outer) ? margin.outer : 0); })
         };
-        console.log("metrics ", metrics);
     }
 
     componentDidMount() {

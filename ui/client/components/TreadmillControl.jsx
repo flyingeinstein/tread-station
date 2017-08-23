@@ -36,7 +36,8 @@ export default class TreadmillControl extends React.Component {
     }
 
     quickSpeed(e) {
-        console.log(e);
+        console.log(e.getValue());
+        this.speed.setValue(e.getValue());
         //this.speed.setValue(this.speed.getValue()-0.1);
     }
 

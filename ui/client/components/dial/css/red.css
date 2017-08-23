@@ -28,6 +28,15 @@ svg.dial.red g.labels text.dial-ordinals {
     font-size: 80px;
 }
 
+svg.dial.red text.button-caption {
+    fill: #FDFDFD;
+    font-family: Akkurat; /*,Helvetica,sans-serif;*/
+    font-size: 60px;
+    font-weight: bold;
+    color: #ccc;
+}
+
+
 svg.dial.red .ticks .background-ticks line {
     stroke: #788088;
 }
