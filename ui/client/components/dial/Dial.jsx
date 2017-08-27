@@ -19,10 +19,10 @@ var dialDefaults = {
 
 export default class Dial extends React.Component {
     componentDidMount() {
-        var el = ReactDOM.findDOMNode(this.refs.dialComp);
-        this.options = dialDefaults;
+        //var el = ReactDOM.findDOMNode(this.refs.dialComp);
+        //this.options = dialDefaults;
         //this.dialControl = document.createElement("div");
-        var dial = this.dial = new dialjs.Dial(el, this.options);
+        //var dial = this.dial = new dialjs.Dial(el, this.options);
 
         // speed increment/decrement buttons
         /*dial.plugin("increment",  new ButtonGroupIndicator({
@@ -102,7 +102,7 @@ export default class Dial extends React.Component {
     render() {
         return (
             <div id="speed-dial" ref="dialComp" style={{textAlign: 'center' }}>
-                <svg className={`dial ${this.props.theme}`}  viewBox="-1500 -1500 3000 3000">
+                <svg className={`noselect dial ${this.props.theme}`}  viewBox="-1500 -1500 3000 3000">
                     <defs>
                         <filter id="fe3" x="0" y="0" width="200%" height="200%">
                             <feOffset result="offOut" in="sourceAlpha" dx="2" dy="2" />
@@ -128,7 +128,13 @@ export default class Dial extends React.Component {
                                 return c;
                         })}
                     </g>
-                    <g className="status" />
+                    <g className="content">
+                        {
+                            this.props.children.map( (c) => {
+                                if(c.type === "g")
+                                    return c;
+                        })}
+                    </g>
                 </svg>
             </div>);
     }

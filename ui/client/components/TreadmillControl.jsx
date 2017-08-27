@@ -8,6 +8,7 @@ import MeterIndicator from './dial/MeterIndicator.jsx';
 import RangeIndicator from './dial/RangeIndicator.jsx';
 import ButtonGroup from "./dial/ButtonGroup.jsx";
 import Button from "./dial/Button.jsx";
+import Treadmill from "../js/treadmill.js";
 import "shapes.css";
 
 
@@ -21,36 +22,57 @@ export default class TreadmillControl extends React.Component {
         this.quickSpeed = this.quickSpeed.bind(this);
     }
 
+    componentDidMount()
+    {
+        let _this = this;
+        this.treadmill = new Treadmill({
+            host: "192.168.2.98"
+        });
+
+        //var el = ReactDOM.findDOMNode(this.refs.statusIndicator);
+
+        this.treadmill.onSpeedChanged = function(speed) {
+            _this.speed.setValue(speed);
+            if(_this.speedIndicator!==null) {
+                //console.log(_this.speedIndicator);
+                _this.speedIndicator.textContent=speed.toFixed(1);
+            }
+        };
+        this.treadmill.connect()
+    }
+
     stop() {
         console.log("stop");
-        this.speed.setValue(0);
+        this.treadmill.stop();
+        //this.speed.setValue(0);
     }
 
     reset() {
         console.log("reset");
-        this.speed.setValue(0);
+        this.treadmill.estop();
+        //this.speed.setValue(0);
     }
 
     incrementSpeed() {
-        this.speed.setValue(this.speed.getValue()+0.1);
+        this.treadmill.increaseSpeed();
+        //this.speed.setValue(this.speed.getValue()+0.1);
     }
 
     decrementSpeed() {
-        this.speed.setValue(this.speed.getValue()-0.1);
+        this.treadmill.decreaseSpeed();
+        //this.speed.setValue(this.speed.getValue()-0.1);
     }
 
     quickSpeed(e) {
         console.log(e.getValue());
-        this.speed.setValue(e.getValue());
+        this.treadmill.setSpeed(e.getValue());
+        //this.speed.setValue(e.getValue());
         //this.speed.setValue(this.speed.getValue()-0.1);
     }
 
     render() {
         return (
-            <div className="treadmill-control" style={{
-                textAlign: 'center',
-
-            }}>
+            <div className="treadmill-control" style={{textAlign: 'center'}}>
                 <button id="stop" className="stop shape-tag right" onClick={this.stop}>STOP</button>
                 <button id="reset" className="reset shape-tag left" onClick={this.reset}>RESET</button>
                 <Dial id="speed-control" theme="red">
@@ -76,7 +98,14 @@ export default class TreadmillControl extends React.Component {
                             <Button id="q5" caption="3.2" value={3.2} onClick={this.quickSpeed} />
                         </ButtonGroup>
                     </Lane>
+                    <g className="status">
+                        <text className="status-indicator" ref={indicator => { this.statusIndicator=indicator; }} textAnchor="middle" fontSize="100px" x="0" y="-500">Running</text>
+                        <text className="speed-indicator" ref={indicator => { this.speedIndicator=indicator; }} textAnchor="middle" fontSize="140px" x="0" y="-320">4.2</text>
+                        <text className="running-time" textAnchor="middle" fontFamily="Verdana" fontSize="240px" x="0" y="100">0:00</text>
+                    </g>
                 </Dial>
-            </div>);
+                <div id="ConnectionStatus">Initializing...</div>
+            </div>
+            );
     }
 }

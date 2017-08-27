@@ -47,6 +47,7 @@ export default class Button extends React.Component {
             var glyphname = caption.substr(1);
             var glyphcode = glyphs[glyphname];
             var yofs = this.props.lane.metrics.middle, xofs = 0;
+            rotate -= 90.0;
             var scale = 4.0;
             console.log(glyphname);
             if(glyphcode) {
