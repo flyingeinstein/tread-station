@@ -1,12 +1,5 @@
 import React from 'react';
-import d3 from "d3";
 import {scaleLinear, scaleBand} from "d3-scale";
-import {select} from "d3-selection";
-import {arc} from "d3-shape";
-import {transition} from "d3-transition";
-import {interpolate} from "d3-interpolate";
-
-import {ButtonGroupIndicator} from './js/button-indicator.js';
 
 
 export default class ButtonGroup extends React.Component {
