@@ -9,12 +9,33 @@ import RangeIndicator from './dial/RangeIndicator.jsx';
 import ButtonGroup from "./dial/ButtonGroup.jsx";
 import Button from "./dial/Button.jsx";
 import Treadmill from "../js/treadmill.js";
+import TreadmillStatus from "./TreadmillStatus.jsx";
 import "shapes.css";
 
 
 export default class TreadmillControl extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            treadmill: {
+                host: "192.168.2.98",
+                connected: false
+            },
+            status: {
+                active: false,
+                timestamp: 0,
+                runningTime: 0,
+                currentSpeed: 0,
+                desiredSpeed: 0,
+                currentIncline: 0,
+                desiredIncline: 0
+            }
+        };
+
+        this.treadmill = new Treadmill({
+            host: this.state.treadmill.host
+        });
+
         this.stop = this.stop.bind(this);
         this.reset = this.reset.bind(this);
         this.incrementSpeed = this.incrementSpeed.bind(this);
@@ -24,19 +45,18 @@ export default class TreadmillControl extends React.Component {
 
     componentDidMount()
     {
-        let _this = this;
-        this.treadmill = new Treadmill({
-            host: "192.168.2.98"
-        });
-
         //var el = ReactDOM.findDOMNode(this.refs.statusIndicator);
+        let _this = this;
 
-        this.treadmill.onSpeedChanged = function(speed) {
-            _this.speed.setValue(speed);
-            if(_this.speedIndicator!==null) {
-                //console.log(_this.speedIndicator);
-                _this.speedIndicator.textContent=speed.toFixed(1);
-            }
+        this.treadmill.onStatusUpdate = function(status) {
+            status.timeDisplay = _this.treadmill ? _this.treadmill.formatTime(status.runningTime) : "";
+            _this.speed.setValue(status.currentSpeed);
+            _this.setState((prevState, props) => { return {
+                status: status
+            }});
+        };
+        this.treadmill.parseEvent = function(name, data) {
+            console.log("event: ", name, data);
         };
         this.treadmill.connect()
     }
@@ -98,13 +118,9 @@ export default class TreadmillControl extends React.Component {
                             <Button id="q5" caption="3.2" value={3.2} onClick={this.quickSpeed} />
                         </ButtonGroup>
                     </Lane>
-                    <g className="status">
-                        <text className="status-indicator" ref={indicator => { this.statusIndicator=indicator; }} textAnchor="middle" fontSize="100px" x="0" y="-500">Running</text>
-                        <text className="speed-indicator" ref={indicator => { this.speedIndicator=indicator; }} textAnchor="middle" fontSize="140px" x="0" y="-320">4.2</text>
-                        <text className="running-time" textAnchor="middle" fontFamily="Verdana" fontSize="240px" x="0" y="100">0:00</text>
-                    </g>
+                    <TreadmillStatus status={this.state.status} />
                 </Dial>
-                <div id="ConnectionStatus">Initializing...</div>
+                <div id="ConnectionStatus" >Initializing...</div>
             </div>
             );
     }

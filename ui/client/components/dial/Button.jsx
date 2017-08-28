@@ -49,7 +49,6 @@ export default class Button extends React.Component {
             var yofs = this.props.lane.metrics.middle, xofs = 0;
             rotate -= 90.0;
             var scale = 4.0;
-            console.log(glyphname);
             if(glyphcode) {
                 return <path className="glyph button-glyph" x={xofs} y={yofs} d={glyphcode} transform={`translate(${xofs},${yofs}) rotate(${rotate}, ${-xofs}, ${-yofs}) scale(${scale})`} />
             }

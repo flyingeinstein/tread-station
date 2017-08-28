@@ -110,7 +110,10 @@ Treadmill.prototype.on = function(eventName, callback)
 Treadmill.prototype.parseMessage = function(msg)
 {
     if(msg.type==="status") {
-        this.updateRunningTime(msg.runningTime);
+        //console.log("stat ", msg);
+
+        if(this.onStatusUpdate!==null)
+            this.onStatusUpdate(msg);
         
         if(this.speed !== msg.currentSpeed)
         {
@@ -142,7 +145,7 @@ Treadmill.prototype.parseMessage = function(msg)
 			}
 		}
 		
-		if(this.eventHandlers && this.eventHandlers[msg.schema]!=null)
+		if(this.eventHandlers && this.eventHandlers[msg.schema]!==null)
 			this.eventHandlers[msg.schema](msg.response);
     }
 };
@@ -160,7 +163,7 @@ Treadmill.prototype.parseEvent = function(name, data)
 
 Treadmill.prototype.setSpeed = function(value) 
 {
-	if(this.resetTimer!=null)
+	if(this.resetTimer!==null)
 		clearTimeout(this.resetTimer);
 				
     if(this.connection)
@@ -195,7 +198,7 @@ Treadmill.prototype.estop = function()
 
 Treadmill.prototype.reset = function(value) 
 {
-	if(this.resetTimer!=null)
+	if(this.resetTimer!==null)
 		clearTimeout(this.resetTimer);
 	if(this.connection)
         this.connection.send(JSON.stringify({ Reset: true }));
@@ -222,15 +225,14 @@ Treadmill.prototype.autopace = function(value)
         this.connection.send(JSON.stringify({ Autopace: value }));
 };
 
-Treadmill.prototype.updateRunningTime = function(millis)
+Treadmill.prototype.formatTime = function(millis)
 {
-	var seconds, minutes, hours;
-	if(this.onUpdateRunningTime) {
-        seconds = Math.floor(millis / 1000);
-        minutes = Math.floor((seconds / 60)) % 60;
-        hours = Math.floor(seconds / 3600);
-        seconds = seconds % 60;
-        this.onUpdateRunningTime(seconds, minutes, hours);
-    }
+    let seconds, minutes, hours;
+    seconds = Math.floor(millis / 1000);
+    minutes = Math.floor((seconds / 60)) % 60;
+    hours = Math.floor(seconds / 3600);
+    seconds = seconds % 60;
+    return hours+":"+zeropad(minutes)+":"+zeropad(seconds);
 };
+
 

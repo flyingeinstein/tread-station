@@ -131,7 +131,7 @@ export default class Dial extends React.Component {
                     <g className="content">
                         {
                             this.props.children.map( (c) => {
-                                if(c.type === "g")
+                                if(c.type !== Lane)
                                     return c;
                         })}
                     </g>
