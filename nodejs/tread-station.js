@@ -50,12 +50,13 @@ if(files.length>1) {
 
 if(!pwm_endpoint && !simulate) console.log("failed to find the PWM P8:13 endpoint in /sys/devices/ocp.?/pwm_test_P8_13.??");
 
-// instantiate the Web Service
-var WebSocketServer = require('websocket').server;
-var http = require('http');
-
 var mysql      = require('mysql');
 var mysqlDateFormat = "yyyy-MM-dd HH:mm:ss";
+
+// instantiate the Web Service
+
+var WebSocketServer = require('websocket').server;
+var http = require('http');
 
 var server = http.createServer(function(request, response) {
     // process HTTP request. Since we're writing just WebSockets server
@@ -72,6 +73,14 @@ wsServer = new WebSocketServer({
 wsServer.on('request', function(request) {
     treadmill.acceptConnection(request);
 });
+
+
+/*const WebSocket = require('ws');
+
+const server = new WebSocket.Server({
+        port: 8080
+    });
+*/
 
 function isNumber(n)
 {
@@ -238,6 +247,10 @@ function Treadmill()
     };
 
     this.init_screensaver();
+
+    // startup a thread to send status every 1 second
+    this.__updateInterval = setInterval(function(a) { if(a.connection) a.sendStatus() }, 1000, this);
+    /// to clear:    clearInterval(_treadmill.__updateInterval);
 
     console.log("Treadmill ready");
 
@@ -855,24 +868,8 @@ Treadmill.prototype.abortConnection = function()
     }
 }
 
-Treadmill.prototype.acceptConnection = function(request)
-{
-    // close any existing connection
-    if(this.connection!=null)
-      this.connection.close();
-
-    // accept the new one
-    this.connection = request.accept(null, request.origin);
-    console.log("connection from host:"+request.host+"   origin:"+request.origin);
-
-    // startup a thread to send status every 1 second
-    this.__updateInterval = setInterval(function(a) { if(a.connection) a.sendStatus() }, 500, this);
-
-    var _treadmill = this;
-
-    // This is the most important callback for us, we'll handle
-    // all messages from users here.
-    this.connection.on('message', function(message) {
+Treadmill.prototype.parseMessage = function(message) {
+        var _treadmill = this;
         if (message.type === 'utf8') {
             var msg = JSON.parse(message.utf8Data);
             if(msg.Speed)
@@ -903,15 +900,30 @@ Treadmill.prototype.acceptConnection = function(request)
                 }
             }
         }
-    });
+    };
+
+Treadmill.prototype.acceptConnection = function(request)
+{
+    // close any existing connection
+    if(this.connection!=null)
+      this.connection.close();
+
+    // accept the new one
+    this.connection = request.accept(null, request.origin);
+    console.log("connection from host:"+request.host+"   origin:"+request.origin);
+
+    var _treadmill = this;
+
+    // This is the most important callback for us, we'll handle
+    // all messages from users here.
+    this.connection.on('message', (message) => { _treadmill.parseMessage(message); });
 
     this.connection.on('close', function(connection) {
         // close user connection
-	    console.log("closed");
-        _treadmill.speed("STOP");
-        clearInterval(_treadmill.__updateInterval);
-        _treadmill.__updateInterval = null;
         _treadmill.connection = null;
+        _treadmill.speed("STOP");
+        _treadmill.__updateInterval = null;
+	    console.log("closed");
     });
 
 

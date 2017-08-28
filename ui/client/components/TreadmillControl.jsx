@@ -23,7 +23,7 @@ export default class TreadmillControl extends React.Component {
         super(props);
         this.state = {
             treadmill: {
-                host: "192.168.2.98",
+                host: "localhost",
                 connected: false,
                 message: null
             },
