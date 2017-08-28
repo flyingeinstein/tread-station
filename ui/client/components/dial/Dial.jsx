@@ -2,11 +2,6 @@
   ./client/components/Dial.jsx
 */
 import React from 'react';
-import ReactDOM from 'react-dom';
-import * as dialjs from './js/dial.js';
-import {ButtonGroupIndicator} from './js/button-indicator.js';
-import {AutoPaceIndicator} from './js/autopace-indicator.js';
-import {InclineIndicator} from './js/incline-indicator.js';
 import Lane from "./Lane.jsx";
 import "./css/defaults.css";
 import "./css/red.css";
