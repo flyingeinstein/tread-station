@@ -4,10 +4,10 @@
     "version": "0.0.2",
     "private": true,
     "dependencies": {
-        "websocket":"1.0.x",
-        "q":"0.9.x",
-	"mysql": "^2.5.4",
-	"datejs": "^1.0.0-rc3",
+        "websocket": "1.0.x",
+        "q": "0.9.x",
+        "mysql": "^2.5.4",
+        "datejs": "^1.0.0-rc3",
         "glob": "^7.0"
     }
 }

@@ -4,7 +4,7 @@ var Q = require('q');
 function bbbPWM(pwmPath, period) {
     bbbPWM.PERIOD = period;
 
-    this.sysClassMode = fs.lstatSync(pwmPath + 'enable').isFile();
+    this.sysClassMode = 0;//fs.lstatSync(pwmPath + 'enable').isFile();
     bbbPWM.RUN_PATH = pwmPath + (this.sysClassMode ? 'enable' : 'run');
     bbbPWM.DUTY_PATH = pwmPath + (this.sysClassMode ? 'duty_cycle' : 'duty');
     bbbPWM.PERIOD_PATH = pwmPath + 'period';
