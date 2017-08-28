@@ -1,4 +1,3 @@
-import $ from "jquery";
 
 function zeropad(number) {
     return (number<10) ? '0'+number : number;
@@ -7,7 +6,7 @@ function zeropad(number) {
 function getParameterByName(name, url) {
     if (!url) url = window.location.href;
     name = name.replace(/[\[\]]/g, "\\$&");
-    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+    let regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
         results = regex.exec(url);
     if (!results) return null;
     if (!results[2]) return '';
@@ -16,7 +15,7 @@ function getParameterByName(name, url) {
 
 export default function Treadmill(options)
 {
-    if(options==null) {
+    if(options===null) {
         options = {};
     }
 
@@ -47,26 +46,22 @@ export default function Treadmill(options)
 	var _treadmill = this;
 	this.eventHandlers = {
 	};
-}
-
-function ws_status(str)
-{
-    $("#ConnectionStatus").text(str);
+	this.onConnectionStatus = function(connected, message) { console.log(message); };
 }
 
 Treadmill.prototype.connect = function()
 {
   if ("WebSocket" in window)
   {
-     var _treadmill = this;
+     let _treadmill = this;
 
      // Let us open a web socket
-     ws_status("connecting to "+this.host+"...");
+     this.onConnectionStatus(false, "connecting to "+this.host+"...");
      this.connection = new WebSocket("ws://"+this.host+":27001/echo");
      this.connection.onopen = function()
      {
         // Web Socket is connected, send data using send()
-        ws_status("Connected.");
+         _treadmill.onConnectionStatus(true, "Connected.");
 		_treadmill.parseEvent("connected");
 		
 		// request some objects from the treadmill service
@@ -75,21 +70,21 @@ Treadmill.prototype.connect = function()
 	};
      this.connection.onmessage = function (evt) 
      {
-        var received_msg = evt.data;
-        var msg = JSON.parse(received_msg);
-        if(msg!=null)
+        let received_msg = evt.data;
+        let msg = JSON.parse(received_msg);
+        if(msg!==null)
             _treadmill.parseMessage(msg);        
      };
      this.connection.onclose = function()
      { 
         // websocket is closed.
-        ws_status("Connection closed."); 
-        this.connection = null;
+         _treadmill.onConnectionStatus(false, "Connection closed.");
+         _treadmill.connection = null;
 		_treadmill.parseEvent("closed");
      };
      this.connection.onerror = function(evt)
      {
-        ws_status("Connection error : "+evt.data);
+         _treadmill.onConnectionStatus(false, "Connection error : "+evt.data);
 	    setTimeout(function(){ _treadmill.connect(); }, 5000);
      }
   } else
@@ -145,7 +140,7 @@ Treadmill.prototype.parseMessage = function(msg)
 			}
 		}
 		
-		if(this.eventHandlers && this.eventHandlers[msg.schema]!==null)
+		if(this.eventHandlers && this.eventHandlers[msg.schema]!=null)
 			this.eventHandlers[msg.schema](msg.response);
     }
 };

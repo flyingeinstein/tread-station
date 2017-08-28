@@ -307,7 +307,10 @@ body {
     webkit-tap-highlight-color: rgba(255,255,255,.2);
 }
 
-#ConnectionStatus {
+.bottom-status {
     position:absolute;
-    bottom: 0px; left: 15px;
+    bottom: 15px; left: 15px;
+    padding:0.5em;
+    border-radius: 6px;
+    background-color: rgba(255,255,255,0.1);
 }
