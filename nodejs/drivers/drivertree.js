@@ -1,3 +1,4 @@
+const glob = require("glob");
 
 
 function DriverTree(props)
@@ -18,6 +19,11 @@ function DriverTree(props)
 
 DriverTree.prototype.enumerate = function()
 {
+    files = glob.sync("./drivers/*");
+    files.forEach(function(item, x, y) { console.log("  : ", item, x, y); });
+
+    return 0;
+
     this.root.output.pwm.addDriver({
         path: 'pwm/bbb.pwmtest',
         klass: require('./pwm/bbb.pwmtest')
