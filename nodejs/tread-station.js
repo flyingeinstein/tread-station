@@ -8,10 +8,13 @@ var fs = require('fs');
 var DateJS = require('./node_modules/datejs');
 var Aggregate = require('./aggregate');
 var exec = require('child_process').exec;
-
+const DriverTree = require('./drivers/drivertree');
 const TreadmillController = require('./treadmill-control.js');
-var controller = new TreadmillController({ simulation: false });
 
+var simulate = true;
+
+// this class handles finding javascript drivers for PWM, sensors and other hardware
+var drivers = new DriverTree();
 
 var mysql      = require('mysql');
 var mysqlDateFormat = "yyyy-MM-dd HH:mm:ss";
@@ -34,7 +37,8 @@ wsServer = new WebSocketServer({
 
 // WebSocket server
 wsServer.on('request', function(request) {
-    treadmill.acceptConnection(request);
+    if(treadmill)
+        treadmill.acceptConnection(request);
 });
 
 
@@ -47,7 +51,7 @@ const server = new WebSocket.Server({
 
 function isNumber(n)
 {
-    return typeof n == 'number' && !isNaN(n) && isFinite(n);
+    return typeof n === 'number' && !isNaN(n) && isFinite(n);
 }
 
 function clamp(value, minV, maxV)
@@ -80,6 +84,8 @@ function Treadmill()
     this.storage = {
         mysql: false
     };
+
+    this.controller = new TreadmillController({ simulation: false });
 
     if(!this.simulation.active) {
    } else {
@@ -224,20 +230,6 @@ Treadmill.prototype.algorithms = [];
 
 
 
-Treadmill.prototype.takeOwnershipOfDevice = function(device_path)
-{
-/*
-    exec("sudo chown -R $USER "+device_path, function(error,stdout, stderr) {
-        if(error) {
-            ss.enabled = false;
-            console.log("failed to take ownership of "+device_path+", error "+error);
-            console.log(stdout);
-            console.log("errors:");
-            console.log(stderr);
-        }
-    });
-*/
-}
 
 Treadmill.prototype.loadSystem = function()
 {
@@ -889,12 +881,13 @@ Date.prototype.unix_timestamp = function()
     return Math.floor(this.getTime()/1000);
 }
 
+// enumerate drivers
+drivers.enumerate();
+drivers.probe({
+    tree: drivers
+});
+
 // ensure we have all config
-var treadmill;
-if(!pwm_endpoint && !simulate) {
-	setTimeout(function () { console.log("unable to start treadmill"); process.exit(5); }, 100);
-} else {
-  treadmill = new Treadmill();
-}
+//var treadmill = new Treadmill();
 
 
