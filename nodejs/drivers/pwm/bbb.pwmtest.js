@@ -109,6 +109,7 @@ PWM.prototype.probe = function (v) {
             console.log("found PWM P8:13 endpoint at "+pwm_endpoint);
         }
     }
+    pwm_endpoint = 'test';
     if(!pwm_endpoint) {
         console.log("failed to find the PWM P8:13 endpoint in /sys/devices/ocp.?/pwm_test_P8_13.??");
         return false;

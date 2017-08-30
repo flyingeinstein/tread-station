@@ -2,13 +2,23 @@
 
 function DriverTree(props)
 {
-    this.drivers = [];
-    this.tree = {};
+    this.root = {
+        input: {
+            hid: new DriverTree.Node({ path: "input/controllers"}),
+            sensors: new DriverTree.Node({ path: "input/sensors"})
+        },
+        output: {
+            pwm: new DriverTree.Node({ path: "pwm"})
+        },
+        motion: {
+            controllers: new DriverTree.Node({ path: "motion/controllers"})
+        }
+    };
 }
 
 DriverTree.prototype.enumerate = function()
 {
-    this.drivers.push({
+    this.root.output.pwm.addDriver({
         path: 'pwm/bbb.pwmtest',
         klass: require('./pwm/bbb.pwmtest')
     });
@@ -16,36 +26,8 @@ DriverTree.prototype.enumerate = function()
 
 DriverTree.prototype.probe = function(props)
 {
-    for(var i=0, n=this.drivers.length; i<n; i++) {
-        var driverinfo = this.drivers[i];
-        var driver = new driverinfo.klass();
-        driver.info = driverinfo;
-        if(driver.probe(props)) {
-            driver.tree = this;
-            this.drivers.push(driver);
-
-            if(!this.tree[driver.devicePath])
-                dnode = this.tree[driver.devicePath] = {
-                    path: '/'+driver.devicePath,
-                    driver: driver,
-                    devices: []
-                };
-            else
-                dnode = this.tree[driver.devicePath];
-
-            if(driver.devices && driver.devices.length>0) {
-                // update path for all devices
-                for (var j = 0, _j = driver.devices.length; j < _j; j++) {
-                    var dev = driver.devices[j];
-                    dev.path = dnode.path+'/'+driver.name+':'+j;
-                }
-
-                dnode[driver.name] = driver.devices;
-                dnode.devices = dnode.devices.concat(driver.devices);
-            }
-            console.log(dnode);
-        }
-    }
+    this.root.output.pwm.probe(props);
+    console.log(this.root.output.pwm);
 };
 
 // todo: this should probably be a function of the DeviceTree
@@ -63,5 +45,60 @@ DriverTree.prototype.takeOwnershipOfDevice = function(device_path)
         });
     */
 }
+
+function DriverTreeNode(props)
+{
+    this.path = props.path;
+    this.drivers = [];
+    this.devices = [];
+}
+
+DriverTreeNode.prototype.addDriver = function(driverinfo) {
+    if(driverinfo===null || driverinfo.klass===null || driverinfo.path===null) {
+        console.log("invalid driver info: ", driverinfo);
+    }
+
+    // get an instance of the driver control class
+    var driver = new driverinfo.klass();
+    driver.info = driverinfo;
+
+    this.drivers.push(driver);
+
+    return driver;
+}
+
+DriverTreeNode.prototype.probe = function(props)
+{
+    var valid_drivers = [];
+    for(var i=0, n=this.drivers.length; i<n; i++) {
+        var driver = this.drivers[i];
+
+        if(!driver.probe) {
+            console.log("driver has no probe function: ", driver);
+            continue;
+        }
+
+        // get the driver control class to probe for devices on the system
+        if(driver.probe(props)) {
+            //driver.node = this;
+            valid_drivers.push(driver);
+
+            if(driver.devices && driver.devices.length>0) {
+                // update path for all devices
+                for (var j = 0, _j = driver.devices.length; j < _j; j++) {
+                    var dev = driver.devices[j];
+                    dev.node = this;
+                    this.devices.push(dev);
+                }
+            }
+        }
+    }
+
+    // now replace the list of drivers with only the ones found
+    this.drivers = valid_drivers;
+};
+
+
+DriverTree.Node = DriverTreeNode;
 
 module.exports = DriverTree;
