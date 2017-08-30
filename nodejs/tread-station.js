@@ -5,50 +5,13 @@ process.on('SIGINT', function() {
 });
 
 var fs = require('fs');
-var bbbPWM = require('./bbb-pwm');
 var DateJS = require('./node_modules/datejs');
 var Aggregate = require('./aggregate');
-var glob = require("glob");
 var exec = require('child_process').exec;
 
+const TreadmillController = require('./treadmill-control.js');
+var controller = new TreadmillController({ simulation: false });
 
-var simulate = false;
-try {
-var simfile = fs.lstatSync('/etc/treadmill/simulate');
-if(simfile.isFile())
-    simulate = true;
-} catch(error) {}
-
-
-// find the OCP PWM module as it's very nomadic
-var ocp_root = null, pwm_endpoint = null;
-var files = glob.sync("/sys/devices/platform/ocp");
-if(files.length>1) {
-	console.log("found too many potential OCP folders:");
-	files.forEach(function(item) { console.log("  : "+item); });
-} else if(files.length==1) {
-	ocp_root = files[0];
-	console.log("found OCP root at "+ocp_root);
-
-	// found OCP root, now find the PWM module
-	files = glob.sync(ocp_root+"/ocp:pwm_test_P8_13");
-	if(files.length>1) {
-		console.log("found too many potential PWM endpoints for P8:13:");
-		files.forEach(function(item) { console.log("  : "+item); });
-	} else if(files.length==1) {
-		pwm_endpoint = files[0]+'/';
-		console.log("found PWM P8:13 endpoint at "+pwm_endpoint);
-	}
-} else {
-	// look in pwm location in >4.1 kernels
-	files = glob.sync("/sys/class/pwm/pwmchip0/pwm1");
-	if(files.length==1) {
-		pwm_endpoint = files[0]+'/';
-		console.log("found PWM P8:13 endpoint at "+pwm_endpoint);
-	}
-}
-
-if(!pwm_endpoint && !simulate) console.log("failed to find the PWM P8:13 endpoint in /sys/devices/ocp.?/pwm_test_P8_13.??");
 
 var mysql      = require('mysql');
 var mysqlDateFormat = "yyyy-MM-dd HH:mm:ss";
@@ -112,7 +75,6 @@ function Treadmill()
             active: true,
             autopace: false
         };
-        console.log('configured for simulation');
     }
 
     this.storage = {
@@ -120,23 +82,8 @@ function Treadmill()
     };
 
     if(!this.simulation.active) {
-        // usually root owns the pwm device, we want to take ownership
-        // current user must be in the /etc/sudoers file with NOPASSWD needed
-        this.takeOwnershipOfDevice(pwm_endpoint);
-
-        // Instantiate bbbPWM object to control PWM device.  Pass in device path
-        // and the period to the constructor.
-        this.pwm = new bbbPWM(pwm_endpoint, 50000000);
-        this.pwm.turnOff();
-        this.pwm.polarity(0);
-    } else {
+   } else {
         console.log("beginning simulation");
-        this.pwm = {
-          turnOff: function() {},
-          turnOn: function() {},
-          polarity: function() {},
-          setDuty: function() {}
-        };
     }
 
     this.currentIncline = 0;
@@ -469,7 +416,7 @@ Treadmill.prototype.speed = function(value)
 
     // update the PWM
     if(!this.simulation.active) {
-        this.pwm.setDuty(this.currentSpeed*100);
+        controller.speed(this.currentSpeed);
         if(!was_active && this.active) {
     	    this.pwm.turnOn();
 	        this.sendEvent("running");
@@ -509,9 +456,10 @@ Treadmill.prototype.accellerate = function()
             var _treadmill = this;
             setTimeout(function() { _treadmill.accellerate(); }, 100);
         }
-        if(!this.simulation.active)
+        if(!this.simulation.active) {
+            controller.speed(this.currentSpeed); // new
     	    this.pwm.setDuty(this.currentSpeed*100);
-        else
+        } else
             console.log("pwm => "+this.currentSpeed);
     }
     this.sendStatus();
@@ -530,9 +478,10 @@ Treadmill.prototype.deccellerate = function()
             var _treadmill = this;
             setTimeout(function() { _treadmill.deccellerate(); }, 100);
         }
-        if(!this.simulation.active)
+        if(!this.simulation.active) {
+            controller.speed(this.currentSpeed); // new
     	    this.pwm.setDuty(this.currentSpeed*100);
-        else
+        } else
             console.log("pwm => "+this.currentSpeed);
     }
     this.sendStatus();
@@ -559,9 +508,10 @@ Treadmill.prototype.fullstop = function()
         this.activateAutopace(false);
 
     this.active = false;
-    if(!this.simulation.active)
+    if(!this.simulation.active) {
+        controller.stop();
         this.pwm.turnOff();
-    else
+    } else
         console.log("pwm => estop");
     this.desiredSpeed=0;
     this.currentSpeed=0;
