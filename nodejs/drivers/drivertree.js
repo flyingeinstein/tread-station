@@ -4,18 +4,7 @@ const fs = require('fs');
 function DriverTree(props)
 {
     this.driverPath = "./drivers/";
-    this.root = {
-/*        input: {
-            hid: new DriverTree.Node({ path: "input/controllers"}),
-            sensors: new DriverTree.Node({ path: "input/sensors"})
-        },
-        output: {
-            pwm: new DriverTree.Node({ path: "pwm"})
-        },
-        motion: {
-            controllers: new DriverTree.Node({ path: "motion/controllers"})
-        }*/
-    };
+    this.root = {};
 }
 
 DriverTree.prototype.__enumerate = function(node, path)
@@ -41,14 +30,27 @@ DriverTree.prototype.__enumerate = function(node, path)
 
 DriverTree.prototype.enumerate = function()
 {
-    let rv = this.__enumerate(this.root, null);
+    return this.__enumerate(this.root, null);
 };
 
 DriverTree.prototype.$ = function(node, name)
 {
+    if(name===undefined) {
+        name = node;
+        node = this.root;
+    }
     let comps = name.split("/");
     while(comps.length>0) {
         let comp = comps.shift();
+        if(comps.length===0 && Array.isArray(node.drivers)) {
+            // first check if this is a driver name
+            for(let i=0, _i=node.drivers.length; i<_i; i++) {
+                let driver = node.drivers[i];
+                if(driver.name === comp || driver.devicePath===comp)
+                    return driver;
+            }
+        }
+
         if(node[comp]===undefined && node[comp]===null)
             return null;
         node = node[comp];

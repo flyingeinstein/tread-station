@@ -14,7 +14,7 @@
 class TreadmillControl {
     constructor(props) {
         this.name = "Treadmill Control";
-        this.devicePath = "experience";
+        this.devicePath = "treadmill";
         this.description = "Provides user experience for treadmill control";
         this.devices = [this];
         this.driver = {};
@@ -33,7 +33,7 @@ class TreadmillControl {
             console.log("selected "+this.motion.name+" motion controller");
         }
 
-        return false;
+        return this.motion ? true : false;
     }
 
     speed(value) {

@@ -9,7 +9,7 @@ var DateJS = require('./node_modules/datejs');
 var Aggregate = require('./aggregate');
 var exec = require('child_process').exec;
 const DriverTree = require('./drivers/drivertree');
-const TreadmillController = require('./drivers/user/experience/treadmill-control.js');
+const TreadmillController = require('./drivers/user/experience/treadmill.js');
 const WebSocketServer = require('websocket').server;
 const http = require('http');
 
@@ -58,7 +58,10 @@ function Treadmill()
         mysql: false
     };
 
-    this.controller = new TreadmillController({ simulation: false });
+    if(!drivers) { this.fatal("internal error: no driver tree"); }
+    this.controller = drivers.$("user/experience/treadmill");
+    if(!this.controller) { this.fatal("internal error: no treadmill user control driver found"); }
+
 
     if(!this.simulation.active) {
    } else {
@@ -121,6 +124,7 @@ function Treadmill()
     // internals
     this.connection = null;
     this.__updateInterval = null;
+    this.__updateInterval = null;
 
     // session
     this.session = {
@@ -155,7 +159,6 @@ function Treadmill()
         };
         this.session.user = this.users[0];
     }
-
 
     this.autopace = {
         enabled: true,
@@ -230,6 +233,10 @@ function Treadmill()
 Treadmill.prototype.algorithms = [];
 
 
+Treadmill.prototype.fatal = function(error) {
+    console.log(error);
+    process.exit();
+}
 
 
 Treadmill.prototype.loadSystem = function()
@@ -889,6 +896,6 @@ drivers.probe({
 });
 
 // ensure we have all config
-//var treadmill = new Treadmill();
+var treadmill = new Treadmill();
 
 
