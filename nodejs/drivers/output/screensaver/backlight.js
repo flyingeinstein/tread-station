@@ -32,7 +32,6 @@ class BacklightChannel {
     {
         this.value = 100;
         this.endpoint = path;
-        this.enable();
     }
 
     enable() {
