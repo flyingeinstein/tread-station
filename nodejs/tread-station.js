@@ -9,7 +9,9 @@ var DateJS = require('./node_modules/datejs');
 var Aggregate = require('./aggregate');
 var exec = require('child_process').exec;
 const DriverTree = require('./drivers/drivertree');
-const TreadmillController = require('./treadmill-control.js');
+const TreadmillController = require('./drivers/user/experience/treadmill-control.js');
+const WebSocketServer = require('websocket').server;
+const http = require('http');
 
 var simulate = true;
 
@@ -19,35 +21,6 @@ var drivers = new DriverTree();
 var mysql      = require('mysql');
 var mysqlDateFormat = "yyyy-MM-dd HH:mm:ss";
 
-// instantiate the Web Service
-
-var WebSocketServer = require('websocket').server;
-var http = require('http');
-
-var server = http.createServer(function(request, response) {
-    // process HTTP request. Since we're writing just WebSockets server
-    // we don't have to implement anything.
-});
-server.listen(27001, function() { });
-
-// create the server
-wsServer = new WebSocketServer({
-    httpServer: server
-});
-
-// WebSocket server
-wsServer.on('request', function(request) {
-    if(treadmill)
-        treadmill.acceptConnection(request);
-});
-
-
-/*const WebSocket = require('ws');
-
-const server = new WebSocket.Server({
-        port: 8080
-    });
-*/
 
 function isNumber(n)
 {
@@ -222,6 +195,34 @@ function Treadmill()
             _treadmill.activateAutopace(true);
         }, 2000 );
     }
+
+
+
+    // instantiate the Web Service
+    this.server = http.createServer(function(request, response) {
+        // process HTTP request. Since we're writing just WebSockets server
+        // we don't have to implement anything.
+    });
+    this.server.listen(27001, function() { });
+
+// create the server
+    this.wsServer = new WebSocketServer({
+        httpServer: this.server
+    });
+
+// WebSocket server
+    this.wsServer.on('request', function(request) {
+        _treadmill.acceptConnection(request);
+    });
+
+
+    /*const WebSocket = require('ws');
+
+    const server = new WebSocket.Server({
+            port: 8080
+        });
+    */
+
 }
 
 // collection of algorithms

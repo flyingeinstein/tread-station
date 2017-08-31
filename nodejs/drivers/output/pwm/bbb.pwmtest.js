@@ -1,10 +1,10 @@
-var fs = require('fs');
-var Q = require('q');
-var glob = require("glob");
+const fs = require('fs');
+const Q = require('q');
+const glob = require("glob");
 
-function PwmChannel(pwmPath, period) {
+function PwmChannel(driver, pwmPath, period) {
     PwmChannel.PERIOD = period;
-
+    this.driver = driver;
     this.sysClassMode = 0;//fs.lstatSync(pwmPath + 'enable').isFile();
     PwmChannel.RUN_PATH = pwmPath + (this.sysClassMode ? 'enable' : 'run');
     PwmChannel.DUTY_PATH = pwmPath + (this.sysClassMode ? 'duty_cycle' : 'duty');
@@ -14,7 +14,7 @@ function PwmChannel(pwmPath, period) {
 
 
 PwmChannel.prototype.writeFile = function (file, content) {
-    var deferred = Q.defer();
+    let deferred = Q.defer();
     fs.writeFile(file, content, function (error) {
         if (error) {
             deferred.reject(error);
@@ -53,7 +53,7 @@ PwmChannel.prototype.polarity = function (v) {
 };
 
 PwmChannel.prototype.open = function () {
-    var _this = this;
+    let _this = this;
 
     // usually root owns the pwm device, we want to take ownership
     // current user must be in the /etc/sudoers file with NOPASSWD needed
@@ -82,9 +82,9 @@ function PWM() {
 
 PWM.prototype.probe = function (v) {
     // find the OCP PWM module as it's very nomadic
-    var pwm_endpoint=null;
-    var ocp_root = null;
-    var files = glob.sync("/sys/devices/platform/ocp");
+    let pwm_endpoint=null;
+    let ocp_root = null;
+    let files = glob.sync("/sys/devices/platform/ocp");
     if(files.length>1) {
         console.log("found too many potential OCP folders:");
         files.forEach(function(item) { console.log("  : "+item); });
@@ -115,7 +115,7 @@ PWM.prototype.probe = function (v) {
         return false;
     }
 
-    var channel = new PwmChannel(pwm_endpoint, 50000000);
+    let channel = new PwmChannel(this, pwm_endpoint, 50000000);
     channel.driver = this;
     this.devices.push( channel );
     return true;

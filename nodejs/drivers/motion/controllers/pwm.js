@@ -10,10 +10,6 @@ class PWMController {
         return true;
     }
 
-    probe(props) {
-
-    }
-
     open() {
 
         // Instantiate bbbPWM object to control PWM device.  Pass in device path
