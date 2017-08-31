@@ -35,15 +35,15 @@ class BacklightChannel {
     }
 
     enable() {
-        __set(this.value);
+        this.__set(this.value);
     }
 
     disable() {
-        __set(0);
+        this.__set(0);
     }
 
     set(value) {
-        __set(this.value = value);
+        this.__set(this.value = value);
     }
 
     __set(value) {
