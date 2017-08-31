@@ -1,4 +1,5 @@
 const fs = require('fs');
+const Q = require('Q');
 
 const searchpaths = ["/sys/class/backlight/backlight/brightness"];
 
