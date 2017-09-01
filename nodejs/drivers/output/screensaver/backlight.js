@@ -10,7 +10,7 @@ class BacklightSysClass {
         this.description = "Controls backlight display via /sys/class/backlight when the xset command (Xwindows) is not available";
         this.devices = [];
         this.driver = {};
-        this.depends = ["motion/controllers"];
+        //this.depends = [];
     }
 
     probe(props) {

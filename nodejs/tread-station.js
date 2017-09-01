@@ -7,7 +7,6 @@ process.on('SIGINT', function() {
 var fs = require('fs');
 var DateJS = require('./node_modules/datejs');
 var Aggregate = require('./aggregate');
-var exec = require('child_process').exec;
 const DriverTree = require('./drivers/drivertree');
 const TreadmillController = require('./drivers/user/experience/treadmill.js');
 const WebSocketServer = require('websocket').server;
@@ -175,8 +174,6 @@ function Treadmill()
         mode: 'sonar'
     };
 
-    this.init_screensaver();
-
     // startup a thread to send status every 1 second
     this.__updateInterval = setInterval(function(a) { if(a.connection) a.sendStatus() }, 1000, this);
     /// to clear:    clearInterval(_treadmill.__updateInterval);
@@ -312,71 +309,17 @@ Treadmill.prototype.MPHtoNative = function(value)
 Treadmill.prototype.nativeToMPH = function(value) 
 {
     return Number(value) / 45;
-}
-
-Treadmill.prototype.init_screensaver = function(action) 
-{
-    this.screensaver = {
-        // config/settings
-        enabled: !simulate,
-        display: ":0.0",
-        error: 0,
-
-        // internal variables
-        lastReset: new Date(),
-
-        // screensaver functions
-        enable: function() { this.set("on"); },
-        disable: function() { this.set("off"); },
-        activate: function() { this.set("activate"); },
-        blank: function() { this.set("blank"); },
-        reset: function() { this.set("reset"); this.lastReset=new Date(); },
-        timeout: function(secs) { this.set(""+secs); },
-
-        // main set() function calls command "xset s <action>"
-        set: function(action) {
-            if(!this.enabled) return false;
-            var ss = this;
-            exec("DISPLAY="+this.display+" xset s "+action, function(error,stdout, stderr) {
-                if(error) {
-                    if(ss.error++ >10) {
-                        ss.enabled=false;
-                    }
-                    console.log("xset error "+error);
-                    console.log(stdout);
-                    console.log("errors:");
-                    console.log(stderr);
-                }
-            });
-        }
-    };
-
-    if(simulate) return false;
-
-    // initialize the screensaver
-    var ss = this.screensaver;
-    exec("./screensaver.conf "+this.screensaver.display, function(error,stdout, stderr) {
-        if(error) {
-            ss.enabled = false;
-            console.log("screensaver.conf error "+error);
-            console.log(stdout);
-            console.log("errors:");
-            console.log(stderr);
-        }
-    });
-
-    this.screensaver.enable();
-}
+};
 
 Treadmill.prototype.inclineGradeToNative = function(value) 
 {
     return Number(value);
-}
+};
 
 Treadmill.prototype.nativeToInclineGrade = function(value) 
 {
     return Number(value);
-}
+};
 
 Treadmill.prototype.speed = function(value) 
 {
