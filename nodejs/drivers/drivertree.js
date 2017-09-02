@@ -148,14 +148,19 @@ DriverTreeNode.prototype.addDriver = function(driverinfo) {
     }
 
     // get an instance of the driver control class
-    let driver = new driverinfo.klass();
-    driver.info = driverinfo;
-    driver.refs = {};
-    driver.probed = false;
+    if(typeof driverinfo.klass !== "function") {
+        console.log("driver file "+driverinfo.path+"/"+driverinfo.name+" contains no class");
+        return null;
+    } else {
+        let driver = new driverinfo.klass();
+        driver.info = driverinfo;
+        driver.refs = {};
+        driver.probed = false;
 
-    this.drivers.push(driver);
+        this.drivers.push(driver);
 
-    return driver;
+        return driver;
+    }
 }
 
 DriverTreeNode.prototype.probe = function(props)

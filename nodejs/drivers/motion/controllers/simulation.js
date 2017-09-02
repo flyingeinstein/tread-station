@@ -17,11 +17,11 @@ class SimulationController {
 		return true;
 	}
 
-	open() {
+	enable() {
 		return true;
 	}
 
-	close() {
+	disable() {
 		return true;
 	}
 
@@ -29,7 +29,11 @@ class SimulationController {
 	// begins slowing down and then executes the promise when the machine is completely stopped.
 
 	speed(val) {
-		console.log("speed => "+val.toFixed(2));
+        if (val === undefined || val === null || typeof val != "Number") {
+            console.trace("invalid speed value given");
+    	} else {
+            console.log("speed => " + Number(val).toFixed(2));
+        }
 		return true;
 	}
 
