@@ -39,6 +39,10 @@ function Treadmill()
         users: this.datamodel.users()
     };
 
+    this.channels = {
+        system: postal.channel("system")
+    } ;
+
 // enumerate drivers
     this.drivers.enumerate();
     this.drivers.probe(this.system);
@@ -90,6 +94,17 @@ function Treadmill()
         });
     */
 
+    this.channels.system.subscribe("rpc", function(data, envelope) {
+        if(data.driver && data.func) {
+            let driver = this.drivers.$(data.driver);
+            if (driver) {
+                if (typeof driver[data.func] ==="Function") {
+                    console.log("rpc call: "+driver.devicePath+"."+data.func+"  ",data.arguments);
+                    driver[data.func].call(driver, data.arguments);
+                }
+            }
+        }
+    }.bind(this));
 }
 
 

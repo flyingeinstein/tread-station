@@ -43,6 +43,8 @@ export default function Treadmill(options)
         distance: 5             // 5 miles
     };
 
+	this.rpc.debug = true;
+
     //this.forward("controlpanel", "state");
     //this.forward("controlpanel", "session.#");
     //this.forward("controlpanel", "event.#");
@@ -113,12 +115,12 @@ Treadmill.prototype.connect = function()
             message: "connected",
 		    connected: true
 		});
-		
+
 		// request some objects from the treadmill service
 		_treadmill.request("users");
-		_treadmill.request("user");		
+		_treadmill.request("user");
 	}.bind(this);
-     this.connection.onmessage = function (evt) 
+     this.connection.onmessage = function (evt)
      {
         let received_msg = evt.data;
         let msg = JSON.parse(received_msg);
@@ -130,7 +132,7 @@ Treadmill.prototype.connect = function()
      }.bind(this);
 
      this.connection.onclose = function()
-     { 
+     {
          // Web Socket is closed
          this.channel.connection.publish("connected", {
              host: this.host,
@@ -164,6 +166,95 @@ Treadmill.prototype.request = function(schema)
 Treadmill.prototype.on = function(eventName, callback)
 {
 	this.eventHandlers[eventName] = callback;
+};
+
+/**
+ * Configure postal.js channel/topic messages to be sent to remote clients.
+ * @param {string} channel - The postal.js channel name
+ * @param {string} topic... - The postal.js topic name to catch (accepts postal.js wildcards}
+ * @returns {boolean} true if at least one remote subscription was forwarded
+ */
+Treadmill.prototype.remoteSubscribe = function()
+{
+    // todo: could this be added to postal.prototype instead?
+    if(arguments.length <2)
+        return false;
+    let args = [];
+    Array.prototype.push.apply(args, arguments);
+    let channel = args.shift();
+    while(args.length) {
+        let topic = args.shift();
+        postal.subscribe({
+            channel: channel,
+            topic: topic,
+            callback: function (data, envelope) {
+                try {
+                    if (this.connection!==undefined && this.connection!==null) {
+                        this.connection.sendUTF(JSON.stringify(envelope));
+                    }
+                    if(this.debug || this.remoteSubscribe.debug)
+                        console.log(envelope);
+                } catch (ex) {
+                    console.log("warning: failed to transmit postal event, likely connection error, aborting connection.");
+                    console.log("status object was ", envelope);
+                    this.abortConnection();
+                }
+            }.bind(this)
+        });
+    }
+    return true;
+};
+
+Treadmill.prototype.rpc = function(driver, funcname)
+{
+    if(arguments.length <2)
+        return false;
+    let args = [];
+    Array.prototype.push.apply(args, arguments);
+    args.shift(); args.shift(); // remove the two known arguments
+
+    let envelope = {
+        channel: "system",
+        topic: "rpc",
+        data: {
+            driver: driver,
+            func: funcname,
+            arguments: args
+        }
+    };
+    try {
+        if (this.connection!==undefined && this.connection!==null) {
+            this.connection.sendUTF(JSON.stringify(envelope));
+        }
+        if(this.debug || this.rpc.debug)
+            console.log(envelope);
+    } catch (ex) {
+        console.log("warning: rpc call failed, likely connection error, aborting connection.");
+        console.log("rpc object was ", envelope);
+        this.abortConnection();
+    }
+};
+
+Treadmill.prototype.remote = function(channel, topic, data)
+{
+    if(!channel || !subtopic)
+        return false;
+    let envelope = {
+        channel: channel,
+        topic: topic,
+        data: data
+    };
+    try {
+        if (this.connection!==undefined && this.connection!==null) {
+            this.connection.sendUTF(JSON.stringify(envelope));
+        }
+        if(this.debug || this.rpc.debug)
+            console.log(envelope);
+    } catch (ex) {
+        console.log("warning: rpc call failed, likely connection error, aborting connection.");
+        console.log("rpc object was ", envelope);
+        this.abortConnection();
+    }
 };
 
 Treadmill.prototype.parseMessage = function(msg)
@@ -203,78 +294,78 @@ Treadmill.prototype.parseMessage = function(msg)
 				this.goal.distance = this.user.goaldistance;
 			}
 		}
-		
+
 		if(this.eventHandlers && this.eventHandlers[msg.schema]!=null)
 			this.eventHandlers[msg.schema](msg.response);
     }
     */
 };
 
-Treadmill.prototype.setUser = function(user, weightUpdate) 
+Treadmill.prototype.setUser = function(user, weightUpdate)
 {
     if(this.connection)
         this.connection.send(JSON.stringify({ User: user, Weight: weightUpdate }));
 };
-	
+
 Treadmill.prototype.parseEvent = function(name, data)
 {
     // this should not be edited, the main app will override this member
 };
 
-Treadmill.prototype.setSpeed = function(value) 
+Treadmill.prototype.setSpeed = function(value)
 {
 	if(this.resetTimer!==null)
 		clearTimeout(this.resetTimer);
-				
+
     if(this.connection)
         this.connection.send(JSON.stringify({ Speed: value }));
 };
 
-Treadmill.prototype.setIncline = function(value) 
+Treadmill.prototype.setIncline = function(value)
 {
     if(this.connection)
         this.connection.send(JSON.stringify({ Incline: value }));
 };
 
-Treadmill.prototype.increaseSpeed = function() 
+Treadmill.prototype.increaseSpeed = function()
 {
     return this.setSpeed("++");
 };
 
-Treadmill.prototype.decreaseSpeed = function() 
+Treadmill.prototype.decreaseSpeed = function()
 {
     return this.setSpeed("--");
 };
 
-Treadmill.prototype.stop = function() 
+Treadmill.prototype.stop = function()
 {
     return this.setSpeed("STOP");
 };
 
-Treadmill.prototype.estop = function() 
+Treadmill.prototype.estop = function()
 {
     return this.setSpeed("ESTOP");
 };
 
-Treadmill.prototype.reset = function(value) 
+Treadmill.prototype.reset = function(value)
 {
 	if(this.resetTimer!==null)
 		clearTimeout(this.resetTimer);
 	if(this.connection)
         this.connection.send(JSON.stringify({ Reset: true }));
 };
-	
-Treadmill.prototype.inclineUp = function() 
+
+Treadmill.prototype.inclineUp = function()
 {
     return this.setIncline("++");
 };
 
-Treadmill.prototype.inclineDown = function() 
+Treadmill.prototype.inclineDown = function()
 {
     return this.setIncline("--");
 };
 
-Treadmill.prototype.floor = function() 
+Treadmill.prototype.floor = function()
 {
     return this.setIncline("FLOOR");
 };

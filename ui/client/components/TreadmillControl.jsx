@@ -92,7 +92,8 @@ export default class TreadmillControl extends React.Component {
     }
 
     incrementSpeed() {
-        this.treadmill.increaseSpeed();
+        this.treadmill.rpc("user/experience/controlpanel", "speed", 56);
+        //this.treadmill.increaseSpeed();
         //this.speed.setValue(this.speed.getValue()+0.1);
     }
 
