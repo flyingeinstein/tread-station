@@ -18,10 +18,12 @@ class SimulationController {
 	}
 
 	enable() {
+		console.log("motion enabled");
 		return true;
 	}
 
 	disable() {
+        console.log("motion disabled");
 		return true;
 	}
 
@@ -29,8 +31,8 @@ class SimulationController {
 	// begins slowing down and then executes the promise when the machine is completely stopped.
 
 	speed(val) {
-        if (val === undefined || val === null || typeof val != "Number") {
-            console.trace("invalid speed value given");
+        if (val === undefined || val === null || Number.isNaN(val)) {
+            console.trace("invalid speed value given", typeof val, val);
     	} else {
             console.log("speed => " + Number(val).toFixed(2));
         }

@@ -12,12 +12,12 @@ const Session = require("./session");
 //const Nordic = require('./controllers/nordic.js');
 
 
-class TreadmillControl {
-    constructor(props) {
+class ControlPanel {
+    constructor() {
         this.name = "Treadmill Control";
-        this.devicePath = "treadmill";
+        this.devicePath = "controlpanel";
         this.description = "Provides user experience for treadmill control";
-        this.devices = [this];
+        this.devices = [];
         this.driver = {};
         this.depends = ["motion/controllers"];
 
@@ -38,7 +38,7 @@ class TreadmillControl {
         this.minIncline = this.inclineGradeToNative(0);
         this.maxIncline = this.inclineGradeToNative(50);
 
-        this.session = new Session(user);
+        this.session = null;
     }
 
     probe(props) {
@@ -53,12 +53,22 @@ class TreadmillControl {
                 } else
                     sim = devs[i];
             }
-            if(this.motion===null)
-                this.motion = sim;
-            console.log("selected "+this.motion.name+" motion controller");
-        }
+            if(this.motion===null) {
+                if(sim) {
+                    this.motion = sim;
+                } else {
+                    console.log("no motion controller available, at least I require the simulation controller");
+                    return false;
+                }
+            }
 
-        return this.motion ? true : false;
+            this.system = props;
+
+            this.devices.push(this);
+            console.log("selected "+this.motion.name+" motion controller");
+            return !!this.motion;
+        }
+        return false; // no controllers to try
     }
 
     enable() {
@@ -66,64 +76,83 @@ class TreadmillControl {
         if(this.__updateInterval)
             clearInterval(this.__updateInterval);
         this.__updateInterval = setInterval(function() { this.__updateStatus() }.bind(this), 1000);
-        /// to clear:    clearInterval(_treadmill.__updateInterval);
+        this.active = true;
+        this.__sendStatus();
     }
 
     disable() {
+        this.active = false;
         if(this.__updateInterval) {
             clearInterval(this.__updateInterval);
             this.__updateInterval = null;
         }
+        this.__sendStatus();
     }
 
-    setUser(user, weight)
+    setUser(user)
     {
-        if(!user)
+        if(user===undefined || user===null)
             return;
-        else if(user.userid===null)
+        let users = this.system.users;
+        if(isNaN(user))
         {
-            if(isNaN(user))
+            for(let u in users)
             {
-                for(var u in this.users)
-                {
-                    if(this.users[u].name === user) {
-                        user = this.users[u];
-                        break;
-                    }
+                if(users[u].name === user) {
+                    user = users[u];
+                    break;
                 }
-            } else
-                user = this.users[ Number(user) ];
-        }
-        console.log("selecting user "+user.name);
-        this.reset();
+            }
+        } else
+            user = users[ Number(user) ];
 
-        this.session = new Session(user);
-        if(user.goaltime!=null)
-            this.goaltime=user.goaltime;
-        if(user.goaldistance!=null)
-            this.goaldistance=user.goaldistance;
+        console.log("selecting user "+user.name);
+        this.bus.publish("user.select", { user: user });
+        this.__newSession(user);
 
         // notify the interface
-        if(this.connection)
-            this.connection.sendUTF(JSON.stringify({ type:'response', schema:'user', response: (this.session!=null) ? this.session.user : null }));
-        if(weight!=null) {
-            this.updateWeight(weight);
-        }
+        //if(this.connection)
+        //    this.connection.sendUTF(JSON.stringify({ type:'response', schema:'user', response: (this.session!=null) ? this.session.user : null }));
+
+        // todo: re-enable way for user to record their weight
     };
+
+    __closeSession()
+    {
+        if(this.session) {
+            this.session.active = false;
+            this.bus.publish("session.close", this.session);
+            this.session = null;
+        }
+    }
+
+    __newSession(user)
+    {
+        this.__closeSession();
+        this.reset();
+        this.system.session = this.session = new Session(user);
+        if(user.goaltime!==null)
+            this.goaltime=user.goaltime;
+        if(user.goaldistance!==null)
+            this.goaldistance=user.goaldistance;
+        this.session.active = true;
+        this.bus.publish("session.new", this.session);
+        console.log("created new session");
+    }
 
     __speed(value) {
         this.motion.speed(value);
-        console.log("pwm => "+value);
+        this.__sendEvent("speed", { value: value });
     }
 
     __activate() {
-        this.motion.turnOn();
-        this.__sendEvent("running");
+        this.motion.enable();
+        this.__sendEvent("active", { active: true });
     }
 
     __deactivate() {
-        this.motion.turnOff();
-        this.__sendEvent("stopping");
+        this.motion.disable();
+        this.__sendEvent("active", { active: false });
     }
 
     speed(value) {
@@ -144,11 +173,11 @@ class TreadmillControl {
         } else if(value==="--") {
             this.active = true;
             this.desiredSpeed -= this.speedIncrement;
-        } else if(!isNaN(value)) {
+        } else if(!Number.isNaN(value)) {
             // startup if stopped
             this.active = true;
             console.log("speed <= "+value);
-            this.desiredSpeed = clamp( this.MPHtoNative(Number(value)), this.minSpeed, this.maxSpeed);
+            this.desiredSpeed = this.MPHtoNative(Number(value)).clamp(this.minSpeed, this.maxSpeed);
         }
 
         // check limits
@@ -169,10 +198,9 @@ class TreadmillControl {
             this.__activate();
         }
 
-        this.motion.speed(value);
+        this.__speed(value);
         if(!this.motion.active)
             this.motion.enable();
-            
     }
 
     incline(value)
@@ -226,8 +254,16 @@ class TreadmillControl {
         this.__sendStatus();
     }
 
-    stop(value) {
+    __stop(value) {
+        if(this.desiredSpeed!==0) {
+            this.desiredSpeed=0;
+            this.headline = "Stopping";
+            if(this.currentSpeed===0) {
+                this.headline = "Idle";
+            }
+        }
         if(!this.motion) return false;
+        this.__sendEvent("stop");
         this.motion.stop(value)
     }
 
@@ -236,15 +272,8 @@ class TreadmillControl {
         // todo: somehow the autpace UI driver needs to get an event from here
         //if(this.autopace.active)
         //    this.activateAutopace(false);
-
-        if(this.desiredSpeed!=0) {
-            this.desiredSpeed=0;
-            this.__sendEvent("stopping");
-            if(this.currentSpeed==0) {
-                this.__sendEvent("stopped");
-                this.updateStatus();
-            }
-        }
+        this.__stop();
+        this.__updateStatus();
     }
 
     fullstop()
@@ -254,15 +283,12 @@ class TreadmillControl {
         //    this.activateAutopace(false);
 
         this.active = false;
-        if(!this.simulation.active) {
-            controller.stop();
-            this.pwm.turnOff();
-        } else
-            console.log("pwm => estop");
+        this.motion.stop();
         this.desiredSpeed=0;
         this.currentSpeed=0;
-        this.__sendEvent("stopped");
-        this.updateStatus();
+        this.headline = "Emergency!";
+        this.__sendEvent("fullstop");
+        this.__updateStatus();
     }
 
     reset()
@@ -270,34 +296,37 @@ class TreadmillControl {
         this.stop();
         this.runningSince=null;
         this.runningTime = 0;
-        this.session.id = null;    // session begins when user starts treadmill again
+        if(this.session)
+            this.session = null;    // session begins when user starts treadmill again
         this.__sendStatus();
+        this.__sendEvent("reset");
     }
 
     __sendEvent(name, data) {
-        if(this.onEvent) {
-            this.onevent(name, data);
-        }
+        this.bus.publish("event."+name, data);
     }
 
     __updateStatus() {
         var now = new Date();
 
         // if we are starting or stopping, then start our running timer
-        if(!this.active && this.runningSince!=null) {
-            // we are stopping, add latest runtime to accumulated total
-            this.runningTime += new Date().valueOf() - this.runningSince.valueOf();
-            this.runningSince = null;
-        } else if(this.active && this.runningSince==null) {
-            // we are starting up, could be a new session or a continuation of an existing session
-            if(this.session.id==null) {
-                // new session
-                this.runningSince = new Date();
-                this.session.id = this.runningSince.unix_timestamp();
-            } else {
-                this.runningSince = new Date();
+        if(this.session) {
+            if (!this.active && this.session.runningSince != null) {
+                // we are stopping, add latest runtime to accumulated total
+                this.runningTime += new Date().valueOf() - this.runningSince.valueOf();
+                this.runningSince = null;
+            } else if (this.active && this.session.runningSince == null) {
+                // we are starting up, could be a new session or a continuation of an existing session
+                if (this.session.id == null) {
+                    // new session
+                    this.runningSince = new Date();
+                    this.session.id = this.runningSince.unix_timestamp();
+                } else {
+                    this.runningSince = new Date();
+                }
             }
         }
+
 
         // HACK: make the incline move for now
         if(this.desiredIncline != this.currentIncline) {
@@ -312,26 +341,19 @@ class TreadmillControl {
 
 
     __sendStatus() {
-        if(this.onUpdate) {
-            let status = {
-                type: 'status',
-                timestamp: new Date(),
-                active: this.active,
-                runningTime: this.getTotalRunningMillis(),
-                currentSpeed: this.nativeToMPH(this.currentSpeed),
-                desiredSpeed: this.nativeToMPH(this.desiredSpeed),
-                currentIncline: this.nativeToInclineGrade(this.currentIncline),
-                desiredIncline: this.nativeToInclineGrade(this.desiredIncline)
-            };
-            this.onUpdate(status);
-        }
-    }
-
-    getTotalRunningMillis()
-    {
-        return (this.runningSince!==null)
-            ? this.runningTime + (new Date().valueOf() - this.runningSince.valueOf())
-            : this.runningTime;
+        let status = {
+            type: 'status',
+            headline: this.headline,
+            timestamp: new Date(),
+            active: this.active,
+            runningTime: this.session ? this.session.getTotalRunningMillis() : 0,
+            distance: this.session ? this.session.distance : 0,
+            currentSpeed: this.nativeToMPH(this.currentSpeed),
+            desiredSpeed: this.nativeToMPH(this.desiredSpeed),
+            currentIncline: this.nativeToInclineGrade(this.currentIncline),
+            desiredIncline: this.nativeToInclineGrade(this.desiredIncline)
+        };
+        this.bus.publish("state", status);
     }
 
     MPHtoNative(value)
@@ -357,4 +379,4 @@ class TreadmillControl {
 
 };
 
-module.exports = TreadmillControl;
+module.exports = ControlPanel;

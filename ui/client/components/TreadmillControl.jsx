@@ -10,6 +10,7 @@ import ButtonGroup from "./dial/ButtonGroup.jsx";
 import Button from "./dial/Button.jsx";
 import Treadmill from "../js/treadmill.js";
 import TreadmillStatus from "./TreadmillStatus.jsx";
+const postal = require('postal');
 import "shapes.css";
 
 function ConnectionStatus(props) {
@@ -54,21 +55,27 @@ export default class TreadmillControl extends React.Component {
         //var el = ReactDOM.findDOMNode(this.refs.statusIndicator);
         let _this = this;
 
-        this.treadmill.onStatusUpdate = function(status) {
+        let controlpanel = postal.channel("controlpanel");
+        let connection = postal.channel("connection");
+
+        controlpanel.subscribe("event.speed", (data) => {
+            _this.speed.setValue(data.value);
+        });
+
+        controlpanel.subscribe("state", (status) => {
             status.timeDisplay = _this.treadmill ? _this.treadmill.formatTime(status.runningTime) : "";
             _this.speed.setValue(status.currentSpeed);
             _this.setState((prevState, props) => { return {
                 status: status
             }});
-        };
-        this.treadmill.onConnectionStatus = function(connected, message) {
+        });
+
+        connection.subscribe("connected", (state) => {
             _this.setState((prevState, props) => { return {
-                treadmill: { host: prevState.host, connected: connected, message: message }
+                treadmill: { host: prevState.host, connected: state.connected, message: state.message }
             }});
-        };
-        this.treadmill.parseEvent = function(name, data) {
-            console.log("event: ", name, data);
-        };
+        });
+
         this.treadmill.connect()
     }
 

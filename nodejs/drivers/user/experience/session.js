@@ -5,7 +5,7 @@ class Session {
     constructor(user) {
         // session
         this.id = null;
-        this.user = null;
+        this.user = user;
         this.recording = false;
 
         // variables
@@ -31,6 +31,14 @@ class Session {
         };
 
     }
+
+    getTotalRunningMillis()
+    {
+        return (this.runningSince!==null)
+            ? this.runningTime + (new Date().valueOf() - this.runningSince.valueOf())
+            : this.runningTime;
+    }
+
 
 }
 

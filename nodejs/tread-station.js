@@ -4,8 +4,10 @@ process.on('SIGINT', function() {
     process.exit();
 });
 
+require('./math-util');
 var fs = require('fs');
 var DateJS = require('./node_modules/datejs');
+const postal = require('postal');
 const http = require('http');
 const WebSocketServer = require('websocket').server;
 
@@ -13,26 +15,6 @@ const DriverTree = require('./drivers/drivertree');
 
 const DataModel = require("./datamodel");
 
-
-// this class handles finding javascript drivers for PWM, sensors and other hardware
-var drivers = new DriverTree();
-
-
-function isNumber(n)
-{
-    return typeof n === 'number' && !isNaN(n) && isFinite(n);
-}
-
-function clamp(value, minV, maxV)
-{
-    value = Number(value);
-    if(value < minV)
-        return minV;
-    else if(value > maxV)
-        return maxV;
-    else
-        return value;
-}
 
 class DisabledFeature
 {
@@ -45,23 +27,25 @@ class DisabledFeature
     }
 }
 
+/**
+ * The main Tread-Station class
+ * @constructor
+ */
 function Treadmill()
 {
+    this.drivers = new DriverTree();
+    this.datamodel = new DataModel(null);
+    this.system = {
+        users: this.datamodel.users()
+    };
 
-    // check if we are running in simulation mode
-    //var simfile = fs.lstatSync('/etc/treadmill/simulate');
-    if(1) { //simfile.isFile()) {
-        this.simulation = {
-            active: true,
-            autopace: false
-        };
-    }
+// enumerate drivers
+    this.drivers.enumerate();
+    this.drivers.probe(this.system);
 
-    if(!drivers) { this.fatal("internal error: no driver tree"); }
-    this.controlpanel = drivers.$("user/experience/treadmill");
+    if(!this.drivers) { this.fatal("internal error: no driver tree"); }
+    this.controlpanel = this.drivers.$("user/experience/controlpanel");
     if(!this.controlpanel) { this.fatal("internal error: no treadmill user control driver found"); }
-    this.controlpanel.onUpdate = function(status){ this.sendStatus(status); }.bind(this);
-    this.controlpanel.onEvent = function(e){ this.sendEvent(e); }.bind(this);
 
     // for now, no autopace feature
     this.autopace = new DisabledFeature("autopace");
@@ -73,10 +57,12 @@ function Treadmill()
     this.__updateInterval = null;
     this.__updateInterval = null;
 
+    //this.remoteSubscribe.debug = true;
+    this.remoteSubscribe("controlpanel", "state");
+    this.remoteSubscribe("controlpanel", "session.#");
+    this.remoteSubscribe("controlpanel", "event.#");
+
     console.log("Treadmill ready");
-
-
-
 
 
     // instantiate the Web Service
@@ -106,10 +92,6 @@ function Treadmill()
 
 }
 
-// collection of algorithms
-// allows us to more dynamically support various algorithms based on detected sensors or particular implementations
-Treadmill.prototype.algorithms = [];
-
 
 Treadmill.prototype.fatal = function(error) {
     console.log(error);
@@ -117,57 +99,53 @@ Treadmill.prototype.fatal = function(error) {
 };
 
 
+/**
+ * Configure postal.js channel/topic messages to be sent to remote clients.
+ * @param {string} channel - The postal.js channel name
+ * @param {string} topic... - The postal.js topic name to catch (accepts postal.js wildcards}
+ * @returns {boolean} true if at least one remote subscription was forwarded
+ */
+Treadmill.prototype.remoteSubscribe = function()
+{
+    // todo: could this be added to postal.prototype instead?
+    if(arguments.length <2)
+        return false;
+    let args = [];
+    Array.prototype.push.apply(args, arguments);
+    let channel = args.shift();
+    while(args.length) {
+        let topic = args.shift();
+        postal.subscribe({
+            channel: channel,
+            topic: topic,
+            callback: function (data, envelope) {
+                try {
+                    if (this.connection!==undefined && this.connection!==null) {
+                        this.connection.sendUTF(JSON.stringify(envelope));
+                    }
+                    if(this.debug || this.remoteSubscribe.debug)
+                        console.log(envelope);
+                } catch (ex) {
+                    console.log("warning: failed to transmit postal event, likely connection error, aborting connection.");
+                    console.log("status object was ", envelope);
+                    this.abortConnection();
+                }
+            }.bind(this)
+        });
+    }
+    return true;
+};
 
-
-Treadmill.prototype.updateWeight = function(weight)
+/* todo: re-enable weight management
+(Treadmill.prototype.updateWeight = function(weight)
 {
     if(this.datamodel && this.session && this.session.user)
         this.datamodel.updateWeight(this.session.user, weight);
-};
-
-
-Treadmill.prototype.sendStatus = function(status)
-{
-    try {
-        // update clients
-        if(this.connection) {
-            this.connection.sendUTF(JSON.stringify(status));
-        } else if (this.simulate) {
-            console.log(status);
-        }
-        this.updateMysqlStatus();
-    } catch(ex) {
-        console.log("warning: failed to transmit status, likely connection error, aborting connection.", ex);
-        console.log("status object was ", status);
-        this.abortConnection();
-    }
-};
-
-Treadmill.prototype.sendEvent = function(_name, _data)
-{
-    try {
-        console.log(_name, _data);
-        if(this.connection) {
-            this.connection.sendUTF(JSON.stringify({
-                type: 'event',
-                name: _name,
-                data: _data
-            }));
-        }
-    } catch(ex) {
-        console.log("warning: failed to transmit event, likely connection error, aborting connection.");
-        //this.abortConnection();
-    }
-};
-
-
-Treadmill.prototype.readSensors = function()
-{
-    this.readSensor(this.sensors.sonar);
-};
+};*/
 
 Treadmill.prototype.parseMessage = function(message) {
         var _treadmill = this;
+        console.log("warning: old style messages ", message);
         if (message.type === 'utf8') {
             var msg = JSON.parse(message.utf8Data);
             if(msg.Speed)
@@ -185,9 +163,9 @@ Treadmill.prototype.parseMessage = function(message) {
                     console.log("request for schema "+msg.Get);
                     var data;
                     if(msg.Get==='users')
-                        data = _treadmill.users;
+                        data = this.system.users;
                     else if(msg.Get==='user')
-                        data = (_treadmill.session!==null) ? _treadmill.session.user : null;
+                        data = (this.system.session!==null && this.system.session.user!==null) ? this.system.session.user : null;
                     else if(msg.Get==='metrics')
                         data = _treadmill.metrics;
 
@@ -215,7 +193,12 @@ Treadmill.prototype.acceptConnection = function(request)
 
     // This is the most important callback for us, we'll handle
     // all messages from users here.
-    this.connection.on('message', (message) => { this.parseMessage(message); });
+    this.connection.on('message', (msg) => {
+        if(msg.channel!==undefined && msg.topic!==undefined && msg.channel!==null && msg.topic!==null)
+            postal.publish(msg);
+        else
+            this.parseMessage(msg);
+    });
 
     this.connection.on('close', function(connection) {
         // close user connection
@@ -226,6 +209,8 @@ Treadmill.prototype.acceptConnection = function(request)
     }.bind(this));
 
     this.controlpanel.enable();
+    this.controlpanel.setUser(0);
+
 };
 
 Treadmill.prototype.abortConnection = function()
@@ -240,13 +225,8 @@ Treadmill.prototype.abortConnection = function()
 
 
 
-// enumerate drivers
-drivers.enumerate();
-drivers.probe({
-    tree: drivers
-});
 
 // ensure we have all config
-var treadmill = new Treadmill();
+let treadmill = new Treadmill();
 
 

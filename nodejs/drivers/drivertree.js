@@ -1,5 +1,6 @@
 const glob = require("glob");
 const fs = require('fs');
+const postal = require('postal');
 
 function DriverTree(props)
 {
@@ -97,7 +98,7 @@ DriverTree.prototype.__probe = function(node, props)
     children.forEach(function(c) {
         let child = node[c];
         if(child && child.tree && child.path && Array.isArray(child.drivers)) {
-            this.__probe(node[c]);
+            this.__probe(node[c], props);
         }
     }.bind(this));
 };
@@ -105,7 +106,7 @@ DriverTree.prototype.__probe = function(node, props)
 DriverTree.prototype.probe = function(props)
 {
     this.__resolveDependancies(this.root);
-    this.__probe(this.root);
+    this.__probe(this.root, props);
 
     //this.root.output.pwm.probe(props);
     //this.root.motion.controllers.probe(props);
@@ -182,7 +183,7 @@ DriverTreeNode.prototype.probe = function(props)
         }
 
         if(!driver.probe) {
-            console.log("driver has no probe function: ", driver);
+            //console.log("driver has no probe function: ", driver);
             continue;
         }
         driver.tree = this.tree;
@@ -191,7 +192,10 @@ DriverTreeNode.prototype.probe = function(props)
 
         // get the driver control class to probe for devices on the system
         if(driver.probe(props)) {
-            //driver.node = this;
+            // create a bus channel for the driver
+            driver.bus = postal.channel(driver.devicePath);
+
+            // add driver to list of valid drivers
             valid_drivers.push(driver);
 
             if(driver.devices && driver.devices.length>0) {
@@ -199,6 +203,8 @@ DriverTreeNode.prototype.probe = function(props)
                 for (let j = 0, _j = driver.devices.length; j < _j; j++) {
                     let dev = driver.devices[j];
                     dev.node = this;
+                    if(dev.bus === undefined)
+                        dev.bus = driver.bus;
                     this.devices.push(dev);
                 }
             }

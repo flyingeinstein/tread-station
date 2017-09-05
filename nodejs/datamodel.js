@@ -14,8 +14,9 @@ Date.prototype.unix_timestamp = function()
 class DataModel
 {
     constructor(config) {
+        this.config = config;
         // connect to mysql
-        if(config!==null) {
+        if(config!==null && !config.testing) {
             // connect to mysql and load initial data
             this.db = mysql.createConnection({
                     host     : 'localhost',
@@ -25,12 +26,24 @@ class DataModel
                 });
 
             this.db.connect();
-            if(this.state==='connected')
-                this.loadUsers();
+        }
+    }
+
+    users() {
+        // load users
+        if(this.db) {
+            let _users = [];
+            this.db.query('SELECT * FROM users')
+                .on('result', function (row) {
+                    _users[row.userid] = row;
+                    console.log(row);
+                }.bind(this));
+            return _users;
         } else {
+            console.log("using dummy users table for testing");
             // setup some dummy data for testing
-            this.users = {
-                0: {
+            return [
+                {
                     userid: 'colin',
                     name: 'Colin MacKenzie',
                     birthdate: new Date('1975-06-25'),
@@ -39,19 +52,8 @@ class DataModel
                     goaltime: 5400,
                     goaldistance: null
                 }
-            };
-            this.session.user = this.users[0];
+            ];
         }
-    }
-
-    loadUsers() {
-        // load users
-        this.users = [];
-        this.db.query('SELECT * FROM users')
-            .on('result', function(row) {
-                this.users[row.userid] = row;
-                console.log(row);
-            }.bind(this));
     }
 
     updateWeight(user, weight) {
