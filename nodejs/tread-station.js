@@ -1,83 +1,29 @@
 
+process.on('SIGINT', function() {
+    console.trace("Caught interrupt signal");
+    process.exit();
+});
+
 var fs = require('fs');
-var bbbPWM = require('./bbb-pwm');
 var DateJS = require('./node_modules/datejs');
 var Aggregate = require('./aggregate');
-var glob = require("glob");
-var exec = require('child_process').exec;
+const DriverTree = require('./drivers/drivertree');
+const TreadmillController = require('./drivers/user/experience/treadmill.js');
+const WebSocketServer = require('websocket').server;
+const http = require('http');
 
+var simulate = true;
 
-var simulate = false;
-try {
-var simfile = fs.lstatSync('/etc/treadmill/simulate');
-if(simfile.isFile())
-    simulate = true;
-} catch(error) {}
+// this class handles finding javascript drivers for PWM, sensors and other hardware
+var drivers = new DriverTree();
 
-// find the OCP PWM module as it's very nomadic
-var ocp_root = null, pwm_endpoint = null;
-var files = glob.sync("/sys/devices/ocp.?");
-if(files.length>1) {
-	console.log("found too many potential OCP folders:");
-	files.forEach(function(item) { console.log("  : "+item); });
-} else if(files.length==1) {
-	ocp_root = files[0];
-	console.log("found OCP root at "+ocp_root);
-
-	// found OCP root, now find the PWM module
-	files = glob.sync(ocp_root+"/pwm_test_P8_13*");
-	if(files.length>1) {
-		console.log("found too many potential PWM endpoints for P8:13:");
-		files.forEach(function(item) { console.log("  : "+item); });
-	} else if(files.length==1) {
-		pwm_endpoint = files[0]+'/';
-		console.log("found PWM P8:13 endpoint at "+pwm_endpoint);
-	}
-} else {
-	// look in pwm location in >4.1 kernels
-	files = glob.sync("/sys/class/pwm/pwmchip0/pwm1");
-	if(files.length==1) {
-		pwm_endpoint = files[0]+'/';
-		console.log("found PWM P8:13 endpoint at "+pwm_endpoint);
-	}
-}
-
-if(!pwm_endpoint && !simulate) console.log("failed to find the PWM P8:13 endpoint in /sys/devices/ocp.?/pwm_test_P8_13.??");
-
-// instantiate the Web Service
-var WebSocketServer = require('websocket').server;
-var http = require('http');
-
-// connect to the database
 var mysql      = require('mysql');
 var mysqlDateFormat = "yyyy-MM-dd HH:mm:ss";
-var db = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'tread',
-  password : 'peps1c0la',
-  database : 'treadstation'
-});
 
-
-var server = http.createServer(function(request, response) {
-    // process HTTP request. Since we're writing just WebSockets server
-    // we don't have to implement anything.
-});
-server.listen(27001, function() { });
-
-// create the server
-wsServer = new WebSocketServer({
-    httpServer: server
-});
-
-// WebSocket server
-wsServer.on('request', function(request) {
-    treadmill.acceptConnection(request);
-});
 
 function isNumber(n)
 {
-    return typeof n == 'number' && !isNaN(n) && isFinite(n);
+    return typeof n === 'number' && !isNaN(n) && isFinite(n);
 }
 
 function clamp(value, minV, maxV)
@@ -98,22 +44,28 @@ function Treadmill()
     this.speedMeasured = 0;
     this.accelleration = 1;
 
-    // usually root owns the pwm device, we want to take ownership
-    // current user must be in the /etc/sudoers file with NOPASSWD needed
-    this.takeOwnershipOfDevice(pwm_endpoint);
+    // check if we are running in simulation mode
+    //var simfile = fs.lstatSync('/etc/treadmill/simulate');
+    if(1) { //simfile.isFile()) {
+        this.simulation = {
+            active: true,
+            autopace: false
+        };
+    }
 
-    // Instantiate bbbPWM object to control PWM device.  Pass in device path
-    // and the period to the constructor.
-    if(simulate) {
+    this.storage = {
+        mysql: false
+    };
+
+    if(!drivers) { this.fatal("internal error: no driver tree"); }
+    this.controller = drivers.$("user/experience/treadmill");
+    if(!this.controller) { this.fatal("internal error: no treadmill user control driver found"); }
+
+
+    if(!this.simulation.active) {
+   } else {
         console.log("beginning simulation");
-      this.pwm = {
-        turnOff: function() {},
-        turnOn: function() {},
-        polarity: function() {},
-        setDuty: function() {}
-      };
-    } else
-      this.pwm = new bbbPWM(pwm_endpoint, 50000000);
+    }
 
     this.currentIncline = 0;
     this.desiredIncline = 0;
@@ -126,6 +78,7 @@ function Treadmill()
         },
         sonar: {
             device: {
+                present: false,
                 mode: "raw",
                 file: "/sys/bus/iio/devices/iio\:device0/in_distance_raw"
             },
@@ -141,16 +94,6 @@ function Treadmill()
     this.inclineIncrement = this.inclineGradeToNative(1);
     this.minIncline = this.inclineGradeToNative(0);
     this.maxIncline = this.inclineGradeToNative(50);
-
-    // check if we are running in simulation mode
-    var simfile = fs.lstatSync('/etc/treadmill/simulate');
-    if(simfile.isFile()) {
-        this.simulation = {
-            active: true,
-            autopace: false
-        };
-        console.log('configured for simulation');
-    }
 
     // variables
     this.runningTime = 0;       // total running millis (accumulates start/stops until a reset)
@@ -180,11 +123,7 @@ function Treadmill()
     // internals
     this.connection = null;
     this.__updateInterval = null;
-
-    // connect to mysql
-    this.db = db;
-    this.db.connect();
-    this.loadSystem();
+    this.__updateInterval = null;
 
     // session
     this.session = {
@@ -192,6 +131,33 @@ function Treadmill()
         user: null,
         recording: false
     };
+
+    // connect to mysql
+    if(this.storage.mysql) {
+        this.mysql = {
+            db : mysql.createConnection({
+                host     : 'localhost',
+                user     : 'tread',
+                password : 'peps1c0la',
+                database : 'treadstation'
+            })
+        };
+        this.mysql.db.connect();
+        this.loadSystem();
+    } else {
+        this.users = {
+            0: {
+                userid: 'colin',
+                name: 'Colin MacKenzie',
+                birthdate: new Date('1975-06-25'),
+                weight: 68,
+                height: 170,
+                goaltime: 5400,
+                goaldistance: null
+            }
+        };
+        this.session.user = this.users[0];
+    }
 
     this.autopace = {
         enabled: true,
@@ -208,10 +174,9 @@ function Treadmill()
         mode: 'sonar'
     };
 
-    this.pwm.turnOff();
-    this.pwm.polarity(0);
-
-    this.init_screensaver();
+    // startup a thread to send status every 1 second
+    this.__updateInterval = setInterval(function(a) { if(a.connection) a.sendStatus() }, 1000, this);
+    /// to clear:    clearInterval(_treadmill.__updateInterval);
 
     console.log("Treadmill ready");
 
@@ -230,6 +195,34 @@ function Treadmill()
             _treadmill.activateAutopace(true);
         }, 2000 );
     }
+
+
+
+    // instantiate the Web Service
+    this.server = http.createServer(function(request, response) {
+        // process HTTP request. Since we're writing just WebSockets server
+        // we don't have to implement anything.
+    });
+    this.server.listen(27001, function() { });
+
+// create the server
+    this.wsServer = new WebSocketServer({
+        httpServer: this.server
+    });
+
+// WebSocket server
+    this.wsServer.on('request', function(request) {
+        _treadmill.acceptConnection(request);
+    });
+
+
+    /*const WebSocket = require('ws');
+
+    const server = new WebSocket.Server({
+            port: 8080
+        });
+    */
+
 }
 
 // collection of algorithms
@@ -237,19 +230,11 @@ function Treadmill()
 Treadmill.prototype.algorithms = [];
 
 
-
-Treadmill.prototype.takeOwnershipOfDevice = function(device_path)
-{
-    exec("sudo chown -R $USER "+device_path, function(error,stdout, stderr) {
-        if(error) {
-            ss.enabled = false;
-            console.log("failed to take ownership of "+device_path+", error "+error);
-            console.log(stdout);
-            console.log("errors:");
-            console.log(stderr);
-        }
-    });
+Treadmill.prototype.fatal = function(error) {
+    console.log(error);
+    process.exit();
 }
+
 
 Treadmill.prototype.loadSystem = function()
 {
@@ -324,71 +309,17 @@ Treadmill.prototype.MPHtoNative = function(value)
 Treadmill.prototype.nativeToMPH = function(value) 
 {
     return Number(value) / 45;
-}
-
-Treadmill.prototype.init_screensaver = function(action) 
-{
-    this.screensaver = {
-        // config/settings
-        enabled: !simulate,
-        display: ":0.0",
-        error: 0,
-
-        // internal variables
-        lastReset: new Date(),
-
-        // screensaver functions
-        enable: function() { this.set("on"); },
-        disable: function() { this.set("off"); },
-        activate: function() { this.set("activate"); },
-        blank: function() { this.set("blank"); },
-        reset: function() { this.set("reset"); this.lastReset=new Date(); },
-        timeout: function(secs) { this.set(""+secs); },
-
-        // main set() function calls command "xset s <action>"
-        set: function(action) {
-            if(!this.enabled) return false;
-            var ss = this;
-            exec("DISPLAY="+this.display+" xset s "+action, function(error,stdout, stderr) {
-                if(error) {
-                    if(ss.error++ >10) {
-                        ss.enabled=false;
-                    }
-                    console.log("xset error "+error);
-                    console.log(stdout);
-                    console.log("errors:");
-                    console.log(stderr);
-                }
-            });
-        }
-    };
-
-    if(simulate) return false;
-
-    // initialize the screensaver
-    var ss = this.screensaver;
-    exec("./screensaver.conf "+this.screensaver.display, function(error,stdout, stderr) {
-        if(error) {
-            ss.enabled = false;
-            console.log("screensaver.conf error "+error);
-            console.log(stdout);
-            console.log("errors:");
-            console.log(stderr);
-        }
-    });
-
-    this.screensaver.enable();
-}
+};
 
 Treadmill.prototype.inclineGradeToNative = function(value) 
 {
     return Number(value);
-}
+};
 
 Treadmill.prototype.nativeToInclineGrade = function(value) 
 {
     return Number(value);
-}
+};
 
 Treadmill.prototype.speed = function(value) 
 {
@@ -410,6 +341,7 @@ Treadmill.prototype.speed = function(value)
     } else if(!isNaN(value)) {
         // startup if stopped
         this.active = true;
+        console.log("speed <= "+value);
         this.desiredSpeed = clamp( this.MPHtoNative(Number(value)), this.minSpeed, this.maxSpeed);
     }
 
@@ -426,10 +358,14 @@ Treadmill.prototype.speed = function(value)
         this.deccellerate();
 
     // update the PWM
-    this.pwm.setDuty(this.currentSpeed*100);
-    if(!was_active && this.active) {
-    	this.pwm.turnOn();
-	    this.sendEvent("running");
+    if(!this.simulation.active) {
+        controller.speed(this.currentSpeed);
+        if(!was_active && this.active) {
+    	    this.pwm.turnOn();
+	        this.sendEvent("running");
+        }
+    } else {
+        console.log("pwm => "+this.currentSpeed);
     }
 }
 
@@ -463,7 +399,11 @@ Treadmill.prototype.accellerate = function()
             var _treadmill = this;
             setTimeout(function() { _treadmill.accellerate(); }, 100);
         }
-    	this.pwm.setDuty(this.currentSpeed*100);
+        if(!this.simulation.active) {
+            controller.speed(this.currentSpeed); // new
+    	    this.pwm.setDuty(this.currentSpeed*100);
+        } else
+            console.log("pwm => "+this.currentSpeed);
     }
     this.sendStatus();
 }
@@ -481,7 +421,11 @@ Treadmill.prototype.deccellerate = function()
             var _treadmill = this;
             setTimeout(function() { _treadmill.deccellerate(); }, 100);
         }
-    	this.pwm.setDuty(this.currentSpeed*100);
+        if(!this.simulation.active) {
+            controller.speed(this.currentSpeed); // new
+    	    this.pwm.setDuty(this.currentSpeed*100);
+        } else
+            console.log("pwm => "+this.currentSpeed);
     }
     this.sendStatus();
 }
@@ -507,7 +451,11 @@ Treadmill.prototype.fullstop = function()
         this.activateAutopace(false);
 
     this.active = false;
-    this.pwm.turnOff();
+    if(!this.simulation.active) {
+        controller.stop();
+        this.pwm.turnOff();
+    } else
+        console.log("pwm => estop");
     this.desiredSpeed=0;
     this.currentSpeed=0;
     this.sendEvent("stopped");
@@ -596,7 +544,7 @@ Treadmill.prototype.sendStatus = function()
 Treadmill.prototype.updateMysqlStatus = function()
 {
     try {
-        if(this.db && this.session && this.session.id && this.session.user && this.runningSince) {
+        if(this.storage.mysql && this.db && this.session && this.session.id && this.session.user && this.runningSince) {
             var treadmill = this;
             var _lastUpdate = new Date().unix_timestamp();
             var _runningSince = this.runningSince.unix_timestamp();
@@ -643,7 +591,7 @@ Treadmill.prototype.readSensors = function()
 Treadmill.prototype.readSensor = function(sensor_info)
 {
     var _treadmill = this;
-    if(sensor_info.device.mode =='raw') {
+    if(sensor_info && sensor_info.device && sensor_info.device.present && sensor_info.device.mode =='raw') {
         // read the value straight from the file
         fs.readFile(sensor_info.device.file, function(err, contents) {
             if(err==null) {
@@ -813,24 +761,8 @@ Treadmill.prototype.abortConnection = function()
     }
 }
 
-Treadmill.prototype.acceptConnection = function(request)
-{
-    // close any existing connection
-    if(this.connection!=null)
-      this.connection.close();
-
-    // accept the new one
-    this.connection = request.accept(null, request.origin);
-    console.log("connection from host:"+request.host+"   origin:"+request.origin);
-
-    // startup a thread to send status every 1 second
-    this.__updateInterval = setInterval(function(a) { if(a.connection) a.sendStatus() }, 500, this);
-
-    var _treadmill = this;
-
-    // This is the most important callback for us, we'll handle
-    // all messages from users here.
-    this.connection.on('message', function(message) {
+Treadmill.prototype.parseMessage = function(message) {
+        var _treadmill = this;
         if (message.type === 'utf8') {
             var msg = JSON.parse(message.utf8Data);
             if(msg.Speed)
@@ -861,15 +793,30 @@ Treadmill.prototype.acceptConnection = function(request)
                 }
             }
         }
-    });
+    };
+
+Treadmill.prototype.acceptConnection = function(request)
+{
+    // close any existing connection
+    if(this.connection!=null)
+      this.connection.close();
+
+    // accept the new one
+    this.connection = request.accept(null, request.origin);
+    console.log("connection from host:"+request.host+"   origin:"+request.origin);
+
+    var _treadmill = this;
+
+    // This is the most important callback for us, we'll handle
+    // all messages from users here.
+    this.connection.on('message', (message) => { _treadmill.parseMessage(message); });
 
     this.connection.on('close', function(connection) {
         // close user connection
-	    console.log("closed");
-        _treadmill.speed("STOP");
-        clearInterval(_treadmill.__updateInterval);
-        _treadmill.__updateInterval = null;
         _treadmill.connection = null;
+        _treadmill.speed("STOP");
+        _treadmill.__updateInterval = null;
+	    console.log("closed");
     });
 
 
@@ -885,12 +832,13 @@ Date.prototype.unix_timestamp = function()
     return Math.floor(this.getTime()/1000);
 }
 
+// enumerate drivers
+drivers.enumerate();
+drivers.probe({
+    tree: drivers
+});
+
 // ensure we have all config
-var treadmill;
-if(!pwm_endpoint && !simulate) {
-	setTimeout(function () { console.log("unable to start treadmill"); process.exit(5); }, 100);
-} else {
-  treadmill = new Treadmill();
-}
+var treadmill = new Treadmill();
 
 

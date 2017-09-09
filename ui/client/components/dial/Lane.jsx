@@ -1,18 +1,13 @@
 import React from 'react';
-import * as dialjs from './js/dial.js';
-import d3 from "d3";
-import {scaleLinear, scaleBand} from "d3-scale";
-import {select} from "d3-selection";
+import * as Metrics from './js/dial-metrics.js';
 import {arc} from "d3-shape";
-import {transition} from "d3-transition";
-import {interpolate} from "d3-interpolate";
 
 
 export default class Lane extends React.Component {
     componentWillMount() {
         var metrics = {
-            offset: dialjs.Units.pixel(this.props.radius),
-            width: this.props.width ? dialjs.Units.pixel(this.props.width) : 100,
+            offset: Metrics.Units.pixel(this.props.radius),
+            width: this.props.width ? Metrics.Units.pixel(this.props.width) : 100,
             margin: {
                 inner: 5,
                 outer: 5

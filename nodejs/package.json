@@ -1,13 +1,14 @@
 {
-    "name": "tread-station",
-    "description": "Control a treadmill speed controller through your beaglebone and your computer",
-    "version": "0.0.2",
-    "private": true,
-    "dependencies": {
-        "websocket":"1.0.x",
-        "q":"0.9.x",
-	"mysql": "^2.5.4",
-	"datejs": "^1.0.0-rc3",
-        "glob": "^7.0"
-    }
+  "name": "tread-station",
+  "description": "Control a treadmill speed controller through your beaglebone and your computer",
+  "version": "0.0.2",
+  "private": true,
+  "dependencies": {
+    "datejs": "^1.0.0-rc3",
+    "glob": "^7.0",
+    "mysql": "^2.5.4",
+    "q": "0.9.x",
+    "websocket": "1.0.x",
+    "ws": "^3.1.0"
+  }
 }

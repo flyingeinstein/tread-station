@@ -12,14 +12,20 @@ import Treadmill from "../js/treadmill.js";
 import TreadmillStatus from "./TreadmillStatus.jsx";
 import "shapes.css";
 
+function ConnectionStatus(props) {
+    return props.connection.connected
+        ? null
+        : <div className="bottom-status">{props.connection.message}</div>;
+}
 
 export default class TreadmillControl extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             treadmill: {
-                host: "192.168.2.98",
-                connected: false
+                host: "localhost",
+                connected: false,
+                message: null
             },
             status: {
                 active: false,
@@ -53,6 +59,11 @@ export default class TreadmillControl extends React.Component {
             _this.speed.setValue(status.currentSpeed);
             _this.setState((prevState, props) => { return {
                 status: status
+            }});
+        };
+        this.treadmill.onConnectionStatus = function(connected, message) {
+            _this.setState((prevState, props) => { return {
+                treadmill: { host: prevState.host, connected: connected, message: message }
             }});
         };
         this.treadmill.parseEvent = function(name, data) {
@@ -118,9 +129,9 @@ export default class TreadmillControl extends React.Component {
                             <Button id="q5" caption="3.2" value={3.2} onClick={this.quickSpeed} />
                         </ButtonGroup>
                     </Lane>
-                    <TreadmillStatus status={this.state.status} />
+                    <TreadmillStatus connection={this.state.treadmill} status={this.state.status} />
                 </Dial>
-                <div id="ConnectionStatus" >Initializing...</div>
+                <ConnectionStatus connection={this.state.treadmill} />
             </div>
             );
     }

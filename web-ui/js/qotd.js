@@ -70,7 +70,7 @@ var qotd_workout_text = [
 	"Squat! Because somewhere there’s a girl warming up with your max.",
 	"Cheat on your girlfriends, not on your workouts.",
 	"A pint of sweat will save a gallon of blood.",
-	"Second place is just a spot for the first looser .",
+	"Second place is just a spot for the first loser.",
 	"Just think about how you wanna look, just think about how you wanna look. Ok, up with it!"
 ];
 
