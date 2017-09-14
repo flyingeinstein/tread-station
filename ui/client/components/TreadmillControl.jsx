@@ -43,10 +43,6 @@ export default class TreadmillControl extends React.Component {
             host: this.state.treadmill.host
         });
 
-        this.stop = this.stop.bind(this);
-        this.reset = this.reset.bind(this);
-        this.incrementSpeed = this.incrementSpeed.bind(this);
-        this.decrementSpeed = this.decrementSpeed.bind(this);
         this.quickSpeed = this.quickSpeed.bind(this);
     }
 
@@ -79,47 +75,21 @@ export default class TreadmillControl extends React.Component {
         this.treadmill.connect()
     }
 
-    stop() {
-        console.log("stop");
-        this.treadmill.stop();
-        //this.speed.setValue(0);
-    }
-
-    reset() {
-        console.log("reset");
-        this.treadmill.estop();
-        //this.speed.setValue(0);
-    }
-
-    incrementSpeed() {
-        this.treadmill.rpc("user/experience/controlpanel", "speed", 56);
-        //this.treadmill.increaseSpeed();
-        //this.speed.setValue(this.speed.getValue()+0.1);
-    }
-
-    decrementSpeed() {
-        this.treadmill.decreaseSpeed();
-        //this.speed.setValue(this.speed.getValue()-0.1);
-    }
-
     quickSpeed(e) {
-        console.log(e.getValue());
-        this.treadmill.setSpeed(e.getValue());
-        //this.speed.setValue(e.getValue());
-        //this.speed.setValue(this.speed.getValue()-0.1);
+        this.treadmill.controlpanel.speed(e.getValue());
     }
 
     render() {
         return (
             <div className="treadmill-control" style={{textAlign: 'center'}}>
-                <button id="stop" className="stop shape-tag right" onClick={this.stop}>STOP</button>
-                <button id="reset" className="reset shape-tag left" onClick={this.reset}>RESET</button>
+                <button id="stop" className="stop shape-tag right" onClick={this.treadmill.controlpanel.stop}>STOP</button>
+                <button id="reset" className="reset shape-tag left" onClick={this.treadmill.controlpanel.reset}>RESET</button>
                 <Dial id="speed-control" theme="red">
                     <Lane id="root" lane="0" radius="700" width="250px" alignment="bottom">
                         <MeterIndicator ref={meter => {this.speed=meter;} } domain={[2, 9]} arcrange={[ 1.18*Math.PI, 2.82*Math.PI ]} value="3.2" />
                         <ButtonGroup arcrange={[ 0.83*Math.PI, 1.17*Math.PI ]} style={{ alignment: 'bottom' }}>
-                            <Button id="speed-increase" caption="$up"   onClick={this.incrementSpeed} />
-                            <Button id="speed-decrease" caption="$down" onClick={this.decrementSpeed} />
+                            <Button id="speed-increase" caption="$up"   onClick={this.treadmill.controlpanel.increment} />
+                            <Button id="speed-decrease" caption="$down" onClick={this.treadmill.controlpanel.decrement} />
                         </ButtonGroup>
                     </Lane>
                     <Lane id="incline" lane="1" radius="980" alignment="bottom">

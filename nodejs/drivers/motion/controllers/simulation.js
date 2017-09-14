@@ -31,7 +31,7 @@ class SimulationController {
 	// begins slowing down and then executes the promise when the machine is completely stopped.
 
 	speed(val) {
-        if (val === undefined || val === null || Number.isNaN(val)) {
+        if (val === undefined || val === null || val==='++' || val==='--' || Number.isNaN(val)) {
             console.trace("invalid speed value given", typeof val, val);
     	} else {
             console.log("speed => " + Number(val).toFixed(2));

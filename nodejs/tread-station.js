@@ -97,10 +97,10 @@ function Treadmill()
     this.channels.system.subscribe("rpc", function(data, envelope) {
         if(data.driver && data.func) {
             let driver = this.drivers.$(data.driver);
-            if (driver) {
-                if (typeof driver[data.func] ==="Function") {
+            if (driver!==null) {
+                if (typeof driver[data.func] ==="function") {
                     console.log("rpc call: "+driver.devicePath+"."+data.func+"  ",data.arguments);
-                    driver[data.func].call(driver, data.arguments);
+                    driver[data.func].apply(driver, data.arguments);
                 }
             }
         }
@@ -158,37 +158,34 @@ Treadmill.prototype.remoteSubscribe = function()
         this.datamodel.updateWeight(this.session.user, weight);
 };*/
 
-Treadmill.prototype.parseMessage = function(message) {
+Treadmill.prototype.parseMessage = function(msg) {
         var _treadmill = this;
-        console.log("warning: old style messages ", message);
-        if (message.type === 'utf8') {
-            var msg = JSON.parse(message.utf8Data);
-            if(msg.Speed)
-                _treadmill.controlpanel.speed(msg.Speed);
-            else if(msg.Incline)
-                _treadmill.controlpanel.incline(msg.Incline);
-            else if(msg.Reset)
-                _treadmill.controlpanel.reset();
-            else if(msg.Autopace)
-                _treadmill.autopace.action(msg.Autopace);
-            else if(msg.User)
-                _treadmill.setUser(msg.User, msg.Weight);
-            else if(msg.Get) {
-                try {
-                    console.log("request for schema "+msg.Get);
-                    var data;
-                    if(msg.Get==='users')
-                        data = this.system.users;
-                    else if(msg.Get==='user')
-                        data = (this.system.session!==null && this.system.session.user!==null) ? this.system.session.user : null;
-                    else if(msg.Get==='metrics')
-                        data = _treadmill.metrics;
+        console.log("warning: old style messages ", msg);
+        if(msg.Speed)
+            _treadmill.controlpanel.speed(msg.Speed);
+        else if(msg.Incline)
+            _treadmill.controlpanel.incline(msg.Incline);
+        else if(msg.Reset)
+            _treadmill.controlpanel.reset();
+        else if(msg.Autopace)
+            _treadmill.autopace.action(msg.Autopace);
+        else if(msg.User)
+            _treadmill.setUser(msg.User, msg.Weight);
+        else if(msg.Get) {
+            try {
+                console.log("request for schema "+msg.Get);
+                var data;
+                if(msg.Get==='users')
+                    data = this.system.users;
+                else if(msg.Get==='user')
+                    data = (this.system.session!==null && this.system.session.user!==null) ? this.system.session.user : null;
+                else if(msg.Get==='metrics')
+                    data = _treadmill.metrics;
 
-                    // send the reply
-                    _treadmill.connection.sendUTF(JSON.stringify({ type:'response', schema:msg.Get, response: data }));
-                } catch(ex) {
-                    console.log("failed to send '"+msg.Get+"' : "+ex);
-                }
+                // send the reply
+                _treadmill.connection.sendUTF(JSON.stringify({ type:'response', schema:msg.Get, response: data }));
+            } catch(ex) {
+                console.log("failed to send '"+msg.Get+"' : "+ex);
             }
         }
     };
@@ -208,11 +205,14 @@ Treadmill.prototype.acceptConnection = function(request)
 
     // This is the most important callback for us, we'll handle
     // all messages from users here.
-    this.connection.on('message', (msg) => {
-        if(msg.channel!==undefined && msg.topic!==undefined && msg.channel!==null && msg.topic!==null)
-            postal.publish(msg);
-        else
-            this.parseMessage(msg);
+    this.connection.on('message', (message) => {
+        if (message.type === 'utf8') {
+            var msg = JSON.parse(message.utf8Data);
+            if (msg.channel !== undefined && msg.topic !== undefined && msg.channel !== null && msg.topic !== null)
+                postal.publish(msg);
+            else
+                this.parseMessage(msg);
+        }
     });
 
     this.connection.on('close', function(connection) {

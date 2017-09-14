@@ -178,6 +178,8 @@ class ControlPanel {
             this.active = true;
             console.log("speed <= "+value);
             this.desiredSpeed = this.MPHtoNative(Number(value)).clamp(this.minSpeed, this.maxSpeed);
+        } else {
+            console.trace("unexpected speed value", value);
         }
 
         // check limits
@@ -196,11 +198,9 @@ class ControlPanel {
         this.__speed(this.currentSpeed);
         if(!was_active && this.active) {
             this.__activate();
+            if(!this.motion.active)
+                this.motion.enable();
         }
-
-        this.__speed(value);
-        if(!this.motion.active)
-            this.motion.enable();
     }
 
     incline(value)

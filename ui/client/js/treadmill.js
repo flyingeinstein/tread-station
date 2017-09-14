@@ -49,10 +49,20 @@ export default function Treadmill(options)
     //this.forward("controlpanel", "session.#");
     //this.forward("controlpanel", "event.#");
 
+    // This function object represents the remote interface on the ControlPanel driver
+    this.controlpanel = {
+        endpoint: "user/experience/controlpanel",
+        speed: (value) => this.rpc(this.controlpanel.endpoint, "speed", value),
+        increment: () => this.rpc(this.controlpanel.endpoint, "speed", '++'),
+        decrement: () => this.rpc(this.controlpanel.endpoint, "speed", '--'),
+        incline: (value) => this.rpc(this.controlpanel.endpoint, "incline", value),
+        stop: () => this.rpc(this.controlpanel.endpoint, "stop"),
+        fullstop: () => this.rpc(this.controlpanel.endpoint, "fullstop"),
+        reset: () => this.rpc(this.controlpanel.endpoint, "reset")
+    };
+
+
     // internals
-	var _treadmill = this;
-	this.eventHandlers = {
-	};
 	this.onConnectionStatus = function(connected, message) { console.log(message); };
 }
 
@@ -190,7 +200,7 @@ Treadmill.prototype.remoteSubscribe = function()
             callback: function (data, envelope) {
                 try {
                     if (this.connection!==undefined && this.connection!==null) {
-                        this.connection.sendUTF(JSON.stringify(envelope));
+                        this.connection.send(JSON.stringify(envelope));
                     }
                     if(this.debug || this.remoteSubscribe.debug)
                         console.log(envelope);
@@ -224,7 +234,7 @@ Treadmill.prototype.rpc = function(driver, funcname)
     };
     try {
         if (this.connection!==undefined && this.connection!==null) {
-            this.connection.sendUTF(JSON.stringify(envelope));
+            this.connection.send(JSON.stringify(envelope));
         }
         if(this.debug || this.rpc.debug)
             console.log(envelope);
@@ -245,7 +255,7 @@ Treadmill.prototype.remote = function(channel, topic, data)
     };
     try {
         if (this.connection!==undefined && this.connection!==null) {
-            this.connection.sendUTF(JSON.stringify(envelope));
+            this.connection.send(JSON.stringify(envelope));
         }
         if(this.debug || this.rpc.debug)
             console.log(envelope);
