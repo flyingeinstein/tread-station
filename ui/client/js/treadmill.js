@@ -231,7 +231,6 @@ Treadmill.prototype.rpc = function(driver, funcname)
     } catch (ex) {
         console.log("warning: rpc call failed, likely connection error, aborting connection.");
         console.log("rpc object was ", envelope);
-        this.abortConnection();
     }
 };
 
