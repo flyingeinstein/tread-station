@@ -1,4 +1,5 @@
 const postal = require('postal');
+const Q = require('q');
 
 function zeropad(number) {
     return (number<10) ? '0'+number : number;
@@ -61,6 +62,12 @@ export default function Treadmill(options)
         reset: () => this.rpc(this.controlpanel.endpoint, "reset")
     };
 
+    this.data = {
+        users: {
+            endpoint: "data/users",
+            all: (value) => this.rpc(this.data.users.endpoint, "users")
+        }
+    }
 
     // internals
 	this.onConnectionStatus = function(connected, message) { console.log(message); };
@@ -129,6 +136,11 @@ Treadmill.prototype.connect = function()
 		// request some objects from the treadmill service
 		_treadmill.request("users");
 		_treadmill.request("user");
+
+        this.data.users.all().then((users) => {
+            console.log(users);
+        });
+
 	}.bind(this);
      this.connection.onmessage = function (evt)
      {
@@ -217,19 +229,57 @@ Treadmill.prototype.remoteSubscribe = function()
 
 Treadmill.prototype.rpc = function(driver, funcname)
 {
+
+    // ensure the response handler is setup
+    if(this._rpc === undefined) {
+        this._rpc = {
+            pending: [],
+            cookie: 1,
+            defer: function () {
+                let deferred = Q.defer();
+                deferred.cookie = this.cookie;
+                this.pending.push(deferred);
+                console.log("defer "+deferred.cookie+": ", deferred);
+                return deferred;
+            },
+            promise: function(cookie) {
+                for(let i=0,_i=this.pending.length; i<_i; i++)
+                    if(this.pending[i] && this.pending[i].cookie === cookie ) {
+                        let defer = this.pending[i];
+                        this.pending[i] = null;
+                        return defer;
+                    }
+                    return null;
+            },
+            response_handler: postal.subscribe({
+                channel: "system",
+                topic: "rpc.response",
+                callback: function (data, envelope) {
+                    console.log("rpc-response: ", envelope);
+                    let defer = this._rpc.promise(data.cookie);
+                    if(defer!==null) {
+                        defer.resolve(data.response);
+                    }
+                }.bind(this)
+            })
+        }
+    };
+
     if(arguments.length <2)
         return false;
     let args = [];
     Array.prototype.push.apply(args, arguments);
     args.shift(); args.shift(); // remove the two known arguments
 
+    let defer = this._rpc.defer();
     let envelope = {
         channel: "system",
-        topic: "rpc",
+        topic: "rpc.request",
         data: {
             driver: driver,
             func: funcname,
-            arguments: args
+            arguments: args,
+            cookie: defer.cookie
         }
     };
     try {
@@ -242,6 +292,7 @@ Treadmill.prototype.rpc = function(driver, funcname)
         console.log("warning: rpc call failed, likely connection error, aborting connection.");
         console.log("rpc object was ", envelope);
     }
+    return defer.promise;
 };
 
 Treadmill.prototype.remote = function(channel, topic, data)

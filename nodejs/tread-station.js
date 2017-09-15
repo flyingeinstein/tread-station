@@ -5,14 +5,10 @@ process.on('SIGINT', function() {
 });
 
 require('./math-util');
-var fs = require('fs');
-var DateJS = require('./node_modules/datejs');
 const postal = require('postal');
 const http = require('http');
 const WebSocketServer = require('websocket').server;
-
 const DriverTree = require('./drivers/drivertree');
-
 const DataModel = require("./datamodel");
 
 
@@ -94,13 +90,33 @@ function Treadmill()
         });
     */
 
-    this.channels.system.subscribe("rpc", function(data, envelope) {
+    this.channels.system.subscribe("rpc.request", function(data, envelope) {
         if(data.driver && data.func) {
             let driver = this.drivers.$(data.driver);
             if (driver!==null) {
+                let response = null;
                 if (typeof driver[data.func] ==="function") {
                     console.log("rpc call: "+driver.devicePath+"."+data.func+"  ",data.arguments);
                     driver[data.func].apply(driver, data.arguments);
+                } else if (typeof driver[data.func] ==="object") {
+                    response = driver[data.func];
+                }
+
+                // send back the response
+                if(response!==null) {
+                    if (this.connection!==undefined && this.connection!==null)
+                        this.connection.sendUTF(JSON.stringify({
+                            channel: "system",
+                            topic: "rpc.response",
+                            data: {
+                                driver: data.driver,
+                                func: data.func,
+                                cookie: (data.cookie !== undefined) ? data.cookie : null,
+                                response: response
+                            }
+                        }));
+                    else
+                        console.log("rpc call: cannot send response");
                 }
             }
         }
@@ -161,16 +177,10 @@ Treadmill.prototype.remoteSubscribe = function()
 Treadmill.prototype.parseMessage = function(msg) {
         var _treadmill = this;
         console.log("warning: old style messages ", msg);
-        if(msg.Speed)
-            _treadmill.controlpanel.speed(msg.Speed);
-        else if(msg.Incline)
-            _treadmill.controlpanel.incline(msg.Incline);
-        else if(msg.Reset)
-            _treadmill.controlpanel.reset();
-        else if(msg.Autopace)
-            _treadmill.autopace.action(msg.Autopace);
-        else if(msg.User)
+        if(msg.User)
             _treadmill.setUser(msg.User, msg.Weight);
+        //else if(msg.Autopace)
+        //    _treadmill.autopace.action(msg.Autopace);
         else if(msg.Get) {
             try {
                 console.log("request for schema "+msg.Get);
