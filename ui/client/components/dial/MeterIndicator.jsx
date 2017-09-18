@@ -28,6 +28,13 @@ export default class Meter extends React.Component {
         return this.state.value;
     }
 
+    indicator(value) {
+        if(this.state.value!==undefined && this.state.value!==null)
+            return <path className="current-indicator" d={this.props.lane.tick(this.scale(Number(value)), 0.025)} />
+        else
+            return null;
+    }
+
     render() {
         return <g id={this.props.id} className={`indicator meter-indicator`} style={{cursor:'hand'}} onClick={this.props.onClick} data-index={this.props.index}>
             <g className="dial-face">
@@ -48,7 +55,7 @@ export default class Meter extends React.Component {
                 }</g>
             </g>
             <g className="indicators">
-                <path className="current-indicator" d={this.props.lane.tick(this.scale(Number(this.state.value)), 0.025)} />
+                {this.indicator(this.state.value)}
             </g>
         </g>
     }

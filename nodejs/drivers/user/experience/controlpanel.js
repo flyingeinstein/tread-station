@@ -120,7 +120,7 @@ class ControlPanel {
     __closeSession()
     {
         if(this.session) {
-            this.session.active = false;
+            this.session.deactivate();
             this.bus.publish("session.close", this.session);
             this.session = null;
         }
@@ -135,7 +135,7 @@ class ControlPanel {
             this.goaltime=user.goaltime;
         if(user.goaldistance!==null)
             this.goaldistance=user.goaldistance;
-        this.session.active = true;
+        this.session.activate();
         this.bus.publish("session.new", this.session);
         console.log("created new session");
     }
@@ -346,6 +346,7 @@ class ControlPanel {
             headline: this.headline,
             timestamp: new Date(),
             active: this.active,
+            runningSince: this.session ? this.session.runningSince : null,
             runningTime: this.session ? this.session.getTotalRunningMillis() : 0,
             distance: this.session ? this.session.distance : 0,
             currentSpeed: this.nativeToMPH(this.currentSpeed),

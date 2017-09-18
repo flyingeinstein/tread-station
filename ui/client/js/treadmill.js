@@ -21,36 +21,32 @@ export default function Treadmill(options)
         options = {};
     }
 
+    // get hostname from query string if present
     this.host = options.host
         ? options.host
         : getParameterByName("host");
+
+    // get host from host line (meaning UI and Treadmill service on the same server)
     if(!this.host)
         this.host = window.location.hostname;
+
+    // log what host we are going to try
     console.log("treadmill host: "+this.host);
 
-    // variables
-	this.speed = -1;
-    this.incline = -1;
-
-    // Research suggests walking 5 miles a day is the magic number when it comes to health and fitness. For this reason
-    // we choose a goal distance of 5 miles. Based on an average human walking speed of 3.1 miles/hour (wikipedia) this
-    // translates to about 90 minutes of of walking. The user will choose a goal based on either time or distance but
-    // either choice they will walk the magic number if they accept the defaults.
-    // references:
-    //     https://en.wikipedia.org/wiki/Preferred_walking_speed
-    //     http://www.livescience.com/10406-fast-walk-predict-long-youll-live.html
-	this.goal = {
-        time: 1.5 * 3600,       // hour and a half
-        distance: 5             // 5 miles
-    };
-
-	this.rpc.debug = true;
+    // set if you are debugging RPC communication to Treadmill service
+	//this.rpc.debug = true;
 
     //this.forward("controlpanel", "state");
     //this.forward("controlpanel", "session.#");
     //this.forward("controlpanel", "event.#");
 
-    // This function object represents the remote interface on the ControlPanel driver
+    /*** Remote Interfaces on Treadmill Service
+     *
+     */
+
+    // Control Panel
+    // This function object represents the remote interface on the ControlPanel
+    // driver which mimics the interface of an old style Treadmill panel.
     this.controlpanel = {
         endpoint: "user/experience/controlpanel",
         speed: (value) => this.rpc(this.controlpanel.endpoint, "speed", value),
@@ -62,15 +58,18 @@ export default function Treadmill(options)
         reset: () => this.rpc(this.controlpanel.endpoint, "reset")
     };
 
+    // Data Model
+    // This contains remote interfaces to manipulate data such as users
+    // or recording run status.
     this.data = {
+        // Users
+        // Interface for querying system users and manipulating the current user.
         users: {
             endpoint: "data/users",
-            all: (value) => this.rpc(this.data.users.endpoint, "users")
+            all: (value) => this.rpc(this.data.users.endpoint, "users"),
+            current: () => this.rpc(this.data.users.endpoint, "user")
         }
     }
-
-    // internals
-	this.onConnectionStatus = function(connected, message) { console.log(message); };
 }
 
 /**
@@ -122,7 +121,6 @@ Treadmill.prototype.connect = function()
 
 
      // Let us open a web socket
-     this.onConnectionStatus(false, "connecting to "+this.host+"...");
      this.connection = new WebSocket("ws://"+this.host+":27001/echo");
      this.connection.onopen = function()
      {
@@ -132,16 +130,8 @@ Treadmill.prototype.connect = function()
             message: "connected",
 		    connected: true
 		});
+     }.bind(this);
 
-		// request some objects from the treadmill service
-		_treadmill.request("users");
-		_treadmill.request("user");
-
-        this.data.users.all().then((users) => {
-            console.log(users);
-        });
-
-	}.bind(this);
      this.connection.onmessage = function (evt)
      {
         let received_msg = evt.data;
@@ -162,7 +152,6 @@ Treadmill.prototype.connect = function()
              connected: false
          });
 
-         //_treadmill.onConnectionStatus(false, "Connection closed.");
          _treadmill.connection = null;
 		_treadmill.parseEvent("closed");
      }.bind(this);
@@ -185,10 +174,6 @@ Treadmill.prototype.request = function(schema)
 		this.connection.send(JSON.stringify({ Get: schema }));
 };
 
-Treadmill.prototype.on = function(eventName, callback)
-{
-	this.eventHandlers[eventName] = callback;
-};
 
 /**
  * Configure postal.js channel/topic messages to be sent to remote clients.
@@ -239,7 +224,7 @@ Treadmill.prototype.rpc = function(driver, funcname)
                 let deferred = Q.defer();
                 deferred.cookie = this.cookie;
                 this.pending.push(deferred);
-                console.log("defer "+deferred.cookie+": ", deferred);
+                //console.log("defer "+deferred.cookie+": ", deferred);
                 return deferred;
             },
             promise: function(cookie) {
@@ -255,7 +240,7 @@ Treadmill.prototype.rpc = function(driver, funcname)
                 channel: "system",
                 topic: "rpc.response",
                 callback: function (data, envelope) {
-                    console.log("rpc-response: ", envelope);
+                    //console.log("rpc-response: ", envelope);
                     let defer = this._rpc.promise(data.cookie);
                     if(defer!==null) {
                         defer.resolve(data.response);
@@ -315,125 +300,6 @@ Treadmill.prototype.remote = function(channel, topic, data)
         console.log("rpc object was ", envelope);
         this.abortConnection();
     }
-};
-
-Treadmill.prototype.parseMessage = function(msg)
-{
-    /*
-    if (msg.channel==="controlpanel") {
-        if(msg.topic==="state") {
-            if(this.speed !== msg.currentSpeed)
-            {
-                this.speed = msg.currentSpeed;
-                if(this.onSpeedChanged)
-                    this.onSpeedChanged(msg.currentSpeed);
-            }
-
-            if(this.incline !== msg.currentIncline)
-            {
-                this.incline = msg.currentIncline;
-                if(this.onInclineChanged)
-                    this.onInclineChanged(msg.currentIncline);
-
-            }
-        } else {
-            console.log("ControlPanel "+msg.topic+": ", msg.data);
-        }
-    } else if(msg.type==="event") {
-		this.parseEvent(msg.name, msg.data);
-    } else if(msg.type==="response") {
-		//console.log(msg);
-		if(msg.schema==="users")
-			this.users = msg.response;
-		else if(msg.schema==="user")
-		{
-			if(msg.response && msg.response.userid>0) {
-				this.user = msg.response;
-				this.users[this.user.userid] = this.user;
-				this.goal.time = this.user.goaltime;
-				this.goal.distance = this.user.goaldistance;
-			}
-		}
-
-		if(this.eventHandlers && this.eventHandlers[msg.schema]!=null)
-			this.eventHandlers[msg.schema](msg.response);
-    }
-    */
-};
-
-Treadmill.prototype.setUser = function(user, weightUpdate)
-{
-    if(this.connection)
-        this.connection.send(JSON.stringify({ User: user, Weight: weightUpdate }));
-};
-
-Treadmill.prototype.parseEvent = function(name, data)
-{
-    // this should not be edited, the main app will override this member
-};
-
-Treadmill.prototype.setSpeed = function(value)
-{
-	if(this.resetTimer!==null)
-		clearTimeout(this.resetTimer);
-
-    if(this.connection)
-        this.connection.send(JSON.stringify({ Speed: value }));
-};
-
-Treadmill.prototype.setIncline = function(value)
-{
-    if(this.connection)
-        this.connection.send(JSON.stringify({ Incline: value }));
-};
-
-Treadmill.prototype.increaseSpeed = function()
-{
-    return this.setSpeed("++");
-};
-
-Treadmill.prototype.decreaseSpeed = function()
-{
-    return this.setSpeed("--");
-};
-
-Treadmill.prototype.stop = function()
-{
-    return this.setSpeed("STOP");
-};
-
-Treadmill.prototype.estop = function()
-{
-    return this.setSpeed("ESTOP");
-};
-
-Treadmill.prototype.reset = function(value)
-{
-	if(this.resetTimer!==null)
-		clearTimeout(this.resetTimer);
-	if(this.connection)
-        this.connection.send(JSON.stringify({ Reset: true }));
-};
-
-Treadmill.prototype.inclineUp = function()
-{
-    return this.setIncline("++");
-};
-
-Treadmill.prototype.inclineDown = function()
-{
-    return this.setIncline("--");
-};
-
-Treadmill.prototype.floor = function()
-{
-    return this.setIncline("FLOOR");
-};
-
-Treadmill.prototype.autopace = function(value)
-{
-    if(this.connection && value)
-        this.connection.send(JSON.stringify({ Autopace: value }));
 };
 
 Treadmill.prototype.formatTime = function(millis)

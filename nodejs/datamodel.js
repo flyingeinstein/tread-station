@@ -44,7 +44,7 @@ class DataModel
             // setup some dummy data for testing
             return [
                 {
-                    userid: 'colin',
+                    userid: 1,
                     name: 'Colin MacKenzie',
                     birthdate: new Date('1975-06-25'),
                     weight: 68,

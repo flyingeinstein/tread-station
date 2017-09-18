@@ -34,7 +34,7 @@ class SimulationController {
         if (val === undefined || val === null || val==='++' || val==='--' || Number.isNaN(val)) {
             console.trace("invalid speed value given", typeof val, val);
     	} else {
-            console.log("speed => " + Number(val).toFixed(2));
+            //console.log("speed => " + Number(val).toFixed(2));
         }
 		return true;
 	}

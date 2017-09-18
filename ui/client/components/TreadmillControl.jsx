@@ -10,6 +10,7 @@ import ButtonGroup from "./dial/ButtonGroup.jsx";
 import Button from "./dial/Button.jsx";
 import Treadmill from "../js/treadmill.js";
 import TreadmillStatus from "./TreadmillStatus.jsx";
+import TreadmillUser from "./UserIndicator.jsx";
 const postal = require('postal');
 import "shapes.css";
 
@@ -36,6 +37,9 @@ export default class TreadmillControl extends React.Component {
                 desiredSpeed: 0,
                 currentIncline: 0,
                 desiredIncline: 0
+            },
+            user: {
+                name: 'No user'
             }
         };
 
@@ -48,31 +52,35 @@ export default class TreadmillControl extends React.Component {
 
     componentDidMount()
     {
-        //var el = ReactDOM.findDOMNode(this.refs.statusIndicator);
-        let _this = this;
-
         let controlpanel = postal.channel("controlpanel");
         let connection = postal.channel("connection");
 
         controlpanel.subscribe("event.speed", (data) => {
-            _this.speed.setValue(data.value);
+            this.speed.setValue(data.value);
         });
 
         controlpanel.subscribe("state", (status) => {
-            status.timeDisplay = _this.treadmill ? _this.treadmill.formatTime(status.runningTime) : "";
-            _this.speed.setValue(status.currentSpeed);
-            _this.setState((prevState, props) => { return {
+            status.timeDisplay = this.treadmill ? this.treadmill.formatTime(status.runningTime) : "";
+            console.log(status);
+            this.speed.setValue(status.currentSpeed);
+            this.setState((prevState, props) => { return {
                 status: status
             }});
         });
 
         connection.subscribe("connected", (state) => {
-            _this.setState((prevState, props) => { return {
+            this.setState((prevState, props) => { return {
                 treadmill: { host: prevState.host, connected: state.connected, message: state.message }
             }});
+            this.treadmill.data.users.current().then((user) => {
+                console.log("got user", user);
+                this.setState((prevState, props) => { return {
+                    user: user
+                }});
+            });
         });
 
-        this.treadmill.connect()
+        this.treadmill.connect();
     }
 
     quickSpeed(e) {
@@ -108,6 +116,7 @@ export default class TreadmillControl extends React.Component {
                         </ButtonGroup>
                     </Lane>
                     <TreadmillStatus connection={this.state.treadmill} status={this.state.status} />
+                    <TreadmillUser user={this.state.user} />
                 </Dial>
                 <ConnectionStatus connection={this.state.treadmill} />
             </div>

@@ -14,7 +14,7 @@ class Users {
     probe() {
         this.users = [
             {
-                userid: 'colin',
+                userid: 1,
                 name: 'Colin MacKenzie',
                 birthdate: new Date('1975-06-25'),
                 weight: 68,
@@ -23,7 +23,7 @@ class Users {
                 goaldistance: null
             },
             {
-                userid: 'kinga',
+                userid: 2,
                 name: 'Kinga Ganko',
                 birthdate: new Date('1975-11-01'),
                 weight: 53,
@@ -32,6 +32,7 @@ class Users {
                 goaldistance: null
             }
         ];
+        this.user = this.users[0];
         this.devices.push(this);
         console.log("loaded "+this.users.length+" users");
         return true;
