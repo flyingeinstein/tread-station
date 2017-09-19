@@ -32,7 +32,6 @@ function Treadmill()
     this.drivers = new DriverTree();
     this.datamodel = new DataModel(null);
     this.system = {
-        users: this.datamodel.users()
     };
 
     this.channels = {
@@ -61,6 +60,8 @@ function Treadmill()
     this.remoteSubscribe("controlpanel", "state");
     this.remoteSubscribe("controlpanel", "session.#");
     this.remoteSubscribe("controlpanel", "event.#");
+    this.remoteSubscribe("users", "#");
+    this.remoteSubscribe("user", "#");
 
     console.log("Treadmill ready");
 

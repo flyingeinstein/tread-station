@@ -63,15 +63,37 @@ class ControlPanel {
             }
 
             this.system = props;
+            this.sessionChannel = this.postal.channel("session");
 
             this.devices.push(this);
             console.log("selected "+this.motion.name+" motion controller");
+
+            // setting a user enables the control panel
+            this.subscriptions = {
+                enable: this.postal.subscribe({
+                        channel: "user",
+                        topic: "selected",
+                        callback: (user) => {
+                            if(user) {
+                                // start a new session and enable the control panel
+                                this.__newSession(user);
+                                this.enable();
+                            } else {
+                                // user logged out, close his session and disable the control panel
+                                this.__closeSession();
+                                this.disable();
+                            }
+                        }})
+            };
+
             return !!this.motion;
         }
         return false; // no controllers to try
     }
 
     enable() {
+        console.log("enabling control panel for "+this.session.user.name);
+
         // startup a thread to send status every 1 second
         if(this.__updateInterval)
             clearInterval(this.__updateInterval);
@@ -81,6 +103,8 @@ class ControlPanel {
     }
 
     disable() {
+        console.log("disabling control panel");
+
         this.active = false;
         if(this.__updateInterval) {
             clearInterval(this.__updateInterval);
@@ -89,39 +113,12 @@ class ControlPanel {
         this.__sendStatus();
     }
 
-    setUser(user)
-    {
-        if(user===undefined || user===null)
-            return;
-        let users = this.system.users;
-        if(isNaN(user))
-        {
-            for(let u in users)
-            {
-                if(users[u].name === user) {
-                    user = users[u];
-                    break;
-                }
-            }
-        } else
-            user = users[ Number(user) ];
-
-        console.log("selecting user "+user.name);
-        this.bus.publish("user.select", { user: user });
-        this.__newSession(user);
-
-        // notify the interface
-        //if(this.connection)
-        //    this.connection.sendUTF(JSON.stringify({ type:'response', schema:'user', response: (this.session!=null) ? this.session.user : null }));
-
-        // todo: re-enable way for user to record their weight
-    };
 
     __closeSession()
     {
         if(this.session) {
             this.session.deactivate();
-            this.bus.publish("session.close", this.session);
+            this.sessionChannel.publish("close", this.session);
             this.session = null;
         }
     }
@@ -136,8 +133,8 @@ class ControlPanel {
         if(user.goaldistance!==null)
             this.goaldistance=user.goaldistance;
         this.session.activate();
-        this.bus.publish("session.new", this.session);
-        console.log("created new session");
+        this.sessionChannel.publish("new", this.session);
+        //console.log("created new session");
     }
 
     __speed(value) {

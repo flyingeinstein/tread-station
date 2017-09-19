@@ -131,9 +131,30 @@ DriverTree.prototype.probe = function(props)
             : false;
     }.bind(props);
 
+    if(props.notifyDeviceReady===undefined) {
+        props.notifyDeviceReady = function (driver, dev) {
+            driver.bus.publish( "device.ready",  { driver: driver, device: dev, ready: true });
+        }.bind(props);
+    }
 
     // initiate the probing
+    props.__probing = {
+        completed: false,
+        ready: []   // list of drivers that turned ready
+    };
+
     this.__probe(this.root, props);
+    props.__probing.completed = true; // will cause any pending drivers to send their ready update immediately
+    if(typeof props.notifyDeviceReady==="function") {
+        // send notifications for each device that became ready
+        for (let i = 0, n = props.__probing.ready.length; i < n; i++) {
+            let driver = props.__probing.ready[i];
+            for (let j = 0, _j = driver.devices.length; j < _j; j++) {
+                let dev = driver.devices[j];
+                props.notifyDeviceReady(driver, dev);
+            }
+        }
+    }
 };
 
 // todo: this should probably be a function of the DeviceTree
@@ -214,16 +235,17 @@ DriverTreeNode.prototype.probe = function(props)
         driver.node = this;
         driver.probed = true;
 
+        // create a bus channel for the driver
+        driver.postal = postal;
+        if(driver.bus===undefined)
+            driver.bus = postal.channel(driver.devicePath);
+
         // get the driver control class to probe for devices on the system
         let defer = driver.probe(props);
         let _then = function(probe_succeeded) {
             //console.log("probe: "+driver.name+" returned ", probe_succeeded);
             if(!probe_succeeded)
                 return;
-
-            // create a bus channel for the driver
-            if(driver.bus===undefined)
-                driver.bus = postal.channel(driver.devicePath);
 
             // add driver to list of valid drivers
             this.drivers.push(driver);
@@ -236,6 +258,9 @@ DriverTreeNode.prototype.probe = function(props)
                     if(dev.bus === undefined)
                         dev.bus = driver.bus;
                     this.devices.push(dev);
+
+                    if(typeof props.notifyDeviceReady==="function")
+                        props.notifyDeviceReady(driver, dev);
                 }
             }
         }.bind(this);

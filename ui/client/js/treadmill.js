@@ -214,7 +214,6 @@ Treadmill.prototype.remoteSubscribe = function()
 
 Treadmill.prototype.rpc = function(driver, funcname)
 {
-
     // ensure the response handler is setup
     if(this._rpc === undefined) {
         this._rpc = {

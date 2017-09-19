@@ -29,32 +29,6 @@ class DataModel
         }
     }
 
-    users() {
-        // load users
-        if(this.db) {
-            let _users = [];
-            this.db.query('SELECT * FROM users')
-                .on('result', function (row) {
-                    _users[row.userid] = row;
-                    console.log(row);
-                }.bind(this));
-            return _users;
-        } else {
-            console.log("using dummy users table for testing");
-            // setup some dummy data for testing
-            return [
-                {
-                    userid: 1,
-                    name: 'Colin MacKenzie',
-                    birthdate: new Date('1975-06-25'),
-                    weight: 68,
-                    height: 170,
-                    goaltime: 5400,
-                    goaldistance: null
-                }
-            ];
-        }
-    }
 
     updateWeight(user, weight) {
         if(weight && this.db!==null && this.session && this.session.user && this.session.user.userid>0) {

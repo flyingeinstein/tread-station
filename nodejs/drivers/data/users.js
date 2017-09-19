@@ -12,30 +12,83 @@ class Users {
     }
 
     probe() {
-        this.users = [
-            {
-                userid: 1,
-                name: 'Colin MacKenzie',
-                birthdate: new Date('1975-06-25'),
-                weight: 68,
-                height: 170,
-                goaltime: 5400,
-                goaldistance: null
-            },
-            {
-                userid: 2,
-                name: 'Kinga Ganko',
-                birthdate: new Date('1975-11-01'),
-                weight: 53,
-                height: 169,
-                goaltime: 5400,
-                goaldistance: null
-            }
-        ];
-        this.user = this.users[0];
+        this.userchannel = this.postal.channel("user");
+
+        this.postal.subscribe({
+            channel: "database",
+            topic: "device.ready",
+            callback: (data) => { this.db = data.device.db; this.loadUsers(); this.loadDefaultUser(); }
+        });
+
+        // set first user as default when users are loaded
+        this.bus.subscribe("refreshed", (data) => { if(data.length>0) this.setUser(data[0]) });
+
         this.devices.push(this);
-        console.log("loaded "+this.users.length+" users");
         return true;
+    }
+
+    loadUsers() {
+        if(this.db) {
+            console.log("loading users from database ");
+            try {
+                this.db.query('SELECT * FROM users', function (error, results, fields) {
+                        this.users = results;
+                        console.log("loaded "+this.users.length+" users from mysql");
+                        //console.log(this.users);
+
+                        // notify that list of users changed
+                        this.bus.publish("refreshed", this.users);
+                    }.bind(this));
+            } catch(e) {
+                console.log(e);
+            }
+        } else {
+            console.log("using dummy users table for testing");
+            // setup some dummy data for testing
+            this.users = [
+                {
+                    userid: 1,
+                    name: 'Colin MacKenzie',
+                    birthdate: new Date('1975-06-25'),
+                    weight: 68,
+                    height: 170,
+                    goaltime: 5400,
+                    goaldistance: null
+                },
+                {
+                    userid: 2,
+                    name: 'Kinga Ganko',
+                    birthdate: new Date('1975-11-01'),
+                    weight: 53,
+                    height: 169,
+                    goaltime: 5400,
+                    goaldistance: null
+                }
+            ];
+        }
+    }
+
+    setUser(user)
+    {
+        if(user===undefined || user===null)
+            return false;
+        if(isNaN(user))
+        {
+            for(let u in this.users)
+            {
+                if(this.users[u].name === user) {
+                    user = users[u];
+                    break;
+                }
+            }
+        } else
+            user = this.users[ Number(user) ];
+
+        if(typeof user ==="object") {
+            this.user = user;
+            console.log("selected user " + this.user.userid + " - " + this.user.name);
+            this.userchannel.publish("selected", this.user);
+        }
     }
 
     updateWeight(user, weight) {
