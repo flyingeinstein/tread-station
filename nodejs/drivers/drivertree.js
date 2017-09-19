@@ -113,7 +113,7 @@ DriverTree.prototype.probe = function(props)
 
     props.readSection = function(name, default_value)
     {
-        let filepath = "../"+name+".conf";
+        let filepath = "../conf/"+name+".conf";
         let added = false;
         if(fs.existsSync(filepath)) {
             let stat = fs.lstatSync(filepath);
