@@ -3,9 +3,9 @@
 class PWMController {
     constructor(props) {
         this.name = "simulation";
-        this.name = "Simulated Treadmill Control";
+        this.name = "PWM Treadmill Control";
         this.devicePath = "experience";
-        this.description = "A simulated treadmill motion controller for testing";
+        this.description = "Motion controller that requires a PWM signal to control speed";
         this.simulation = true;
         this.devices = [this];
         this.driver = {};
@@ -13,8 +13,7 @@ class PWMController {
     }
 
     probe() {
-
-        return true;
+        return false;
     }
 
     open() {
