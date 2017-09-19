@@ -10,10 +10,9 @@ class Configuration {
         this.description = "Provides shared configuration between drivers";
         this.devices = [];
         this.driver = {};
-        this.depends = ["sensors/range"];
     }
 
-    probe() {
+    disabled_probe() {
         this.addSection("main", {
             simulation: false
         });
