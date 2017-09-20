@@ -88,6 +88,7 @@ class Users {
             this.user = user;
             console.log("selected user " + this.user.userid + " - " + this.user.name);
             this.userchannel.publish("selected", this.user);
+            return this.user;
         }
     }
 

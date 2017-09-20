@@ -233,10 +233,6 @@ Treadmill.prototype.acceptConnection = function(request)
         this.__updateInterval = null;
 	    console.log("closed");
     }.bind(this));
-
-    this.controlpanel.enable();
-    this.controlpanel.setUser(0);
-
 };
 
 Treadmill.prototype.abortConnection = function()

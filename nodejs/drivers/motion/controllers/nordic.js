@@ -1,13 +1,11 @@
 'use strict';
-const PWMController = require('./pwm.js');
+const PWMControlDriver = require('./pwm.js');
 
-class NordicController extends PWMController {
+class NordicControlDriver extends PWMControlDriver {
 	constructor(props) {
 		super(props);
         this.name = "NordicTrak (PWM)";
         this.description = "NordicTrak motion control board";
-        this.depends = [ "output/pwm" ];
-
 	}
 
 	probe(props) {
@@ -15,18 +13,23 @@ class NordicController extends PWMController {
 		if(this.refs.pwm) {
 			var pwm = this.refs.pwm;
 			if(pwm.devices.length>0) {
-				this.pwm = pwm.devices[0];
-                this.devices = [ this ];
-                console.log("controller: "+this.name+" is using pwm channel 0 ("+this.pwm.driver.name+")");
+				let pwmchannel = pwm.devices[0];
+				let controller = new NordicControlDriver.Controller(this, pwmchannel, {
+					smooth: true,
+					period: 50000000
+				});
+				controller.open();
+                this.devices.push( controller );
+                console.log("controller: "+this.name+" is using pwm channel 0 ("+pwmchannel.driver.name+")");
 				return true;
 			}
 		}
-		console.log("no controller found, switching to simulation");
+        console.log("no treadmill motion controllers configured");
 		return false;
 	}
+}
 
+NordicControlDriver.Controller = PWMControlDriver.Controller;
 
-};
-
-module.exports = NordicController;
+module.exports = NordicControlDriver;
 

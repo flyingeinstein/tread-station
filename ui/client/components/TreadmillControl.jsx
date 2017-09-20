@@ -54,6 +54,8 @@ export default class TreadmillControl extends React.Component {
     {
         let controlpanel = postal.channel("controlpanel");
         let connection = postal.channel("connection");
+        let users = postal.channel("users");
+        let user = postal.channel("user");
 
         controlpanel.subscribe("event.speed", (data) => {
             this.speed.setValue(data.value);
@@ -72,12 +74,16 @@ export default class TreadmillControl extends React.Component {
             this.setState((prevState, props) => { return {
                 treadmill: { host: prevState.host, connected: state.connected, message: state.message }
             }});
-            this.treadmill.data.users.current().then((user) => {
+            this.treadmill.data.users.select(0).then((user) => {
                 console.log("got user", user);
-                this.setState((prevState, props) => { return {
-                    user: user
-                }});
             });
+        });
+
+        user.subscribe("selected", (user) => {
+            console.log("user "+user.name+" selected");
+            this.setState((prevState, props) => { return {
+                user: user
+            }});
         });
 
         this.treadmill.connect();

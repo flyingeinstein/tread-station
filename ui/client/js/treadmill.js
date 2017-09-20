@@ -67,7 +67,8 @@ export default function Treadmill(options)
         users: {
             endpoint: "data/users",
             all: (value) => this.rpc(this.data.users.endpoint, "users"),
-            current: () => this.rpc(this.data.users.endpoint, "user")
+            current: () => this.rpc(this.data.users.endpoint, "user"),
+            select: (id) => this.rpc(this.data.users.endpoint, "setUser", id)
         }
     }
 }
