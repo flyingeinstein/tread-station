@@ -89,8 +89,15 @@ class Session {
                 callback: (data, envelope) => {
                     this.stop();
                 }
+            }),
+
+            db: postal.subscribe({
+                channel: "database",
+                topic: "device.ready",
+                callback: (data) => { this.db = data.device.db; }
             })
-        };
+
+    };
         this.active = true;
     }
 
