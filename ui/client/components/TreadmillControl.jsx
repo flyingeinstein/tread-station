@@ -74,6 +74,14 @@ export default class TreadmillControl extends React.Component {
         motion.subscribe("speed.#", (speed) => {
             console.log(speed);
             this.speed.setValue(speed.currentSpeed);
+            this.setState((prevState, props) => { return {
+                status: {
+                    active: true,
+                    headline: prevState.status.headline,
+                    timeDisplay: prevState.status.timeDisplay,
+                    currentSpeed: speed.currentSpeed
+                }
+            }});
         });
 
         connection.subscribe("connected", (state) => {
