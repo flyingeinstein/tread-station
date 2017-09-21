@@ -29,10 +29,9 @@ export default class Meter extends React.Component {
     }
 
     indicator(value) {
-        if(this.state.value!==undefined && this.state.value!==null)
+        let domain = this.scale.domain();
+        if(value!==undefined && value!==null && value > domain[0] && value < domain[1])
             return <path className="current-indicator" d={this.props.lane.tick(this.scale(Number(value)), 0.025)} />
-        else
-            return null;
     }
 
     render() {

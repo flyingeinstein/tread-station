@@ -24,6 +24,7 @@ class PWMSimulationChannel {
         this.driver = driver;
         this.name = "pwm"+id;
         this.id = id;
+        this.echo = false;
     }
 
     open() {
@@ -33,38 +34,38 @@ class PWMSimulationChannel {
     }
 
     enable() {
-		console.log("motion enabled");
+		if(this.echo) console.log("motion enabled");
 		return true;
 	}
 
 	disable() {
-        console.log("motion disabled");
+        if(this.echo) console.log("motion disabled");
 		return true;
 	}
 
 	turnOn() {
 	    this.active = true;
-        console.log(this.name+" output active");
+        if(this.echo) console.log(this.name+" output active");
     }
 
 	turnOff() {
 	    this.active = false;
-        console.log(this.name+" output deactivated");
+        if(this.echo) console.log(this.name+" output deactivated");
     }
 
 	polarity(v) {
 	    this.polarity = v;
-        console.log(this.name+" polarity => "+this.polarity);
+        if(this.echo) console.log(this.name+" polarity => "+this.polarity);
     }
 
 	period(v) {
 	    this.period = v;
-        console.log(this.name+" period => "+this.period);
+        if(this.echo) console.log(this.name+" period => "+this.period);
     }
 
 	setDuty(v) {
 	    this.duty = v;
-	    console.log(this.name+" duty => "+(this.duty / this.period));
+        if(this.echo) console.log(this.name+" duty => "+(this.duty / this.period));
     }
 }
 

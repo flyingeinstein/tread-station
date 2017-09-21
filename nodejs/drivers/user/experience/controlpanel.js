@@ -31,8 +31,8 @@ class ControlPanel {
 
         // limits - in native format
         this.speedIncrement = this.MPHtoNative(0.1);
-        this.minSpeed = 90; // this is a built in limit of the speed controller
-        this.maxSpeed = this.MPHtoNative(8.0);
+        this.minSpeed = 2; // this is a built in limit of the speed controller
+        this.maxSpeed = 9;
 
         this.inclineIncrement = this.inclineGradeToNative(1);
         this.minIncline = this.inclineGradeToNative(0);
@@ -186,13 +186,14 @@ class ControlPanel {
             this.desiredSpeed=this.minSpeed;
 
         // start to accellerate or deccellerate
-        if(this.currentSpeed < this.desiredSpeed)
+        /*if(this.currentSpeed < this.desiredSpeed)
             this.accellerate();
         else if(this.currentSpeed > this.desiredSpeed)
-            this.deccellerate();
+            this.deccellerate();*/
 
         // update the PWM
-        this.__speed(this.currentSpeed);
+        this.headline = null;   // clear any headline
+        this.__speed(this.desiredSpeed);
         if(!was_active && this.active) {
             this.__activate();
             if(!this.motion.active)
@@ -214,7 +215,7 @@ class ControlPanel {
 
         // TODO: do something here to make the incline change
     }
-
+/*
     accellerate()
     {
         if(this.currentSpeed !== this.desiredSpeed) {
@@ -250,15 +251,8 @@ class ControlPanel {
         }
         this.__sendStatus();
     }
-
+*/
     __stop(value) {
-        if(this.desiredSpeed!==0) {
-            this.desiredSpeed=0;
-            this.headline = "Stopping";
-            if(this.currentSpeed===0) {
-                this.headline = "Idle";
-            }
-        }
         if(!this.motion) return false;
         this.__sendEvent("stop");
         this.motion.stop(value)
@@ -282,7 +276,7 @@ class ControlPanel {
         this.active = false;
         this.motion.stop();
         this.desiredSpeed=0;
-        this.currentSpeed=0;
+        //this.currentSpeed=0;
         this.headline = "Emergency!";
         this.__sendEvent("fullstop");
         this.__updateStatus();
@@ -336,17 +330,38 @@ class ControlPanel {
         this.__sendStatus();
     };
 
+    state() {
+        if(this.motion.desired===0 && this.motion.value>0)
+            return "Stopping";
+        else if(!this.motion.active || this.motion.value===0)
+            return "Stopped";
+        else if(this.motion.desired>this.minSpeed && this.motion.value<this.minSpeed)
+            return "Starting";
+        else if(this.motion.active && this.motion.value>=8)
+            return "Sprinting";
+        else if(this.motion.active && this.motion.value>=5.6)
+            return "Running";
+        else if(this.motion.active && this.motion.value>=4.2)
+            return "Jogging";
+        else if(this.motion.active && this.motion.value>=3.0)
+            return "Walking";
+        else if(this.motion.active && this.motion.value>=2.0)
+            return "Walking Dead";
+        else
+            return"Duck!";  // we should never get here
+    }
 
     __sendStatus() {
         let status = {
             type: 'status',
-            headline: this.headline,
+            headline: this.headline ? this.headline : this.state(),
             timestamp: new Date(),
             active: this.active,
             runningSince: this.session ? this.session.runningSince : null,
             runningTime: this.session ? this.session.getTotalRunningMillis() : 0,
             distance: this.session ? this.session.distance : 0,
-            currentSpeed: this.nativeToMPH(this.currentSpeed),
+            //currentSpeed: this.nativeToMPH(this.currentSpeed),
+            currentSpeed: this.nativeToMPH(this.motion.value),
             desiredSpeed: this.nativeToMPH(this.desiredSpeed),
             currentIncline: this.nativeToInclineGrade(this.currentIncline),
             desiredIncline: this.nativeToInclineGrade(this.desiredIncline)
@@ -357,12 +372,12 @@ class ControlPanel {
     MPHtoNative(value)
     {
         // 90 is 2mph, 150 is 3.4mph, 250 is 6mph
-        return Number(value) * 45;
+        return Number(value);// * 45;
     }
 
     nativeToMPH(value)
     {
-        return Number(value) / 45;
+        return Number(value);// / 45;
     };
 
     inclineGradeToNative(value)

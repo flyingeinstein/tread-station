@@ -62,6 +62,7 @@ function Treadmill()
     this.remoteSubscribe("controlpanel", "event.#");
     this.remoteSubscribe("users", "#");
     this.remoteSubscribe("user", "#");
+    this.remoteSubscribe("motion-control", "#");
 
     console.log("Treadmill ready");
 

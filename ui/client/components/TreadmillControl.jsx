@@ -56,9 +56,10 @@ export default class TreadmillControl extends React.Component {
         let connection = postal.channel("connection");
         let users = postal.channel("users");
         let user = postal.channel("user");
+        let motion = postal.channel("motion-control");
 
         controlpanel.subscribe("event.speed", (data) => {
-            this.speed.setValue(data.value);
+            //this.speed.setValue(data.value);
         });
 
         controlpanel.subscribe("state", (status) => {
@@ -68,6 +69,11 @@ export default class TreadmillControl extends React.Component {
             this.setState((prevState, props) => { return {
                 status: status
             }});
+        });
+
+        motion.subscribe("speed.#", (speed) => {
+            console.log(speed);
+            this.speed.setValue(speed.currentSpeed);
         });
 
         connection.subscribe("connected", (state) => {

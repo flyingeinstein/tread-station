@@ -1,5 +1,6 @@
 'use strict';
 const PWMControlDriver = require('./pwm.js');
+const scale = require('d3-scale');
 
 class NordicControlDriver extends PWMControlDriver {
 	constructor(props) {
@@ -16,7 +17,7 @@ class NordicControlDriver extends PWMControlDriver {
 				let pwmchannel = pwm.devices[0];
 				let controller = new NordicControlDriver.Controller(this, pwmchannel, {
 					smooth: true,
-					period: 50000000
+					scale: scale.scaleLinear().domain([0,9]).range([0, 100]),
 				});
 				controller.open();
                 this.devices.push( controller );

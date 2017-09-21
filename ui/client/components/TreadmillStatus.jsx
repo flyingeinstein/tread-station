@@ -8,9 +8,7 @@ export default class TreadmillStatus extends React.Component {
     getStatus() {
         return !this.props.connection.connected
             ? "disconnected"
-            : this.props.status.active
-                ? "Running"
-                : "Idle";
+            : this.props.status.headline;
     }
 
     render() {
