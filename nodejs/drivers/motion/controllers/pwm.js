@@ -81,7 +81,8 @@ class PWMController {
     {
         this.value = val;
         mode = mode ? "speed."+mode : "speed";
-        console.log(mode+" => ", val.toFixed(2));
+        if(mode!=="speed.smooth")
+            console.log(mode+" => ", val.toFixed(2));
         this.pwm.setDuty(this.options.scale ? this.options.scale(val) : val);
         this.active = val>0;
         this.bus.publish(mode, {

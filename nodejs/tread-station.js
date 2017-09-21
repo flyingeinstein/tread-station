@@ -72,25 +72,11 @@ function Treadmill()
         // process HTTP request. Since we're writing just WebSockets server
         // we don't have to implement anything.
     });
-    this.server.listen(27001, function() { });
+    this.server.listen(27001, () => null);
 
-// create the server
-    this.wsServer = new WebSocketServer({
-        httpServer: this.server
-    });
-
-// WebSocket server
-    this.wsServer.on('request', function(request) {
-        this.acceptConnection(request);
-    }.bind(this));
-
-
-    /*const WebSocket = require('ws');
-
-    const server = new WebSocket.Server({
-            port: 8080
-        });
-    */
+    // create the server and setup connection handler
+    this.wsServer = new WebSocketServer({ httpServer: this.server });
+    this.wsServer.on('request', (request) => this.acceptConnection(request) );
 
     this.channels.system.subscribe("rpc.request", function(data, envelope) {
         if(data.driver && data.func) {
