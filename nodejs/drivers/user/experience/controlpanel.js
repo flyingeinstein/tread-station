@@ -21,16 +21,14 @@ class ControlPanel {
         this.driver = {};
         this.depends = ["motion/controllers"];
 
-        this.currentSpeed = 0;
         this.desiredSpeed = 0;
         this.speedMeasured = 0;
-        this.accelleration = 1;
 
         this.currentIncline = 0;
         this.desiredIncline = 0;
 
         // limits - in native format
-        this.speedIncrement = this.MPHtoNative(0.1);
+        this.speedIncrement = 0.1;
         this.minSpeed = 2; // this is a built in limit of the speed controller
         this.maxSpeed = 9;
 
@@ -174,7 +172,7 @@ class ControlPanel {
             // startup if stopped
             this.active = true;
             console.log("speed <= "+value);
-            this.desiredSpeed = this.MPHtoNative(Number(value)).clamp(this.minSpeed, this.maxSpeed);
+            this.desiredSpeed = Number(value).clamp(this.minSpeed, this.maxSpeed);
         } else {
             console.trace("unexpected speed value", value);
         }
@@ -184,12 +182,6 @@ class ControlPanel {
             this.desiredSpeed=this.maxSpeed;
         else if(this.desiredSpeed<this.minSpeed && this.desiredSpeed>0)
             this.desiredSpeed=this.minSpeed;
-
-        // start to accellerate or deccellerate
-        /*if(this.currentSpeed < this.desiredSpeed)
-            this.accellerate();
-        else if(this.currentSpeed > this.desiredSpeed)
-            this.deccellerate();*/
 
         // update the PWM
         this.headline = null;   // clear any headline
@@ -215,43 +207,7 @@ class ControlPanel {
 
         // TODO: do something here to make the incline change
     }
-/*
-    accellerate()
-    {
-        if(this.currentSpeed !== this.desiredSpeed) {
-            this.currentSpeed += this.accelleration;
-            if(this.currentSpeed < this.minSpeed)
-                this.currentSpeed = this.minSpeed;
 
-            if(this.currentSpeed > this.maxSpeed)
-                this.currentSpeed = this.maxSpeed;
-            else if(this.currentSpeed > this.desiredSpeed)
-                this.currentSpeed = this.desiredSpeed;
-            else {
-                setTimeout(function() { this.accellerate(); }.bind(this), 100);
-            }
-            this.__speed(this.currentSpeed);
-        }
-        this.__sendStatus();
-    }
-
-    deccellerate()
-    {
-        if(this.currentSpeed !== this.desiredSpeed) {
-            this.currentSpeed -= this.accelleration;
-            if (this.currentSpeed < this.minSpeed) {
-                // we've stopped
-                this.fullstop();
-            } else if (this.currentSpeed < this.desiredSpeed) {
-                this.currentSpeed = this.desiredSpeed;
-            } else {
-                setTimeout(function() { this.deccellerate(); }.bind(this), 100);
-            }
-            this.__speed(this.currentSpeed); // new
-        }
-        this.__sendStatus();
-    }
-*/
     __stop(value) {
         if(!this.motion) return false;
         this.__sendEvent("stop");
@@ -276,7 +232,6 @@ class ControlPanel {
         this.active = false;
         this.motion.stop();
         this.desiredSpeed=0;
-        //this.currentSpeed=0;
         this.headline = "Emergency!";
         this.__sendEvent("fullstop");
         this.__updateStatus();
@@ -360,25 +315,13 @@ class ControlPanel {
             runningSince: this.session ? this.session.runningSince : null,
             runningTime: this.session ? this.session.getTotalRunningMillis() : 0,
             distance: this.session ? this.session.distance : 0,
-            //currentSpeed: this.nativeToMPH(this.currentSpeed),
-            currentSpeed: this.nativeToMPH(this.motion.value),
-            desiredSpeed: this.nativeToMPH(this.desiredSpeed),
+            currentSpeed: this.motion.value,
+            desiredSpeed: this.desiredSpeed,
             currentIncline: this.nativeToInclineGrade(this.currentIncline),
             desiredIncline: this.nativeToInclineGrade(this.desiredIncline)
         };
         this.bus.publish("state", status);
     }
-
-    MPHtoNative(value)
-    {
-        // 90 is 2mph, 150 is 3.4mph, 250 is 6mph
-        return Number(value);// * 45;
-    }
-
-    nativeToMPH(value)
-    {
-        return Number(value);// / 45;
-    };
 
     inclineGradeToNative(value)
     {
