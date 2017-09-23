@@ -86,8 +86,8 @@ class PWMController {
         this.pwm.setDuty(this.options.scale ? this.options.scale(val) : val);
         this.active = val>0;
         this.bus.publish(mode, {
-            desiredSpeed: this.desired,
-            currentSpeed: this.value
+            target: this.desired,
+            current: this.value
         });
     }
 

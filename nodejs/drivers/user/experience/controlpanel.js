@@ -28,7 +28,6 @@ class ControlPanel {
         this.speed.increment=0.1;
         this.speed.min= 2;
         this.speed.max= 9;
-        //};
 
         this.currentIncline = 0;
         this.desiredIncline = 0;
@@ -273,7 +272,7 @@ class ControlPanel {
         }
 
         // HACK: make the incline move for now
-        if(this.desiredIncline != this.currentIncline) {
+        if(this.desiredIncline !== this.currentIncline) {
             if(this.currentIncline < this.desiredIncline)
                 this.currentIncline += this.inclineIncrement;
             else
@@ -313,8 +312,10 @@ class ControlPanel {
             runningSince: this.session ? this.session.runningSince : null,
             runningTime: this.session ? this.session.getTotalRunningMillis() : 0,
             distance: this.session ? this.session.distance : 0,
-            currentSpeed: this.motion.value,
-            desiredSpeed: this.speed.target,
+            speed: {
+                current: this.motion.value,
+                target: this.speed.target,
+            },
             currentIncline: this.nativeToInclineGrade(this.currentIncline),
             desiredIncline: this.nativeToInclineGrade(this.desiredIncline)
         };

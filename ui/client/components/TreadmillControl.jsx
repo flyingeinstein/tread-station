@@ -33,8 +33,10 @@ export default class TreadmillControl extends React.Component {
                 active: false,
                 timestamp: 0,
                 runningTime: 0,
-                currentSpeed: 0,
-                desiredSpeed: 0,
+                speed: {
+                    current: 0,
+                    target: 0
+                },
                 currentIncline: 0,
                 desiredIncline: 0
             },
@@ -65,7 +67,7 @@ export default class TreadmillControl extends React.Component {
         controlpanel.subscribe("state", (status) => {
             status.timeDisplay = this.treadmill ? this.treadmill.formatTime(status.runningTime) : "";
             console.log(status);
-            this.speed.setValue(status.currentSpeed);
+            this.speed.setValue(status.speed.current);
             this.setState((prevState, props) => { return {
                 status: status
             }});
@@ -73,13 +75,13 @@ export default class TreadmillControl extends React.Component {
 
         motion.subscribe("speed.#", (speed) => {
             console.log(speed);
-            this.speed.setValue(speed.currentSpeed);
+            this.speed.setValue(speed.current);
             this.setState((prevState, props) => { return {
                 status: {
                     active: true,
                     headline: prevState.status.headline,
                     timeDisplay: prevState.status.timeDisplay,
-                    currentSpeed: speed.currentSpeed
+                    speed: speed
                 }
             }});
         });
