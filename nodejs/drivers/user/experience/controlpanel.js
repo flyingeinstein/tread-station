@@ -21,17 +21,17 @@ class ControlPanel {
         this.driver = {};
         this.depends = ["motion/controllers"];
 
-        this.desiredSpeed = 0;
-        this.speedMeasured = 0;
+        // Note: we are actually adding these members to the function object speed()
+        // so we cant just use this.speed= {...} syntax here.
+        this.speed.target=0;
+        this.speed.measured=0;
+        this.speed.increment=0.1;
+        this.speed.min= 2;
+        this.speed.max= 9;
+        //};
 
         this.currentIncline = 0;
         this.desiredIncline = 0;
-
-        // limits - in native format
-        this.speedIncrement = 0.1;
-        this.minSpeed = 2; // this is a built in limit of the speed controller
-        this.maxSpeed = 9;
-
         this.inclineIncrement = this.inclineGradeToNative(1);
         this.minIncline = this.inclineGradeToNative(0);
         this.maxIncline = this.inclineGradeToNative(50);
@@ -164,28 +164,27 @@ class ControlPanel {
             return this.speed("2.0");
         } else if(value==="++") {
             this.active = true;
-            this.desiredSpeed += this.speedIncrement;
+            this.speed.target += this.speed.increment;
         } else if(value==="--") {
             this.active = true;
-            this.desiredSpeed -= this.speedIncrement;
+            this.speed.target -= this.speed.increment;
         } else if(!Number.isNaN(value)) {
             // startup if stopped
             this.active = true;
             console.log("speed <= "+value);
-            this.desiredSpeed = Number(value).clamp(this.minSpeed, this.maxSpeed);
+            this.speed.target = Number(value).clamp(this.speed.min, this.speed.max);
         } else {
             console.trace("unexpected speed value", value);
         }
 
         // check limits
-        if(this.desiredSpeed>this.maxSpeed)
-            this.desiredSpeed=this.maxSpeed;
-        else if(this.desiredSpeed<this.minSpeed && this.desiredSpeed>0)
-            this.desiredSpeed=this.minSpeed;
+        this.speed.target = (this.speed.target>0)
+            ? this.speed.target.clamp(this.speed.min, this.speed.max)  // restrict to min/max
+            : 0; // always allow 0 (off)
 
         // update the PWM
         this.headline = null;   // clear any headline
-        this.__speed(this.desiredSpeed);
+        this.__speed(this.speed.target);
         if(!was_active && this.active) {
             this.__activate();
             if(!this.motion.active)
@@ -202,7 +201,7 @@ class ControlPanel {
         } else if(value==="FLOOR") {
             this.desiredIncline = this.minIncline;
         } else if(!isNaN(value)) {
-            value = clamp(Number(value), this.minIncline, this.maxIncline);
+            value = value.clamp(this.minIncline, this.maxIncline);
         }
 
         // TODO: do something here to make the incline change
@@ -231,7 +230,7 @@ class ControlPanel {
 
         this.active = false;
         this.motion.stop();
-        this.desiredSpeed=0;
+        this.speed.target=0;
         this.headline = "Emergency!";
         this.__sendEvent("fullstop");
         this.__updateStatus();
@@ -273,7 +272,6 @@ class ControlPanel {
             }
         }
 
-
         // HACK: make the incline move for now
         if(this.desiredIncline != this.currentIncline) {
             if(this.currentIncline < this.desiredIncline)
@@ -290,7 +288,7 @@ class ControlPanel {
             return "Stopping";
         else if(!this.motion.active || this.motion.value===0)
             return "Stopped";
-        else if(this.motion.desired>this.minSpeed && this.motion.value<this.minSpeed)
+        else if(this.motion.desired>this.speed.min && this.motion.value<this.speed.min)
             return "Starting";
         else if(this.motion.active && this.motion.value>=8)
             return "Sprinting";
@@ -316,7 +314,7 @@ class ControlPanel {
             runningTime: this.session ? this.session.getTotalRunningMillis() : 0,
             distance: this.session ? this.session.distance : 0,
             currentSpeed: this.motion.value,
-            desiredSpeed: this.desiredSpeed,
+            desiredSpeed: this.speed.target,
             currentIncline: this.nativeToInclineGrade(this.currentIncline),
             desiredIncline: this.nativeToInclineGrade(this.desiredIncline)
         };
