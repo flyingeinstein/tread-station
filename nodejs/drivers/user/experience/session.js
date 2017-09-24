@@ -59,8 +59,9 @@ class Session {
                             // short distance, just merge
                             this.segment.speed = data.value;
                         } else {
-                            console.log("speed change " + diff + "ms x" + oldspeed + " => " + data.value);
+                            //console.log("speed change " + diff + "ms x" + oldspeed + " => " + data.value);
                             // add the segment of speed to history
+                            this.segment.end = new Date();
                             this.segments.push(this.segment);
                             this.segment = new Session.Segment(data.value);
                         }
@@ -106,40 +107,44 @@ class Session {
             this.segment.end = new Date();
             this.segments.push(this.segment);
             this.segment = null;
-            console.log("there are "+this.segments.length+" speed segments");
+            //console.log("there are "+this.segments.length+" speed segments");
         }
     }
 
     total()
     {
-        // add up the history
-        let since=null, segcount=this.segments.length, distance = 0, millis = 0, speed_acc = 0;
-        for(let i=0; i<segcount;i++) {
-            let seg = this.segments[i];
-            let duration = seg.duration();
-            millis += duration;
-            distance += seg.speed * duration / 3600000; // MPH * duration_ms / (millis-in-an-hour)
-            speed_acc += duration * seg.speed;
-            if(since===null)
-                since = seg.since;
-        }
-        if(this.segment!==null) {
-            // add in the current segment portion
-            let duration = this.segment.duration();
-            millis += duration;
-            distance += this.segment.speed * duration / 3600000;
-            speed_acc += duration * this.segment.speed;
-            segcount++;
-            if(since===null)
-                since = this.segment.since;
-        }
-        return {
-            since: since,
-            duration: millis,
-            distance: distance,
-            avgspeed: (millis>0) ? speed_acc / millis : 0,
-            segments: segcount
+        // combine the history with current value
+        let segments = this.segments.slice(0);
+        if(this.segment)
+            segments.push(this.segment);
+        let _totals = {
+            since: null,
+            duration: 0,
+            distance: 0,
+            segments: segments.length,
+            speed: {
+                current: this.segment ? this.segment.speed*1.0 : 0,
+                dur: this.segment ? this.segment.duration() : 0,
+                average: 0,
+                min: null,
+                max: null
+            }
         };
+        for(let i=0; i<_totals.segments;i++) {
+            let seg = segments[i];
+            let duration = seg.duration();
+            let speed = seg.speed*1.0;
+            _totals.duration += duration;
+            _totals.distance += speed * duration / 3600000; // MPH * duration_ms / (millis-in-an-hour)
+            _totals.speed.average += speed * (duration/1000);
+            if(_totals.speed.min===null || speed < _totals.speed.min) _totals.speed.min = speed;
+            if(_totals.speed.max===null || speed > _totals.speed.max) _totals.speed.max = speed;
+        }
+        if(_totals.segments>0) {
+            _totals.since = segments[0].since;
+            _totals.speed.average /= _totals.duration/1000;
+        }
+        return _totals;
     }
 
 
@@ -167,9 +172,9 @@ class Session {
             if(this.db && this.user && total.since!==null) {
                 let _lastUpdate = new Date().unix_timestamp();
                 //console.log("session.update  ", this.id, "   user: ", this.user.userid, "   totals: ", total);
-                this.db.query("insert into runs(session,user,ts,track,laps,lastupdate,runningTime,distance) values (?,?,?,?,?,?,?,?) on duplicate key update lastupdate=?, runningTime=?, laps=?, distance=?;", [
-                        this.id, this.user.userid, total.since.unix_timestamp(), this.track.id, this.track.laps, _lastUpdate, total.duration, total.distance, // insert values
-                        _lastUpdate, total.duration, this.track.laps, total.distance])    // update values
+                this.db.query("insert into runs(session,user,ts,track,laps,lastupdate,runningTime,distance,avgspeed,maxspeed) values (?,?,?,?,?,?,?,?,?,?) on duplicate key update lastupdate=?, runningTime=?, laps=?, distance=?, avgspeed=?, maxspeed=?;", [
+                        this.id, this.user.userid, total.since.unix_timestamp(), this.track.id, this.track.laps, _lastUpdate, total.duration, total.distance, total.speed.average, total.speed.max, // insert values
+                        _lastUpdate, total.duration, this.track.laps, total.distance, total.speed.average, total.speed.max])    // update values
                     .on('error', function(err) {
                         this.recording = false;
                         console.log(err);

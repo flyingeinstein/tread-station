@@ -291,7 +291,11 @@ class ControlPanel {
             since: null,
             duration: 0,
             distance: 0,
-            avgspeed: 0,
+            speed: {
+                average: 0,
+                min: 0,
+                max: 0
+            },
             segments: 0
         };
 
@@ -306,7 +310,7 @@ class ControlPanel {
             speed: {
                 current: this.motion.value,
                 target: this.speed.target,
-                average: totals.avgspeed
+                average: totals.speed.average
             },
             currentIncline: this.nativeToInclineGrade(this.currentIncline),
             desiredIncline: this.nativeToInclineGrade(this.desiredIncline)
