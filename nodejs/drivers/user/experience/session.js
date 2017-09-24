@@ -2,28 +2,20 @@ const postal = require('postal');
 var Aggregate = require('../../../aggregate');
 
 class Session {
-    constructor(user) {
+    constructor(user, props) {
         // session
-        this.id = null;
+        this.id = new Date().unix_timestamp();
         this.user = user;
         this.recording = false;
         this.active = false;
-
-        // variables
-        this.runningTime = 0;       // total running millis (accumulates start/stops until a reset)
-        this.runningSince = null;   // Date that we started running (non stop)
-        this.segments = 0;
-        this.distance = 0;
+        if(props && props.database)
+            this.db = props.database;
 
         // current speed setting
         this.segment = null;
-        this.currentSpeed = 0;
-        this.currentSpeedSince = null;
 
         // track history
-        this.history = {
-            speed: []
-        }
+        this.segments= [];
 
         // goals
         this.track = {
@@ -51,35 +43,28 @@ class Session {
                 callback: (data, envelope) => {
                     let now = new Date();
                     let newspeed = data.value;
-                    if (this.runningSince === null && newspeed > 0) {
-                        this.start();
+                    if (this.segment===null && newspeed > 0) {
+                        // first segment in the session
+                        this.start(data.value);
                     } else if (newspeed === 0) {
+                        // we've stopped, so we can close off this segment
                         this.stop();
-                    }
+                    } else {
+                        // speed change within a segment
+                        let diff = now - this.segment.since;
+                        let oldspeed = this.segment.speed;
 
-                    if (this.currentSpeedSince !== null) {
-                        let diff = now - this.currentSpeedSince;
-                        let oldspeed = this.currentSpeed;
-                        this.currentSpeedSince = now;
-                        this.currentSpeed = data.value;
-
+                        // detect if the user is changing speeds quickly
                         if (diff < 1000) {
                             // short distance, just merge
-                            this.currentSpeed = data.value;
+                            this.segment.speed = data.value;
                         } else {
                             console.log("speed change " + diff + "ms x" + oldspeed + " => " + data.value);
                             // add the segment of speed to history
-                            this.history.speed.push(this.segment);
-                            this.segment = {
-                                since: now,
-                                speed: oldspeed,
-                                duration: diff
-                            }
+                            this.segments.push(this.segment);
+                            this.segment = new Session.Segment(data.value);
                         }
-                    } else {
-                        // first setting
-                        this.currentSpeedSince = now;
-                        this.currentSpeed = data.value;
+
                     }
                 }
             }),
@@ -94,7 +79,7 @@ class Session {
             db: postal.subscribe({
                 channel: "database",
                 topic: "device.ready",
-                callback: (data) => { this.db = data.device.db; }
+                callback: (data) => { this.db = data.device.db; console.log("session got db"); }
             })
 
     };
@@ -108,37 +93,55 @@ class Session {
         this.active = false;
     }
 
-    start()
+    start(speed)
     {
-        if(this.runningSince ===null) {
-            this.runningSince = new Date();
-            this.segment = {
-                since: this.runningSince,
-                speed: 0,
-                duration: 0
-            };
+        if(this.segment ===null) {
+            this.segment = new Session.Segment(speed ? speed : 0);
         }
     }
 
     stop()
     {
-        if(this.runningSince !== null) {
-            this.runningTime += new Date().valueOf() - this.runningSince.valueOf();
-            this.runningSince = null;
-            if(this.segment!==null) {
-                this.history.speed.push(this.segment);
-                this.segment = null;
-            }
-            console.log("there are "+this.history.speed.length+" speed segments");
+        if(this.segment !== null) {
+            this.segment.end = new Date();
+            this.segments.push(this.segment);
+            this.segment = null;
+            console.log("there are "+this.segments.length+" speed segments");
         }
     }
 
-    getTotalRunningMillis()
+    total()
     {
-        return (this.runningSince!==null)
-            ? this.runningTime + (new Date().valueOf() - this.runningSince.valueOf())
-            : this.runningTime;
+        // add up the history
+        let since=null, segcount=this.segments.length, distance = 0, millis = 0, speed_acc = 0;
+        for(let i=0; i<segcount;i++) {
+            let seg = this.segments[i];
+            let duration = seg.duration();
+            millis += duration;
+            distance += seg.speed * duration / 3600000; // MPH * duration_ms / (millis-in-an-hour)
+            speed_acc += duration * seg.speed;
+            if(since===null)
+                since = seg.since;
+        }
+        if(this.segment!==null) {
+            // add in the current segment portion
+            let duration = this.segment.duration();
+            millis += duration;
+            distance += this.segment.speed * duration / 3600000;
+            speed_acc += duration * this.segment.speed;
+            segcount++;
+            if(since===null)
+                since = this.segment.since;
+        }
+        return {
+            since: since,
+            duration: millis,
+            distance: distance,
+            avgspeed: (millis>0) ? speed_acc / millis : 0,
+            segments: segcount
+        };
     }
+
 
     __update() {
         let status = {
@@ -148,8 +151,8 @@ class Session {
             active: this.active,
             runningSince: this.runningSince,
             runningTime: this.getTotalRunningMillis(),
-            distance: this.distance,
-            currentSpeed: this.nativeToMPH(this.currentSpeed),
+            distance: this.getTotalRunningDistance(),
+            currentSpeed: this.nativeToMPH(this.segment.speed),
             desiredSpeed: this.nativeToMPH(this.desiredSpeed),
             currentIncline: this.nativeToInclineGrade(this.currentIncline),
             desiredIncline: this.nativeToInclineGrade(this.desiredIncline)
@@ -157,6 +160,55 @@ class Session {
         this.bus.publish("state", status);
     }
 
+    updateMysqlStatus()
+    {
+        try {
+            let total = this.total();
+            if(this.db && this.user && total.since!==null) {
+                let _lastUpdate = new Date().unix_timestamp();
+                //console.log("session.update  ", this.id, "   user: ", this.user.userid, "   totals: ", total);
+                this.db.query("insert into runs(session,user,ts,track,laps,lastupdate,runningTime,distance) values (?,?,?,?,?,?,?,?) on duplicate key update lastupdate=?, runningTime=?, laps=?, distance=?;", [
+                        this.id, this.user.userid, total.since.unix_timestamp(), this.track.id, this.track.laps, _lastUpdate, total.duration, total.distance, // insert values
+                        _lastUpdate, total.duration, this.track.laps, total.distance])    // update values
+                    .on('error', function(err) {
+                        this.recording = false;
+                        console.log(err);
+                        console.log("recording of runs disabled");
+                    }.bind(this))
+                    .on('end', function() {
+                        this.recording=true;
+                    }.bind(this));
+            }
+        } catch(ex) {
+            console.log("warning: failed to send to mysql : "+ex);
+            this.recording = false;
+        }
+    };
 }
+
+class Segment {
+    constructor(speed) {
+        this.since = new Date();
+        this.end = null;        // no end time yet
+        this.speed = speed ? speed : 0;
+    }
+    
+    /// Return duration of segment in milliseconds
+    duration() {
+        let now =  (this.end!==null)
+            ? this.end
+            : new Date().valueOf();
+        return (this.since!==null)
+            ? now - this.since.valueOf()
+            : 0;
+    }
+    
+    /// Return distance in miles
+    distance() {
+        return this.speed * this.duration() / 3600000;
+    }
+}
+
+Session.Segment = Segment;
 
 module.exports = Session;

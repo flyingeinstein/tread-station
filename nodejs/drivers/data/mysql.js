@@ -13,12 +13,13 @@ class MysqlDriver  {
         this.devices = [];
         this.driver = {};
         this.depends = ["system/configuration"];
+        this.props = props;
     }
 
     probe(props) {
         // find our configuration
         if(!props.db) {
-            this.config = props.db = props.readSection("db", {
+            this.config = props.readSection("db", {
                 host     : 'localhost',
                 user     : 'tread',
                 password : 'peps1c0la',
@@ -41,6 +42,7 @@ class MysqlDriver  {
                 }
             } else {
                 console.log("connected to mysql server "+this.config.host+"   (database: "+this.config.database+")");
+                props.database = this.db;
                 this.devices.push(this);
                 defer.resolve(true);
             }

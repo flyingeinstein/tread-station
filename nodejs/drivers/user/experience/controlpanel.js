@@ -124,7 +124,7 @@ class ControlPanel {
     {
         this.__closeSession();
         this.reset();
-        this.system.session = this.session = new Session(user);
+        this.system.session = this.session = new Session(user, this.system);
         if(user.goaltime!==null)
             this.goaltime=user.goaltime;
         if(user.goaldistance!==null)
@@ -253,24 +253,6 @@ class ControlPanel {
     __updateStatus() {
         var now = new Date();
 
-        // if we are starting or stopping, then start our running timer
-        if(this.session) {
-            if (!this.active && this.session.runningSince != null) {
-                // we are stopping, add latest runtime to accumulated total
-                this.runningTime += new Date().valueOf() - this.runningSince.valueOf();
-                this.runningSince = null;
-            } else if (this.active && this.session.runningSince == null) {
-                // we are starting up, could be a new session or a continuation of an existing session
-                if (this.session.id == null) {
-                    // new session
-                    this.runningSince = new Date();
-                    this.session.id = this.runningSince.unix_timestamp();
-                } else {
-                    this.runningSince = new Date();
-                }
-            }
-        }
-
         // HACK: make the incline move for now
         if(this.desiredIncline !== this.currentIncline) {
             if(this.currentIncline < this.desiredIncline)
@@ -304,22 +286,34 @@ class ControlPanel {
     }
 
     __sendStatus() {
+        // get actual totals if we have them yet, otherwise set zero values
+        let totals = this.session ? this.session.total() : {
+            since: null,
+            duration: 0,
+            distance: 0,
+            avgspeed: 0,
+            segments: 0
+        };
+
         let status = {
             type: 'status',
             headline: this.headline ? this.headline : this.state(),
             timestamp: new Date(),
             active: this.active,
-            runningSince: this.session ? this.session.runningSince : null,
-            runningTime: this.session ? this.session.getTotalRunningMillis() : 0,
-            distance: this.session ? this.session.distance : 0,
+            runningSince: totals.since,
+            runningTime: totals.duration,
+            distance: totals.distance,
             speed: {
                 current: this.motion.value,
                 target: this.speed.target,
+                average: totals.avgspeed
             },
             currentIncline: this.nativeToInclineGrade(this.currentIncline),
             desiredIncline: this.nativeToInclineGrade(this.desiredIncline)
         };
         this.bus.publish("state", status);
+        if(this.session)
+            this.session.updateMysqlStatus();
     }
 
     inclineGradeToNative(value)
