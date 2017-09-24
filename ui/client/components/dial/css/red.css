@@ -131,3 +131,7 @@ svg.dial.red g.button-indicator path.band {
 
 svg.dial.red g.quickspeed g.button-indicator path {
 }
+
+svg.dial.red g.meter-indicator.average .indicators path {
+    fill: rgba(255,0,0,0.65);
+}

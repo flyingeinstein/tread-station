@@ -68,6 +68,7 @@ export default class TreadmillControl extends React.Component {
             status.timeDisplay = this.treadmill ? this.treadmill.formatTime(status.runningTime) : "";
             console.log(status);
             this.speed.setValue(status.speed.current);
+            this.avgspeed.setValue(status.speed.average);
             this.setState((prevState, props) => { return {
                 status: status
             }});
@@ -120,7 +121,8 @@ export default class TreadmillControl extends React.Component {
                 <button id="reset" className="reset shape-tag left" onClick={this.treadmill.controlpanel.reset}>RESET</button>
                 <Dial id="speed-control" theme="red">
                     <Lane id="root" lane="0" radius="700" width="250px" alignment="bottom">
-                        <MeterIndicator ref={meter => {this.speed=meter;} } domain={[2, 9]} arcrange={[ 1.18*Math.PI, 2.82*Math.PI ]} value="3.2" />
+                        <MeterIndicator className="average" ref={meter => {this.avgspeed=meter;} } domain={[2, 9]} arcrange={[ 1.18*Math.PI, 2.82*Math.PI ]} value="3.5" />
+                        <MeterIndicator className="current" ref={meter => {this.speed=meter;} } domain={[2, 9]} arcrange={[ 1.18*Math.PI, 2.82*Math.PI ]} graduated={false} value="3.2" />
                         <ButtonGroup arcrange={[ 0.83*Math.PI, 1.17*Math.PI ]} style={{ alignment: 'bottom' }}>
                             <Button id="speed-increase" caption="$up"   onClick={this.treadmill.controlpanel.increment} />
                             <Button id="speed-decrease" caption="$down" onClick={this.treadmill.controlpanel.decrement} />

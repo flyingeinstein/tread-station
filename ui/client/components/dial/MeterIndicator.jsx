@@ -28,6 +28,27 @@ export default class Meter extends React.Component {
         return this.state.value;
     }
 
+    graduation(show) {
+        return !show ? null :
+        <g className="dial-face">
+            <circle className="background-circle" r={this.radius_outer} filter="url(#fe3)" />
+            <g className="ticks">{
+                React.Children.map(this.ticks, (t) => {
+                    let sp = this.scale(t);
+                    var major = t === Math.floor(t);
+                    let dxAngle = major ? 0.015 : 0.003;
+                    return <path className={`tick ${major?'major-tick':'minor-tick'}`} d={this.props.lane.tick(sp, dxAngle)} />
+                })
+            }</g>
+            <g className="labels">{
+                React.Children.map(this.majors, (d) => {
+                    let r = this.scale(d+0.5) * 180 / Math.PI;
+                    return <text className="dial-ordinals" textAnchor="middle" transform={`translate(0,${this.radius_ordinals}) rotate(${r} 0 ${-this.radius_ordinals})`} >{d}</text>
+                })
+            }</g>
+        </g>
+    }
+
     indicator(value) {
         let domain = this.scale.domain();
         if(value!==undefined && value!==null && value > domain[0] && value < domain[1])
@@ -35,24 +56,8 @@ export default class Meter extends React.Component {
     }
 
     render() {
-        return <g id={this.props.id} className={`indicator meter-indicator`} style={{cursor:'hand'}} onClick={this.props.onClick} data-index={this.props.index}>
-            <g className="dial-face">
-                <circle className="background-circle" r={this.radius_outer} filter="url(#fe3)" />
-                <g className="ticks">{
-                    React.Children.map(this.ticks, (t) => {
-                        let sp = this.scale(t);
-                        var major = t === Math.floor(t);
-                        let dxAngle = major ? 0.015 : 0.003;
-                        return <path className={`tick ${major?'major-tick':'minor-tick'}`} d={this.props.lane.tick(sp, dxAngle)} />
-                    })
-                }</g>
-                <g className="labels">{
-                    React.Children.map(this.majors, (d) => {
-                        let r = this.scale(d+0.5) * 180 / Math.PI;
-                        return <text className="dial-ordinals" textAnchor="middle" transform={`translate(0,${this.radius_ordinals}) rotate(${r} 0 ${-this.radius_ordinals})`} >{d}</text>
-                    })
-                }</g>
-            </g>
+        return <g id={this.props.id} className={`indicator meter-indicator ${this.props.className}`} style={{cursor:'hand'}} onClick={this.props.onClick} data-index={this.props.index}>
+            {this.graduation((this.props.graduated!==undefined) ? this.props.graduated : true)}
             <g className="indicators">
                 {this.indicator(this.state.value)}
             </g>
