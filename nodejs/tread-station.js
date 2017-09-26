@@ -1,3 +1,4 @@
+'use strict';
 
 process.on('SIGINT', function() {
     console.trace("Caught interrupt signal");

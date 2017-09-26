@@ -1,3 +1,5 @@
+'use strict';
+
 //
 // System Configuration driver
 // holds configuration information that any driver can retrieve, add or modify.
