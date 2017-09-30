@@ -34,10 +34,11 @@ class PWMController {
 
     open() {
         this.pwm.open();
+        this.pwm.setDuty(0);
         if(this.options.scale)
-            this.pwm.period(this.options.scale.range()[1]);
+            this.pwm.setPeriod(this.options.scale.range()[1]);
         this.pwm.turnOff();
-        this.pwm.polarity(0);
+        this.pwm.setPolarity(0);
         this.value = 0;
 
         // Instantiate bbbPWM object to control PWM device.  Pass in device path
@@ -84,6 +85,8 @@ class PWMController {
         if(mode!=="speed.smooth")
             console.log(mode+" => ", val.toFixed(2));
         this.pwm.setDuty(this.options.scale ? this.options.scale(val) : val);
+        if(!this.pwm.active)
+            this.pwm.enable(true);
         this.active = val>0;
         this.bus.publish(mode, {
             target: this.desired,

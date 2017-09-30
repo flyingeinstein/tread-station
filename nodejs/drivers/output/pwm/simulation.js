@@ -23,7 +23,7 @@ class PWMSimulationChannel {
     constructor(driver, id){
         this.driver = driver;
         this.name = "pwm"+id;
-        this.id = id;
+        this.id = "sim:"+id;
         this.echo = false;
     }
 
@@ -53,12 +53,12 @@ class PWMSimulationChannel {
         if(this.echo) console.log(this.name+" output deactivated");
     }
 
-	polarity(v) {
+	setPolarity(v) {
 	    this.polarity = v;
         if(this.echo) console.log(this.name+" polarity => "+this.polarity);
     }
 
-	period(v) {
+	setPeriod(v) {
 	    this.period = v;
         if(this.echo) console.log(this.name+" period => "+this.period);
     }
