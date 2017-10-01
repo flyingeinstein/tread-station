@@ -85,7 +85,7 @@ function Treadmill()
             if (driver!==null) {
                 let response = null;
                 if (typeof driver[data.func] ==="function") {
-                    console.log("rpc call: "+driver.devicePath+"."+data.func+"  ",data.arguments);
+                    //console.log("rpc call: "+driver.devicePath+"."+data.func+"  ",data.arguments);
                     driver[data.func].apply(driver, data.arguments);
                 } else if (typeof driver[data.func] ==="object") {
                     response = driver[data.func];
