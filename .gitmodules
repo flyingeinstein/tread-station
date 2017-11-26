@@ -1,3 +1,0 @@
-[submodule "particle/SparkIntervalTimer"]
-	path = particle/SparkIntervalTimer
-	url = git@github.com:flyingeinstein/SparkIntervalTimer.git
