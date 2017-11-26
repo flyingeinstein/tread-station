@@ -22,9 +22,9 @@ export default function Treadmill(options)
     }
 
     // get hostname from query string if present
-    this.host = getParameterByName("host")
-        ? getParameterByName("host")
-        : options.host;
+    this.host = getParameterByName("host");
+    if(options.host && this.host==null)
+        this.host = options.host;
 
     // get host from host line (meaning UI and Treadmill service on the same server)
     if(!this.host)
