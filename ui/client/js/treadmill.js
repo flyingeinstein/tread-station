@@ -19,9 +19,9 @@ export default function Treadmill(options)
         options = {};
     }
 
-    this.host = options.host
-        ? options.host
-        : getParameterByName("host");
+    this.host = getParameterByName("host");
+    if(options.host && this.host==null)
+        this.host = options.host;
     if(!this.host)
         this.host = window.location.hostname;
     console.log("treadmill host: "+this.host);
