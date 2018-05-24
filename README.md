@@ -5,9 +5,19 @@ Wirelessly control your treadmill, replace the old lackluster dashboard with gra
 
 This project is implemented using hardware wired to a RaspberryPi, BeagleBoard or other Linux device running this nodejs project. A React web client provides the treadmill control interface and can be served from the same RPi or BBB using Apache or any simple web server or can also be served remotely and connect to the hardware node.
 
+![My treadmill station](https://hackster.imgix.net/uploads/image/file/80916/IMG_6697.jpg?auto=compress%2Cformat&w=1280&h=960&fit=max)
+
 You may also find some deprecated projects in older branches such as Spark based hardware control, AngularJS based web interface, and MacOS widget control. These dont work well for one reason or another but they are there if you are bored.
 
+
+User Interface
+==============
+I was inspired by the dial control of the Nest thermostat. I've encorporated the dial full screen into the center and then added enhanced indicators and controls around the circumference of the dial that include incline and autopace indicators as well as quick-speed buttons.
+
+
+
 ABOUT ME
+========
 I've replaced my old treadmill dashboard with a 27" monitor and hooked it up to a Mac Mini. My keyboard, mouse and touchpad are all wireless. This is sweet! A workstation without the wires and controllable via a web page. This should help get me back to health. Already I feel more energy, and more creativity as I work a difficult day job that requires me to be at the computer long periods of time.
 
 Directories
