@@ -1,3 +1,5 @@
+'use strict';
+
 const postal = require('postal');
 var Aggregate = require('../../../aggregate');
 

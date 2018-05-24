@@ -1,3 +1,5 @@
+'use strict';
+
 const fs = require('fs');
 const Q = require('q');
 const exec = require('child_process').exec;

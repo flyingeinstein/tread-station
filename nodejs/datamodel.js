@@ -1,3 +1,5 @@
+'use strict';
+
 const mysql      = require('mysql');
 const mysqlDateFormat = "yyyy-MM-dd HH:mm:ss";
 

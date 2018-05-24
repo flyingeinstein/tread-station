@@ -9,6 +9,20 @@ class Users {
         this.simulation = true;
         this.devices = [];
         this.driver = {};
+
+        // setup some dummy data for testing if no db gets loaded
+        this.users = [
+            {
+                userid: 1,
+                name: 'Jane Doe',
+                birthdate: new Date('1975-06-25'),
+                weight: 52,
+                height: 170,
+                goaltime: 5400,
+                goaldistance: null
+            }
+        ];
+
     }
 
     probe() {
@@ -42,29 +56,6 @@ class Users {
             } catch(e) {
                 console.log(e);
             }
-        } else {
-            console.log("using dummy users table for testing");
-            // setup some dummy data for testing
-            this.users = [
-                {
-                    userid: 1,
-                    name: 'Colin MacKenzie',
-                    birthdate: new Date('1975-06-25'),
-                    weight: 68,
-                    height: 170,
-                    goaltime: 5400,
-                    goaldistance: null
-                },
-                {
-                    userid: 2,
-                    name: 'Kinga Ganko',
-                    birthdate: new Date('1975-11-01'),
-                    weight: 53,
-                    height: 169,
-                    goaltime: 5400,
-                    goaldistance: null
-                }
-            ];
         }
     }
 
