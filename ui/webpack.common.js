@@ -1,5 +1,5 @@
 /*
-    ./webpack.config.js
+    ./webpack.common.js
 */
 const path = require('path');
 //const merge = require('merge');
@@ -29,7 +29,7 @@ module.exports = {
   },
 
   module: {
-    loaders: [
+    rules: [
       { test: /\.jsx?$/, loader: 'babel-loader', exclude: /node_modules/, query: { presets: ['env','react'], retainLines: true } },
       { test: /\.css$/, use: [ { loader: 'style-loader', options: {
           fixUrls: true,
