@@ -2,16 +2,17 @@
 User debian
 Group staff
 
+ServerName treadmill
 
 <VirtualHost *:80>
 	ServerAdmin webmaster@localhost
 
-	DocumentRoot /home/debian/tread-station/web-ui
+	DocumentRoot /home/debian/tread-station/ui/client
 	<Directory />
 		Options FollowSymLinks
 		AllowOverride None
 	</Directory>
-	<Directory /home/debian/tread-station/web-ui/>
+	<Directory /home/debian/tread-station/ui/client/>
 		Options Indexes FollowSymLinks MultiViews
 		AllowOverride All
 		Order allow,deny
@@ -19,7 +20,7 @@ Group staff
 		Require all granted
 	</Directory>
 
-	DirectoryIndex default.html
+	DirectoryIndex index.html
 	ErrorLog ${APACHE_LOG_DIR}/error.log
 
 	# Possible values include: debug, info, notice, warn, error, crit,
